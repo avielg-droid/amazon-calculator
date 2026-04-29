@@ -3,7 +3,7 @@ import { Analytics } from "@vercel/analytics/react";
 import {
   TrendingUp, AlertTriangle, DollarSign, Package, BarChart3,
   ShieldCheck, RefreshCw, Info, Zap, Target, ArrowUpRight,
-  ArrowDownRight, Activity, Globe, Flag
+  ArrowDownRight, Activity, Globe, Flag, Share2
 } from "lucide-react";
 
 const C = {
@@ -141,6 +141,11 @@ export default function App() {
   const [marketMode, setMarketMode] = useState("intl");    // us | intl
   const [inputs, setInputs] = useState(() => {
     try {
+      const params = new URLSearchParams(window.location.search);
+      const d = params.get("d");
+      if (d) return JSON.parse(atob(d));
+    } catch {}
+    try {
       const saved = localStorage.getItem("amazon-calc-inputs");
       if (saved) return JSON.parse(saved);
     } catch {}
@@ -148,6 +153,20 @@ export default function App() {
   });
   const [activeTab, setActiveTab] = useState("breakdown");
   const [inputErrors, setInputErrors] = useState({});
+  const [toast, setToast] = useState(null);
+
+  const handleShare = useCallback(() => {
+    try {
+      const encoded = btoa(JSON.stringify(inputs));
+      const url = `${window.location.origin}${window.location.pathname}?d=${encoded}`;
+      navigator.clipboard.writeText(url);
+      setToast("Link copied!");
+      setTimeout(() => setToast(null), 2000);
+    } catch {
+      setToast("Copy failed");
+      setTimeout(() => setToast(null), 2000);
+    }
+  }, [inputs]);
 
   useEffect(() => {
     try {
@@ -294,6 +313,15 @@ export default function App() {
               <button style={modeBtn(channelMode, "amazon")} onClick={() => setChannelMode("amazon")}>Amazon FBA</button>
               <button style={modeBtn(channelMode, "dtc")} onClick={() => setChannelMode("dtc")}>DTC / Shopify</button>
             </div>
+            {/* Share button */}
+            <button onClick={handleShare} style={{
+              display: "flex", alignItems: "center", gap: 6,
+              padding: "8px 14px", borderRadius: 9, fontSize: 12, fontWeight: 600,
+              background: C.s8, border: `1px solid ${C.s7}`, color: C.s4,
+              cursor: "pointer",
+            }}>
+              <Share2 size={13} /> Share
+            </button>
           </div>
         </div>
 
@@ -554,6 +582,15 @@ export default function App() {
         </div>
       </div>
     </div>
+    {toast && (
+      <div style={{
+        position: "fixed", bottom: 24, left: "50%", transform: "translateX(-50%)",
+        background: C.emerald, color: "#fff", padding: "10px 20px", borderRadius: 10,
+        fontSize: 13, fontWeight: 600, zIndex: 100, boxShadow: "0 4px 16px #00000060",
+      }}>
+        {toast}
+      </div>
+    )}
     <Analytics />
     </>
   );
