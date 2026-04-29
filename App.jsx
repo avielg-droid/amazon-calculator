@@ -299,7 +299,7 @@ export default function App() {
             <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: C.emerald }}>
               <Package size={14} />Core Product & Tax
             </div>
-            <InputField label="Selling price (gross incl. VAT)" name="sellingPrice" value={inputs.sellingPrice} onChange={handleChange} prefix="$" highlight={C.emerald} />
+            <InputField label="Selling price (gross incl. VAT)" name="sellingPrice" value={inputs.sellingPrice} onChange={handleChange} prefix="$" highlight={C.emerald} tooltip="The price customers pay on Amazon. For EU, include VAT." />
             <InputField
               label={isUS ? "VAT / Sales Tax" : "VAT Rate"}
               name="vatRate"
@@ -308,14 +308,15 @@ export default function App() {
               suffix="%"
               disabled={isUS}
               dimNote={isUS ? "US: sales tax handled at checkout" : undefined}
+              tooltip="VAT rate for your EU marketplace. DE=19%, UK=20%, FR=20%, IT=22%."
             />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <InputField label="Unit cost" name="unitCost" value={inputs.unitCost} onChange={handleChange} prefix="$" />
               <InputField label="Freight" name="freightCost" value={inputs.freightCost} onChange={handleChange} prefix="$" />
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <InputField label="Customs duty" name="customsDuty" value={inputs.customsDuty} onChange={handleChange} suffix="%" />
-              <InputField label="3PL / Prep" name="prepFees" value={inputs.prepFees} onChange={handleChange} prefix="$" />
+              <InputField label="Customs duty" name="customsDuty" value={inputs.customsDuty} onChange={handleChange} suffix="%" tooltip="Import duty as a % of product cost. Varies by HS code and country." />
+              <InputField label="3PL / Prep" name="prepFees" value={inputs.prepFees} onChange={handleChange} prefix="$" tooltip="Per-unit prep/labeling cost (bubble wrap, poly bags, FNSKU stickers)." />
             </div>
             <InputField label="Safety buffer" name="safetyBuffer" value={inputs.safetyBuffer} onChange={handleChange} suffix="%" />
           </div>
@@ -331,15 +332,16 @@ export default function App() {
                   name="referralFee" value={inputs.referralFee} onChange={handleChange}
                   suffix="%" highlight={C.cyan}
                   dimNote={!isUS ? `Charged on $${fmt(inputs.sellingPrice)} gross → $${fmt(s.referralActual)}` : undefined}
+                  tooltip="Amazon's cut of your sale price, typically 8–15% depending on category."
                 />
-                <InputField label="FBA fulfillment fee" name="fbaFee" value={inputs.fbaFee} onChange={handleChange} prefix="$" />
-                <InputField label="Monthly storage" name="storageFee" value={inputs.storageFee} onChange={handleChange} prefix="$" />
+                <InputField label="FBA fulfillment fee" name="fbaFee" value={inputs.fbaFee} onChange={handleChange} prefix="$" tooltip="Amazon's pick, pack, and ship fee. Depends on product size and weight." />
+                <InputField label="Monthly storage" name="storageFee" value={inputs.storageFee} onChange={handleChange} prefix="$" tooltip="Monthly FBA storage cost per unit. Spikes in Q4 (Oct–Dec)." />
               </>
             ) : (
               <>
-                <InputField label="Payment processing" name="paymentProcessing" value={inputs.paymentProcessing} onChange={handleChange} suffix="%" highlight={C.cyan} />
-                <InputField label="Pick & pack" name="fulfillmentCost" value={inputs.fulfillmentCost} onChange={handleChange} prefix="$" />
-                <InputField label="Shipping to customer" name="shippingToCustomer" value={inputs.shippingToCustomer} onChange={handleChange} prefix="$" />
+                <InputField label="Payment processing" name="paymentProcessing" value={inputs.paymentProcessing} onChange={handleChange} suffix="%" highlight={C.cyan} tooltip="Payment processor fee (Stripe, PayPal, etc.). Typically 2.9% + $0.30." />
+                <InputField label="Pick & pack" name="fulfillmentCost" value={inputs.fulfillmentCost} onChange={handleChange} prefix="$" tooltip="Your own warehouse pick-and-pack cost per unit (non-Amazon channels)." />
+                <InputField label="Shipping to customer" name="shippingToCustomer" value={inputs.shippingToCustomer} onChange={handleChange} prefix="$" tooltip="Last-mile shipping cost you pay per order on non-Amazon channels." />
               </>
             )}
           </div>
@@ -348,8 +350,8 @@ export default function App() {
             <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: C.orange }}>
               <TrendingUp size={14} />Marketing & Scale
             </div>
-            <InputField label="TACOS (ad spend / revenue)" name="adSpendShare" value={inputs.adSpendShare} onChange={handleChange} suffix="%" highlight={C.orange} />
-            <InputField label="Monthly units target" name="monthlyUnits" value={inputs.monthlyUnits} onChange={handleChange} />
+            <InputField label="TACOS (ad spend / revenue)" name="adSpendShare" value={inputs.adSpendShare} onChange={handleChange} suffix="%" highlight={C.orange} tooltip="Total ad spend as % of revenue (TACOS). Includes PPC and external ads." />
+            <InputField label="Monthly units target" name="monthlyUnits" value={inputs.monthlyUnits} onChange={handleChange} tooltip="Estimated units sold per month. Used to calculate total monthly profit." />
             <div style={{ marginTop: 4, padding: "10px 12px", background: C.s95, borderRadius: 10, border: `1px solid ${C.s8}` }}>
               <div style={{ fontSize: 10, color: C.s5, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.08em" }}>Monthly GMV</div>
               <div style={{ fontSize: 18, fontWeight: 700, color: C.amber, ...MONO }}>
