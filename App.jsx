@@ -227,13 +227,16 @@ export default function App() {
   }, []);
 
   const isUS = marketMode === "us";
-  const effectiveVat = isUS ? 0 : inputs.vatRate;
+  const effectiveVat = isUS ? 0 : (Number(inputs.vatRate) || 0);
 
   const s = useMemo(() => {
-    const { sellingPrice, unitCost, freightCost, customsDuty, prepFees,
-      safetyBuffer, referralFee, fbaFee, storageFee,
-      paymentProcessing, fulfillmentCost, shippingToCustomer,
-      adSpendShare, monthlyUnits } = inputs;
+    const n = k => Number(inputs[k]) || 0;
+    const sellingPrice = n("sellingPrice"), unitCost = n("unitCost"), freightCost = n("freightCost"),
+      customsDuty = n("customsDuty"), prepFees = n("prepFees"), safetyBuffer = n("safetyBuffer"),
+      referralFee = n("referralFee"), fbaFee = n("fbaFee"), storageFee = n("storageFee"),
+      paymentProcessing = n("paymentProcessing"), fulfillmentCost = n("fulfillmentCost"),
+      shippingToCustomer = n("shippingToCustomer"), adSpendShare = n("adSpendShare"),
+      monthlyUnits = n("monthlyUnits");
 
     // VAT logic:
     // US: VAT = 0, gross = net, sales tax handled at checkout (not in unit P&L)
