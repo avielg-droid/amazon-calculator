@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback } from "react";
+import { Analytics } from "@vercel/analytics/react";
 import {
   TrendingUp, AlertTriangle, DollarSign, Package, BarChart3,
   ShieldCheck, RefreshCw, Info, Zap, Target, ArrowUpRight,
@@ -216,6 +217,7 @@ export default function App() {
   });
 
   return (
+    <>
     <div style={{ background: C.s95, minHeight: "100vh", padding: "24px 16px", fontFamily: "ui-sans-serif, system-ui, sans-serif", color: "#e2e8f0" }}>
       <h2 className="sr-only">Omni-Channel Profit Engine — global unit economics calculator</h2>
 
@@ -506,5 +508,7 @@ export default function App() {
         </div>
       </div>
     </div>
+    <Analytics />
+    </>
   );
 }
