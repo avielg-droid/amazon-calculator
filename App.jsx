@@ -21,11 +21,33 @@ const ROW = { display: "flex", justifyContent: "space-between", alignItems: "cen
 const CARD = { background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 16, padding: "20px 24px" };
 const MONO = { fontFamily: "ui-monospace, monospace" };
 
-function InputField({ label, name, value, onChange, prefix, suffix, highlight, disabled, dimNote }) {
+function InputField({ label, name, value, onChange, prefix, suffix, highlight, disabled, dimNote, tooltip }) {
   const [focused, setFocused] = useState(false);
+  const [tipVisible, setTipVisible] = useState(false);
   return (
     <div style={{ marginBottom: 12, opacity: disabled ? 0.45 : 1 }}>
-      <label style={LABEL}>{label}</label>
+      <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
+        <label style={{ ...LABEL, marginBottom: 0 }}>{label}</label>
+        {tooltip && (
+          <span
+            style={{ position: "relative", display: "inline-flex", alignItems: "center", cursor: "help" }}
+            onMouseEnter={() => setTipVisible(true)}
+            onMouseLeave={() => setTipVisible(false)}
+          >
+            <Info size={11} color={C.s5} />
+            {tipVisible && (
+              <div style={{
+                position: "absolute", left: 16, top: -4, zIndex: 50,
+                background: C.s8, border: `1px solid ${C.s7}`, borderRadius: 8,
+                padding: "8px 10px", width: 200, fontSize: 11, color: C.s4,
+                lineHeight: 1.5, boxShadow: "0 4px 16px #00000060", pointerEvents: "none",
+              }}>
+                {tooltip}
+              </div>
+            )}
+          </span>
+        )}
+      </div>
       {dimNote && <p style={{ fontSize: 10, color: C.cyan, margin: "-2px 0 5px", fontStyle: "italic" }}>{dimNote}</p>}
       <div style={{ position: "relative", display: "flex", alignItems: "center" }}>
         {prefix && <span style={{ position: "absolute", left: 10, fontSize: 12, color: C.s5, pointerEvents: "none" }}>{prefix}</span>}
