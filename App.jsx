@@ -19,7 +19,7 @@ const fmtK = n => isFinite(n) ? (Math.abs(n) >= 1000 ? `${(n / 1000).toFixed(1)}
 
 const LABEL = { fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: C.s5, marginBottom: 4, display: "block" };
 const ROW = { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: `1px solid ${C.s8}` };
-const CARD = { background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 16, padding: "20px 24px" };
+const CARD = { background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 16, padding: "20px 24px", boxShadow: "0 4px 24px #00000040" };
 const MONO = { fontFamily: "ui-monospace, monospace" };
 
 function InputField({ label, name, value, onChange, prefix, suffix, highlight, disabled, dimNote, tooltip, error }) {
