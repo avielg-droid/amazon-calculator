@@ -70,15 +70,18 @@ function InputField({ label, name, value, onChange, prefix, suffix, highlight, d
   );
 }
 
-function StatCard({ label, value, color, big }) {
+function StatCard({ label, value, color, signed, big }) {
+  const resolvedColor = signed
+    ? (parseFloat(value) >= 0 ? C.emerald : C.rose)
+    : (color || C.s4);
   return (
     <div style={{
-      background: big ? `${color || C.emerald}10` : C.s9,
-      border: `1px solid ${big ? (color || C.emerald) + "40" : C.s8}`,
+      background: big ? `${resolvedColor}10` : C.s9,
+      border: `1px solid ${big ? resolvedColor + "40" : C.s8}`,
       borderRadius: 14, padding: big ? "18px 20px" : "14px 16px",
     }}>
       <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: C.s5, display: "block", marginBottom: 4 }}>{label}</span>
-      <span style={{ fontSize: big ? 26 : 20, fontWeight: 700, color: color || C.emerald, ...MONO, lineHeight: 1.1 }}>{value}</span>
+      <span style={{ fontSize: big ? 26 : 20, fontWeight: 700, color: resolvedColor, ...MONO, lineHeight: 1.1 }}>{value}</span>
     </div>
   );
 }
@@ -416,9 +419,9 @@ export default function App() {
 
           {/* KPI row */}
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
-            <StatCard label="Net profit / unit" value={`$${fmt(s.netProfitPerUnit)}`} color={s.netProfitPerUnit >= 0 ? C.emerald : C.rose} />
+            <StatCard label="Net profit / unit" value={`$${fmt(s.netProfitPerUnit)}`} signed />
             <StatCard label="Net margin" value={`${fmt(s.netMargin, 1)}%`} color={s.netMargin > 20 ? C.emerald : s.netMargin > 10 ? C.amber : C.rose} />
-            <StatCard label="ROI on COGS" value={`${fmt(s.roi, 0)}%`} color={C.cyan} />
+            <StatCard label="ROI on COGS" value={`${fmt(s.roi, 0)}%`} signed />
             <StatCard label="Monthly profit" value={`$${fmtK(s.totalMonthlyProfit)}`} color={C.emerald} big />
           </div>
 
