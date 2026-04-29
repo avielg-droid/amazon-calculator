@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { Analytics } from "@vercel/analytics/react";
+import { PieChart, Pie, Cell, Tooltip as ReTooltip, ResponsiveContainer } from "recharts";
 import {
   TrendingUp, AlertTriangle, DollarSign, Package, BarChart3,
   ShieldCheck, RefreshCw, Info, Zap, Target, ArrowUpRight,
@@ -82,6 +83,43 @@ function StatCard({ label, value, color, signed, big }) {
     }}>
       <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: C.s5, display: "block", marginBottom: 4 }}>{label}</span>
       <span style={{ fontSize: big ? 26 : 20, fontWeight: 700, color: resolvedColor, ...MONO, lineHeight: 1.1 }}>{value}</span>
+    </div>
+  );
+}
+
+function CostChart({ s }) {
+  const profit = s.netProfitPerUnit;
+  const fees = s.channelFees + s.adSpendPerUnit;
+  const cogs = s.totalCOGS;
+
+  const data = [
+    { name: "Product Cost", value: Math.max(0, cogs), color: C.cyan },
+    { name: "Fees & Ads", value: Math.max(0, fees), color: C.violet },
+    { name: profit >= 0 ? "Net Profit" : "Loss", value: Math.abs(profit), color: profit >= 0 ? C.emerald : C.rose },
+  ].filter(d => d.value > 0);
+
+  return (
+    <div style={{ ...CARD, flex: 1, minWidth: 220 }}>
+      <p style={{ ...LABEL, marginBottom: 12 }}>Cost Breakdown</p>
+      <ResponsiveContainer width="100%" height={180}>
+        <PieChart>
+          <Pie data={data} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
+            {data.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+          </Pie>
+          <ReTooltip
+            formatter={(value, name) => [`$${value.toFixed(2)}`, name]}
+            contentStyle={{ background: C.s8, border: `1px solid ${C.s7}`, borderRadius: 8, fontSize: 12 }}
+          />
+        </PieChart>
+      </ResponsiveContainer>
+      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", marginTop: 8 }}>
+        {data.map((d, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: C.s4 }}>
+            <div style={{ width: 8, height: 8, borderRadius: 2, background: d.color }} />
+            {d.name}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -417,12 +455,17 @@ export default function App() {
         {/* ── MAIN DASHBOARD ── */}
         <div style={{ flex: "1 1 500px", minWidth: 300, display: "flex", flexDirection: "column", gap: 16 }}>
 
-          {/* KPI row */}
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
-            <StatCard label="Net profit / unit" value={`$${fmt(s.netProfitPerUnit)}`} signed />
-            <StatCard label="Net margin" value={`${fmt(s.netMargin, 1)}%`} color={s.netMargin > 20 ? C.emerald : s.netMargin > 10 ? C.amber : C.rose} />
-            <StatCard label="ROI on COGS" value={`${fmt(s.roi, 0)}%`} signed />
-            <StatCard label="Monthly profit" value={`$${fmtK(s.totalMonthlyProfit)}`} color={C.emerald} big />
+          {/* KPI row + pie chart */}
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-start" }}>
+            <div style={{ flex: 2, minWidth: 280 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
+                <StatCard label="Net profit / unit" value={`$${fmt(s.netProfitPerUnit)}`} signed />
+                <StatCard label="Net margin" value={`${fmt(s.netMargin, 1)}%`} color={s.netMargin > 20 ? C.emerald : s.netMargin > 10 ? C.amber : C.rose} />
+                <StatCard label="ROI on COGS" value={`${fmt(s.roi, 0)}%`} signed />
+                <StatCard label="Monthly profit" value={`$${fmtK(s.totalMonthlyProfit)}`} color={C.emerald} big />
+              </div>
+            </div>
+            <CostChart s={s} />
           </div>
 
           {/* Tab bar */}
