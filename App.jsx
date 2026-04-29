@@ -21,7 +21,7 @@ const ROW = { display: "flex", justifyContent: "space-between", alignItems: "cen
 const CARD = { background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 16, padding: "20px 24px" };
 const MONO = { fontFamily: "ui-monospace, monospace" };
 
-function InputField({ label, name, value, onChange, prefix, suffix, highlight, disabled, dimNote, tooltip }) {
+function InputField({ label, name, value, onChange, prefix, suffix, highlight, disabled, dimNote, tooltip, error }) {
   const [focused, setFocused] = useState(false);
   const [tipVisible, setTipVisible] = useState(false);
   return (
@@ -55,16 +55,17 @@ function InputField({ label, name, value, onChange, prefix, suffix, highlight, d
           type="number" name={name} value={value} onChange={onChange} disabled={disabled}
           onFocus={() => setFocused(true)} onBlur={() => setFocused(false)}
           style={{
-            width: "100%", background: C.s95, border: `1px solid ${focused ? (highlight || C.emerald) : C.s8}`,
+            width: "100%", background: C.s95, border: `1px solid ${error ? C.rose : focused ? (highlight || C.emerald) : C.s8}`,
             borderRadius: 8, padding: `8px ${suffix ? 28 : 12}px 8px ${prefix ? 24 : 12}px`,
             fontSize: 13, color: "#e2e8f0", outline: "none", boxSizing: "border-box",
             transition: "border-color 0.2s", ...MONO,
-            boxShadow: focused ? `0 0 0 1px ${(highlight || C.emerald)}22` : "none",
+            boxShadow: error ? `0 0 0 1px ${C.rose}22` : focused ? `0 0 0 1px ${(highlight || C.emerald)}22` : "none",
             cursor: disabled ? "not-allowed" : "auto",
           }}
         />
         {suffix && <span style={{ position: "absolute", right: 10, fontSize: 11, color: C.s5, pointerEvents: "none" }}>{suffix}</span>}
       </div>
+      {error && <p style={{ fontSize: 11, color: C.rose, marginTop: 3, marginBottom: 0 }}>{error}</p>}
     </div>
   );
 }
@@ -140,10 +141,17 @@ export default function App() {
   const [marketMode, setMarketMode] = useState("intl");    // us | intl
   const [inputs, setInputs] = useState(DEFAULTS);
   const [activeTab, setActiveTab] = useState("breakdown");
+  const [inputErrors, setInputErrors] = useState({});
 
   const handleChange = useCallback(e => {
     const { name, value } = e.target;
-    setInputs(p => ({ ...p, [name]: parseFloat(value) || 0 }));
+    const num = parseFloat(value);
+    if (value !== "" && num < 0) {
+      setInputErrors(prev => ({ ...prev, [name]: "Must be 0 or greater" }));
+      return;
+    }
+    setInputErrors(prev => { const n = { ...prev }; delete n[name]; return n; });
+    setInputs(prev => ({ ...prev, [name]: value === "" ? "" : parseFloat(value) || 0 }));
   }, []);
 
   const isUS = marketMode === "us";
@@ -299,7 +307,7 @@ export default function App() {
             <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: C.emerald }}>
               <Package size={14} />Core Product & Tax
             </div>
-            <InputField label="Selling price (gross incl. VAT)" name="sellingPrice" value={inputs.sellingPrice} onChange={handleChange} prefix="$" highlight={C.emerald} tooltip="The price customers pay on Amazon. For EU, include VAT." />
+            <InputField label="Selling price (gross incl. VAT)" name="sellingPrice" value={inputs.sellingPrice} onChange={handleChange} prefix="$" highlight={C.emerald} tooltip="The price customers pay on Amazon. For EU, include VAT." error={inputErrors.sellingPrice} />
             <InputField
               label={isUS ? "VAT / Sales Tax" : "VAT Rate"}
               name="vatRate"
@@ -309,16 +317,17 @@ export default function App() {
               disabled={isUS}
               dimNote={isUS ? "US: sales tax handled at checkout" : undefined}
               tooltip="VAT rate for your EU marketplace. DE=19%, UK=20%, FR=20%, IT=22%."
+              error={inputErrors.vatRate}
             />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <InputField label="Unit cost" name="unitCost" value={inputs.unitCost} onChange={handleChange} prefix="$" tooltip="Your manufacturing or wholesale cost per unit (ex-factory)." />
-              <InputField label="Freight" name="freightCost" value={inputs.freightCost} onChange={handleChange} prefix="$" tooltip="Cost to ship one unit from supplier to Amazon FBA warehouse." />
+              <InputField label="Unit cost" name="unitCost" value={inputs.unitCost} onChange={handleChange} prefix="$" tooltip="Your manufacturing or wholesale cost per unit (ex-factory)." error={inputErrors.unitCost} />
+              <InputField label="Freight" name="freightCost" value={inputs.freightCost} onChange={handleChange} prefix="$" tooltip="Cost to ship one unit from supplier to Amazon FBA warehouse." error={inputErrors.freightCost} />
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-              <InputField label="Customs duty" name="customsDuty" value={inputs.customsDuty} onChange={handleChange} suffix="%" tooltip="Import duty as a % of product cost. Varies by HS code and country." />
-              <InputField label="3PL / Prep" name="prepFees" value={inputs.prepFees} onChange={handleChange} prefix="$" tooltip="Per-unit prep/labeling cost (bubble wrap, poly bags, FNSKU stickers)." />
+              <InputField label="Customs duty" name="customsDuty" value={inputs.customsDuty} onChange={handleChange} suffix="%" tooltip="Import duty as a % of product cost. Varies by HS code and country." error={inputErrors.customsDuty} />
+              <InputField label="3PL / Prep" name="prepFees" value={inputs.prepFees} onChange={handleChange} prefix="$" tooltip="Per-unit prep/labeling cost (bubble wrap, poly bags, FNSKU stickers)." error={inputErrors.prepFees} />
             </div>
-            <InputField label="Safety buffer" name="safetyBuffer" value={inputs.safetyBuffer} onChange={handleChange} suffix="%" tooltip="Extra % added to COGS as buffer for damages, shrinkage, or hidden costs." />
+            <InputField label="Safety buffer" name="safetyBuffer" value={inputs.safetyBuffer} onChange={handleChange} suffix="%" tooltip="Extra % added to COGS as buffer for damages, shrinkage, or hidden costs." error={inputErrors.safetyBuffer} />
           </div>
 
           <div style={CARD}>
@@ -333,15 +342,16 @@ export default function App() {
                   suffix="%" highlight={C.cyan}
                   dimNote={!isUS ? `Charged on $${fmt(inputs.sellingPrice)} gross → $${fmt(s.referralActual)}` : undefined}
                   tooltip="Amazon's cut of your sale price, typically 8–15% depending on category."
+                  error={inputErrors.referralFee}
                 />
-                <InputField label="FBA fulfillment fee" name="fbaFee" value={inputs.fbaFee} onChange={handleChange} prefix="$" tooltip="Amazon's pick, pack, and ship fee. Depends on product size and weight." />
-                <InputField label="Monthly storage" name="storageFee" value={inputs.storageFee} onChange={handleChange} prefix="$" tooltip="Monthly FBA storage cost per unit. Spikes in Q4 (Oct–Dec)." />
+                <InputField label="FBA fulfillment fee" name="fbaFee" value={inputs.fbaFee} onChange={handleChange} prefix="$" tooltip="Amazon's pick, pack, and ship fee. Depends on product size and weight." error={inputErrors.fbaFee} />
+                <InputField label="Monthly storage" name="storageFee" value={inputs.storageFee} onChange={handleChange} prefix="$" tooltip="Monthly FBA storage cost per unit. Spikes in Q4 (Oct–Dec)." error={inputErrors.storageFee} />
               </>
             ) : (
               <>
-                <InputField label="Payment processing" name="paymentProcessing" value={inputs.paymentProcessing} onChange={handleChange} suffix="%" highlight={C.cyan} tooltip="Payment processor fee (Stripe, PayPal, etc.). Typically 2.9% + $0.30." />
-                <InputField label="Pick & pack" name="fulfillmentCost" value={inputs.fulfillmentCost} onChange={handleChange} prefix="$" tooltip="Your own warehouse pick-and-pack cost per unit (non-Amazon channels)." />
-                <InputField label="Shipping to customer" name="shippingToCustomer" value={inputs.shippingToCustomer} onChange={handleChange} prefix="$" tooltip="Last-mile shipping cost you pay per order on non-Amazon channels." />
+                <InputField label="Payment processing" name="paymentProcessing" value={inputs.paymentProcessing} onChange={handleChange} suffix="%" highlight={C.cyan} tooltip="Payment processor fee (Stripe, PayPal, etc.). Typically 2.9% + $0.30." error={inputErrors.paymentProcessing} />
+                <InputField label="Pick & pack" name="fulfillmentCost" value={inputs.fulfillmentCost} onChange={handleChange} prefix="$" tooltip="Your own warehouse pick-and-pack cost per unit (non-Amazon channels)." error={inputErrors.fulfillmentCost} />
+                <InputField label="Shipping to customer" name="shippingToCustomer" value={inputs.shippingToCustomer} onChange={handleChange} prefix="$" tooltip="Last-mile shipping cost you pay per order on non-Amazon channels." error={inputErrors.shippingToCustomer} />
               </>
             )}
           </div>
@@ -350,8 +360,8 @@ export default function App() {
             <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: C.orange }}>
               <TrendingUp size={14} />Marketing & Scale
             </div>
-            <InputField label="TACOS (ad spend / revenue)" name="adSpendShare" value={inputs.adSpendShare} onChange={handleChange} suffix="%" highlight={C.orange} tooltip="Total ad spend as % of revenue (TACOS). Includes PPC and external ads." />
-            <InputField label="Monthly units target" name="monthlyUnits" value={inputs.monthlyUnits} onChange={handleChange} tooltip="Estimated units sold per month. Used to calculate total monthly profit." />
+            <InputField label="TACOS (ad spend / revenue)" name="adSpendShare" value={inputs.adSpendShare} onChange={handleChange} suffix="%" highlight={C.orange} tooltip="Total ad spend as % of revenue (TACOS). Includes PPC and external ads." error={inputErrors.adSpendShare} />
+            <InputField label="Monthly units target" name="monthlyUnits" value={inputs.monthlyUnits} onChange={handleChange} tooltip="Estimated units sold per month. Used to calculate total monthly profit." error={inputErrors.monthlyUnits} />
             <div style={{ marginTop: 4, padding: "10px 12px", background: C.s95, borderRadius: 10, border: `1px solid ${C.s8}` }}>
               <div style={{ fontSize: 10, color: C.s5, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.08em" }}>Monthly GMV</div>
               <div style={{ fontSize: 18, fontWeight: 700, color: C.amber, ...MONO }}>
