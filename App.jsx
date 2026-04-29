@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import {
   TrendingUp, AlertTriangle, DollarSign, Package, BarChart3,
@@ -139,9 +139,21 @@ const DEFAULTS = {
 export default function App() {
   const [channelMode, setChannelMode] = useState("amazon"); // amazon | dtc
   const [marketMode, setMarketMode] = useState("intl");    // us | intl
-  const [inputs, setInputs] = useState(DEFAULTS);
+  const [inputs, setInputs] = useState(() => {
+    try {
+      const saved = localStorage.getItem("amazon-calc-inputs");
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return DEFAULTS;
+  });
   const [activeTab, setActiveTab] = useState("breakdown");
   const [inputErrors, setInputErrors] = useState({});
+
+  useEffect(() => {
+    try {
+      localStorage.setItem("amazon-calc-inputs", JSON.stringify(inputs));
+    } catch {}
+  }, [inputs]);
 
   const handleChange = useCallback(e => {
     const { name, value } = e.target;
