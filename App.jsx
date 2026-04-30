@@ -200,6 +200,8 @@ export default function App() {
   const [inputErrors, setInputErrors] = useState({});
   const [toast, setToast] = useState(null);
   const [orderQty, setOrderQty] = useState(500);
+  const [targetMargin, setTargetMargin] = useState(20);
+  const [solveFor, setSolveFor] = useState("price"); // "price" | "cogs"
 
   const handleShare = useCallback(() => {
     try {
@@ -684,6 +686,164 @@ export default function App() {
               </div>
             </div>
           )}
+
+          {/* ── TAB: PRICING ── */}
+          {activeTab === "pricing" && (
+  <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+    <div style={CARD}>
+      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 20 }}>Reverse calculator — solve for target margin</div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-end", marginBottom: 24 }}>
+        <div>
+          <label style={LABEL}>Target margin (%)</label>
+          <input
+            type="number" value={targetMargin} min={1} max={99}
+            onChange={e => setTargetMargin(Math.min(99, Math.max(1, parseFloat(e.target.value) || 20)))}
+            style={{
+              width: 100, background: C.s95, border: `1px solid ${C.emerald}`, borderRadius: 8,
+              padding: "8px 12px", fontSize: 13, color: "#e2e8f0", outline: "none",
+              fontFamily: "ui-monospace, monospace",
+            }}
+          />
+        </div>
+        <div style={{ display: "flex", gap: 6, background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 10, padding: 4 }}>
+          {[["price", "Find min price"], ["cogs", "Find max COGS"]].map(([val, label]) => (
+            <button key={val} onClick={() => setSolveFor(val)} style={{
+              padding: "7px 14px", borderRadius: 7, fontSize: 12, fontWeight: 600,
+              cursor: "pointer", border: "none",
+              background: solveFor === val ? C.emerald : "transparent",
+              color: solveFor === val ? "#fff" : C.s4,
+            }}>{label}</button>
+          ))}
+        </div>
+      </div>
+
+      {(() => {
+        const M = targetMargin / 100;
+        const R = (Number(inputs.referralFee) || 0) / 100;
+        const T = (Number(inputs.adSpendShare) || 0) / 100;
+        const F = (Number(inputs.fbaFee) || 0) + (Number(inputs.storageFee) || 0);
+        const vatFactor = isUS ? 1 : 1 / (1 + (Number(inputs.vatRate) || 0) / 100);
+        const COGS = s.totalCOGS;
+        const P = Number(inputs.sellingPrice) || 0;
+        const denominator = vatFactor - R - T - M;
+        let solvedPrice = null, solvedCOGS = null, feasible = true;
+
+        if (solveFor === "price") {
+          if (denominator <= 0) feasible = false;
+          else solvedPrice = (F + COGS) / denominator;
+        } else {
+          solvedCOGS = P * denominator - F;
+          if (solvedCOGS < 0) feasible = false;
+        }
+
+        const currentGap = solveFor === "price"
+          ? (solvedPrice != null ? P - solvedPrice : null)
+          : (solvedCOGS != null ? solvedCOGS - COGS : null);
+
+        return feasible ? (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+            {solveFor === "price" ? (
+              <>
+                <div style={{ background: C.s95, borderRadius: 12, padding: "16px 20px", flex: 1, minWidth: 160 }}>
+                  <div style={LABEL}>Required selling price</div>
+                  <div style={{ fontSize: 28, fontWeight: 700, color: C.emerald, ...MONO }}>${fmt(solvedPrice)}</div>
+                  <div style={{ fontSize: 11, color: C.s5, marginTop: 4 }}>to achieve {targetMargin}% margin</div>
+                </div>
+                <div style={{ background: C.s95, borderRadius: 12, padding: "16px 20px", flex: 1, minWidth: 160 }}>
+                  <div style={LABEL}>vs. current price</div>
+                  <div style={{ fontSize: 28, fontWeight: 700, color: currentGap != null && currentGap >= 0 ? C.emerald : C.rose, ...MONO }}>
+                    {currentGap != null ? `${currentGap >= 0 ? "+" : ""}$${fmt(Math.abs(currentGap))}` : "—"}
+                  </div>
+                  <div style={{ fontSize: 11, color: C.s5, marginTop: 4 }}>
+                    {currentGap != null && currentGap >= 0 ? "current price exceeds target ✓" : "need to raise price"}
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div style={{ background: C.s95, borderRadius: 12, padding: "16px 20px", flex: 1, minWidth: 160 }}>
+                  <div style={LABEL}>Max allowable COGS</div>
+                  <div style={{ fontSize: 28, fontWeight: 700, color: C.emerald, ...MONO }}>${fmt(solvedCOGS)}</div>
+                  <div style={{ fontSize: 11, color: C.s5, marginTop: 4 }}>to achieve {targetMargin}% margin</div>
+                </div>
+                <div style={{ background: C.s95, borderRadius: 12, padding: "16px 20px", flex: 1, minWidth: 160 }}>
+                  <div style={LABEL}>vs. current COGS</div>
+                  <div style={{ fontSize: 28, fontWeight: 700, color: currentGap != null && currentGap >= 0 ? C.emerald : C.rose, ...MONO }}>
+                    {currentGap != null ? `${currentGap >= 0 ? "+" : "-"}$${fmt(Math.abs(currentGap))}` : "—"}
+                  </div>
+                  <div style={{ fontSize: 11, color: C.s5, marginTop: 4 }}>
+                    {currentGap != null && currentGap >= 0 ? "room to negotiate up ✓" : "must reduce COGS"}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        ) : (
+          <div style={{ padding: "16px 20px", background: "#f43f5e10", border: `1px solid #f43f5e30`, borderRadius: 10, color: C.rose, fontSize: 13 }}>
+            {targetMargin}% margin not achievable with current fee structure. Fees + ads alone consume {fmt((R + T) * 100, 1)}% of revenue.
+          </div>
+        );
+      })()}
+    </div>
+
+    {/* Price sensitivity table */}
+    <div style={CARD}>
+      <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 16 }}>Price sensitivity</div>
+      <div style={{ overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+          <thead>
+            <tr style={{ borderBottom: `1px solid ${C.s8}` }}>
+              {["Price", "Net profit/unit", "Margin %", "Monthly profit", "ROI"].map(h => (
+                <th key={h} style={{ padding: "6px 10px", textAlign: "right", color: C.s5, fontWeight: 600, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {[-10, -5, -2, -1, 0, 1, 2, 5, 10].map(delta => {
+              const P = (Number(inputs.sellingPrice) || 0) + delta;
+              if (P <= 0) return null;
+              const R = (Number(inputs.referralFee) || 0) / 100;
+              const T = (Number(inputs.adSpendShare) || 0) / 100;
+              const F = (Number(inputs.fbaFee) || 0) + (Number(inputs.storageFee) || 0);
+              const vatFactor = isUS ? 1 : 1 / (1 + (Number(inputs.vatRate) || 0) / 100);
+              const netRev = P * vatFactor;
+              const fees = P * R + F;
+              const adSpend = P * T;
+              const profit = netRev - s.totalCOGS - fees - adSpend;
+              const margin = (profit / P) * 100;
+              const roi = (profit / s.totalCOGS) * 100;
+              const monthlyProfit = profit * s.monthlyUnits;
+              const isCurrent = delta === 0;
+              return (
+                <tr key={delta} style={{
+                  borderBottom: `1px solid ${C.s8}`,
+                  background: isCurrent ? `${C.emerald}10` : "transparent",
+                }}>
+                  <td style={{ padding: "8px 10px", textAlign: "right", fontWeight: isCurrent ? 700 : 400, color: isCurrent ? C.emerald : "#e2e8f0", ...MONO }}>
+                    ${fmt(P)} {isCurrent && <span style={{ fontSize: 9, color: C.s5 }}>current</span>}
+                  </td>
+                  <td style={{ padding: "8px 10px", textAlign: "right", color: profit >= 0 ? C.emerald : C.rose, ...MONO, fontWeight: 600 }}>
+                    {profit >= 0 ? `$${fmt(profit)}` : `-$${fmt(Math.abs(profit))}`}
+                  </td>
+                  <td style={{ padding: "8px 10px", textAlign: "right", color: margin > 20 ? C.emerald : margin > 10 ? C.amber : C.rose, ...MONO }}>
+                    {fmt(margin, 1)}%
+                  </td>
+                  <td style={{ padding: "8px 10px", textAlign: "right", color: monthlyProfit >= 0 ? "#e2e8f0" : C.rose, ...MONO }}>
+                    {monthlyProfit >= 0 ? `$${fmtK(monthlyProfit)}` : `-$${fmtK(Math.abs(monthlyProfit))}`}
+                  </td>
+                  <td style={{ padding: "8px 10px", textAlign: "right", color: roi > 50 ? C.emerald : roi > 20 ? C.amber : C.rose, ...MONO }}>
+                    {fmt(roi, 0)}%
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+)}
 
           {/* ── TAB: INSIGHTS ── */}
           {activeTab === "insights" && (
