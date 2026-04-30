@@ -19,7 +19,7 @@ const fmtK = n => { const v = Number(n); return isFinite(v) ? (Math.abs(v) >= 10
 
 const LABEL = { fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: C.s4, marginBottom: 4, display: "block" };
 const ROW = { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: `1px solid ${C.s8}` };
-const CARD = { background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 16, padding: "20px 24px", boxShadow: "0 4px 24px #00000040" };
+const CARD = { background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 16, padding: "16px 18px", boxShadow: "0 4px 24px #00000040" };
 const MONO = { fontFamily: "ui-monospace, monospace" };
 
 function InputField({ label, name, value, onChange, prefix, suffix, highlight, disabled, dimNote, tooltip, error }) {
@@ -139,7 +139,7 @@ function WaterfallBar({ label, value, total, color, isTotal, note }) {
   return (
     <div style={{ marginBottom: 6 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-        <span style={{ fontSize: 11, color: C.s4, width: 150, flexShrink: 0, textAlign: "right" }}>{label}</span>
+        <span style={{ fontSize: 11, color: C.s4, width: 120, flexShrink: 0, textAlign: "right" }}>{label}</span>
         <div style={{ flex: 1, height: isTotal ? 8 : 6, background: C.s8, borderRadius: 99, overflow: "hidden" }}>
           <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: 99 }} />
         </div>
@@ -150,7 +150,7 @@ function WaterfallBar({ label, value, total, color, isTotal, note }) {
           {isFinite(pctOfPrice) ? `${pctOfPrice >= 0 ? "+" : ""}${fmt(pctOfPrice, 1)}%` : "—"}
         </span>
       </div>
-      {note && <p style={{ fontSize: 10, color: C.cyan, margin: "2px 0 0 160px", fontStyle: "italic" }}>{note}</p>}
+      {note && <p style={{ fontSize: 10, color: C.cyan, margin: "2px 0 0 130px", fontStyle: "italic" }}>{note}</p>}
     </div>
   );
 }
@@ -330,12 +330,12 @@ export default function App() {
 
   return (
     <>
-    <div style={{ background: C.s95, minHeight: "100vh", padding: "24px 16px", fontFamily: "ui-sans-serif, system-ui, sans-serif", color: "#e2e8f0" }}>
+    <div style={{ background: C.s95, minHeight: "100vh", padding: "16px 12px", fontFamily: "ui-sans-serif, system-ui, sans-serif", color: "#e2e8f0" }}>
       <h2 className="sr-only">Omni-Channel Profit Engine — global unit economics calculator</h2>
 
       {/* Header */}
       <div style={{ maxWidth: 1100, margin: "0 auto 20px" }}>
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: 14 }}>
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: 14, rowGap: 12 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
               <div style={{ width: 32, height: 32, background: "#10b98120", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -392,7 +392,7 @@ export default function App() {
       <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", flexWrap: "wrap", gap: 20, alignItems: "flex-start" }}>
 
         {/* ── SIDEBAR ── */}
-        <div style={{ flex: "0 0 290px", minWidth: 260, display: "flex", flexDirection: "column", gap: 16 }}>
+        <div style={{ flex: "1 1 260px", maxWidth: 320, minWidth: 260, display: "flex", flexDirection: "column", gap: 16 }}>
 
           <div style={{ padding: "10px 14px", background: "#10b98112", border: "1px solid #10b98130", borderRadius: 10, fontSize: 11, color: "#6ee7b7", lineHeight: 1.5, display: "flex", gap: 8 }}>
             <span style={{ fontSize: 14 }}>👋</span>
@@ -476,7 +476,7 @@ export default function App() {
           {/* KPI row + pie chart */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-start" }}>
             <div style={{ flex: 2, minWidth: 280 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 12 }}>
                 <StatCard label="Monthly profit" value={`$${fmtK(s.totalMonthlyProfit)}`} signed big />
                 <StatCard label="Profit per unit" value={`$${fmt(s.netProfitPerUnit)}`} signed />
                 <StatCard label="Profit % of price" value={`${fmt(s.netMargin, 1)}%`} signed />
@@ -509,7 +509,7 @@ export default function App() {
                 </span>
               </div>
               <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
-                <span style={{ width: 150, flexShrink: 0 }} />
+                <span style={{ width: 120, flexShrink: 0 }} />
                 <span style={{ flex: 1 }} />
                 <span style={{ fontSize: 9, color: C.s6, textTransform: "uppercase", letterSpacing: "0.08em", width: 58, textAlign: "right" }}>$/unit</span>
                 <span style={{ fontSize: 9, color: C.s6, textTransform: "uppercase", letterSpacing: "0.08em", width: 42, textAlign: "right" }}>% of price</span>
