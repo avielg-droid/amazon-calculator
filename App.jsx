@@ -418,13 +418,13 @@ export default function App() {
             />
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <InputField label="Unit cost" name="unitCost" value={inputs.unitCost} onChange={handleChange} prefix="$" tooltip="Your manufacturing or wholesale cost per unit (ex-factory)." error={inputErrors.unitCost} />
-              <InputField label="Freight" name="freightCost" value={inputs.freightCost} onChange={handleChange} prefix="$" tooltip="Cost to ship one unit from supplier to Amazon FBA warehouse." error={inputErrors.freightCost} />
+              <InputField label="Freight to Amazon" name="freightCost" value={inputs.freightCost} onChange={handleChange} prefix="$" tooltip="Cost to ship one unit from supplier to Amazon FBA warehouse." error={inputErrors.freightCost} />
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
               <InputField label="Customs duty" name="customsDuty" value={inputs.customsDuty} onChange={handleChange} suffix="%" tooltip="Import duty as a % of product cost. Varies by HS code and country." error={inputErrors.customsDuty} />
-              <InputField label="3PL / Prep" name="prepFees" value={inputs.prepFees} onChange={handleChange} prefix="$" tooltip="Per-unit prep/labeling cost (bubble wrap, poly bags, FNSKU stickers)." error={inputErrors.prepFees} />
+              <InputField label="Prep & Labeling" name="prepFees" value={inputs.prepFees} onChange={handleChange} prefix="$" tooltip="Per-unit prep/labeling cost (bubble wrap, poly bags, FNSKU stickers)." error={inputErrors.prepFees} />
             </div>
-            <InputField label="Safety buffer" name="safetyBuffer" value={inputs.safetyBuffer} onChange={handleChange} suffix="%" tooltip="Extra % added to COGS as buffer for damages, shrinkage, or hidden costs." error={inputErrors.safetyBuffer} />
+            <InputField label="Cost Buffer %" name="safetyBuffer" value={inputs.safetyBuffer} onChange={handleChange} suffix="%" tooltip="Extra % added to COGS as buffer for damages, shrinkage, or hidden costs." error={inputErrors.safetyBuffer} />
           </div>
 
           <div style={CARD}>
@@ -459,7 +459,7 @@ export default function App() {
               <span style={{ background: C.orange, color: "#000", borderRadius: 4, fontSize: 9, fontWeight: 800, padding: "1px 5px" }}>3</span>
               <TrendingUp size={14} />Marketing & Scale
             </div>
-            <InputField label="TACOS (ad spend / revenue)" name="adSpendShare" value={inputs.adSpendShare} onChange={handleChange} suffix="%" highlight={C.orange} tooltip="Total ad spend as % of revenue (TACOS). Includes PPC and external ads." error={inputErrors.adSpendShare} />
+            <InputField label="Ad Spend % of Sales (TACOS)" name="adSpendShare" value={inputs.adSpendShare} onChange={handleChange} suffix="%" highlight={C.orange} tooltip="Total ad spend as % of revenue (TACOS). Includes PPC and external ads." error={inputErrors.adSpendShare} />
             <InputField label="Monthly units target" name="monthlyUnits" value={inputs.monthlyUnits} onChange={handleChange} tooltip="Estimated units sold per month. Used to calculate total monthly profit." error={inputErrors.monthlyUnits} />
             <div style={{ marginTop: 4, padding: "10px 12px", background: C.s95, borderRadius: 10, border: `1px solid ${C.s8}` }}>
               <div style={{ fontSize: 10, color: C.s5, marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.08em" }}>Monthly GMV</div>
