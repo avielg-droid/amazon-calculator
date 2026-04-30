@@ -485,10 +485,14 @@ export default function App() {
 
           {/* Tab bar */}
           <div style={{ display: "flex", gap: 6, background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 12, padding: 4, width: "fit-content" }}>
-            {["breakdown", "efficiency", "cashflow", "pricing", "insights"].map(t => (
-              <button key={t} style={tabBtn(t)} onClick={() => setActiveTab(t)}>
-                {t.charAt(0).toUpperCase() + t.slice(1)}
-              </button>
+            {[
+              ["breakdown", "P&L Waterfall"],
+              ["efficiency", "Ad & Margin Health"],
+              ["cashflow", "Cash Flow"],
+              ["pricing", "Pricing Tools"],
+              ["insights", "Insights"],
+            ].map(([t, label]) => (
+              <button key={t} style={tabBtn(t)} onClick={() => setActiveTab(t)}>{label}</button>
             ))}
           </div>
 
