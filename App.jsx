@@ -114,8 +114,8 @@ function CostChart({ s }) {
       </ResponsiveContainer>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", marginTop: 8 }}>
         {data.map((d, i) => (
-          <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, fontSize: 11, color: C.s4 }}>
-            <div style={{ width: 8, height: 8, borderRadius: 2, background: d.color }} />
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.s4 }}>
+            <div style={{ width: 10, height: 10, borderRadius: 3, background: d.color, flexShrink: 0 }} />
             {d.name}
           </div>
         ))}
@@ -477,10 +477,10 @@ export default function App() {
           <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-start" }}>
             <div style={{ flex: 2, minWidth: 280 }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
+                <StatCard label="Monthly profit" value={`$${fmtK(s.totalMonthlyProfit)}`} signed big />
                 <StatCard label="Profit per unit" value={`$${fmt(s.netProfitPerUnit)}`} signed />
                 <StatCard label="Profit % of price" value={`${fmt(s.netMargin, 1)}%`} signed />
                 <StatCard label="ROI on COGS" value={`${fmt(s.roi, 0)}%`} signed />
-                <StatCard label="Monthly profit" value={`$${fmtK(s.totalMonthlyProfit)}`} color={C.emerald} big />
               </div>
             </div>
             <CostChart s={s} />
