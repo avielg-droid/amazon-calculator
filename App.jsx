@@ -134,7 +134,8 @@ function ProgressBar({ value, max = 100, color }) {
 }
 
 function WaterfallBar({ label, value, total, color, isTotal, note }) {
-  const pct = Math.abs(value / total) * 100;
+  const pct = total ? Math.abs(value / total) * 100 : 0;
+  const pctOfPrice = total ? (value / total) * 100 : 0;
   return (
     <div style={{ marginBottom: 6 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -144,6 +145,9 @@ function WaterfallBar({ label, value, total, color, isTotal, note }) {
         </div>
         <span style={{ fontSize: 11, fontWeight: 600, color, ...MONO, width: 58, textAlign: "right" }}>
           {value >= 0 ? `$${fmt(value)}` : `-$${fmt(Math.abs(value))}`}
+        </span>
+        <span style={{ fontSize: 10, color: C.s5, ...MONO, width: 42, textAlign: "right", flexShrink: 0 }}>
+          {isFinite(pctOfPrice) ? `${pctOfPrice >= 0 ? "+" : ""}${fmt(pctOfPrice, 1)}%` : "—"}
         </span>
       </div>
       {note && <p style={{ fontSize: 10, color: C.cyan, margin: "2px 0 0 160px", fontStyle: "italic" }}>{note}</p>}
