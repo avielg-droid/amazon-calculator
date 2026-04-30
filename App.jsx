@@ -394,6 +394,11 @@ export default function App() {
         {/* ── SIDEBAR ── */}
         <div style={{ flex: "0 0 290px", minWidth: 260, display: "flex", flexDirection: "column", gap: 16 }}>
 
+          <div style={{ padding: "10px 14px", background: "#10b98112", border: "1px solid #10b98130", borderRadius: 10, fontSize: 11, color: "#6ee7b7", lineHeight: 1.5, display: "flex", gap: 8 }}>
+            <span style={{ fontSize: 14 }}>👋</span>
+            <span>These are <strong>example values</strong>. Replace them with your product's numbers to see your real profit.</span>
+          </div>
+
           <div style={CARD}>
             <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: C.emerald }}>
               <Package size={14} />Core Product & Tax
