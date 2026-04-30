@@ -307,8 +307,8 @@ export default function App() {
   }, [s, isUS, channelMode, inputs.referralFee]);
 
   const tabBtn = t => ({
-    padding: "7px 16px", borderRadius: 8, fontSize: 12, fontWeight: 600,
-    cursor: "pointer", border: "none", transition: "all 0.2s",
+    padding: "7px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600,
+    cursor: "pointer", border: "none", transition: "all 0.2s", whiteSpace: "nowrap",
     background: activeTab === t ? C.emerald : "transparent",
     color: activeTab === t ? "#fff" : C.s4,
   });
@@ -342,7 +342,7 @@ export default function App() {
                 <BarChart3 size={16} color={C.emerald} />
               </div>
               <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, background: "linear-gradient(90deg, #10b981, #06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                Amazon FBA Profit Calculator
+                {channelMode === "amazon" ? "Amazon FBA Profit Calculator" : "DTC / Shopify Profit Calculator"}
               </h1>
             </div>
             <p style={{ fontSize: 12, color: C.s5, margin: 0 }}>Unit economics & multi-channel margin simulator</p>
@@ -487,7 +487,7 @@ export default function App() {
           </div>
 
           {/* Tab bar */}
-          <div style={{ display: "flex", gap: 6, background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 12, padding: 4, width: "fit-content" }}>
+          <div style={{ display: "flex", gap: 6, background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 12, padding: 4, overflowX: "auto", WebkitOverflowScrolling: "touch", maxWidth: "100%" }}>
             {[
               ["breakdown", "P&L Waterfall"],
               ["efficiency", "Ad & Margin Health"],
