@@ -199,6 +199,7 @@ export default function App() {
   const [activeTab, setActiveTab] = useState("breakdown");
   const [inputErrors, setInputErrors] = useState({});
   const [toast, setToast] = useState(null);
+  const [orderQty, setOrderQty] = useState(500);
 
   const handleShare = useCallback(() => {
     try {
@@ -477,7 +478,7 @@ export default function App() {
 
           {/* Tab bar */}
           <div style={{ display: "flex", gap: 6, background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 12, padding: 4, width: "fit-content" }}>
-            {["breakdown", "efficiency", "insights"].map(t => (
+            {["breakdown", "efficiency", "cashflow", "pricing", "insights"].map(t => (
               <button key={t} style={tabBtn(t)} onClick={() => setActiveTab(t)}>
                 {t.charAt(0).toUpperCase() + t.slice(1)}
               </button>
@@ -605,6 +606,81 @@ export default function App() {
                     </div>
                   ))}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── TAB: CASH FLOW ── */}
+          {activeTab === "cashflow" && (
+            <div style={CARD}>
+              <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 20 }}>Inventory cash flow &amp; payback</div>
+
+              {/* Order qty input */}
+              <div style={{ marginBottom: 20 }}>
+                <label style={LABEL}>Order quantity (units)</label>
+                <input
+                  type="number"
+                  value={orderQty}
+                  min={1}
+                  onChange={e => setOrderQty(Math.max(1, parseInt(e.target.value) || 1))}
+                  style={{
+                    width: 160, background: C.s95, border: `1px solid ${C.s7}`, borderRadius: 8,
+                    padding: "8px 12px", fontSize: 13, color: "#e2e8f0", outline: "none",
+                    fontFamily: "ui-monospace, monospace",
+                  }}
+                />
+              </div>
+
+              {(() => {
+                const capitalAtRisk = orderQty * s.totalCOGS;
+                const monthlyProfit = s.netProfitPerUnit * s.monthlyUnits;
+                const paybackMonths = monthlyProfit > 0 ? capitalAtRisk / monthlyProfit : null;
+                const depletionDays = s.monthlyUnits > 0 ? (orderQty / s.monthlyUnits) * 30 : null;
+                const depletionDate = depletionDays
+                  ? new Date(Date.now() + depletionDays * 86400000).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+                  : "—";
+                const unitsToBreakEven = s.netProfitPerUnit > 0 ? Math.ceil(capitalAtRisk / s.netProfitPerUnit) : null;
+
+                return (
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+                    {[
+                      {
+                        label: "Capital at risk",
+                        value: `$${fmtK(capitalAtRisk)}`,
+                        sub: `${orderQty} units × $${fmt(s.totalCOGS)} COGS`,
+                        color: C.rose,
+                      },
+                      {
+                        label: "Payback period",
+                        value: paybackMonths != null ? `${fmt(paybackMonths, 1)} mo` : "Never",
+                        sub: paybackMonths != null ? `at $${fmtK(monthlyProfit)}/mo profit` : "Unprofitable",
+                        color: paybackMonths != null && paybackMonths <= 3 ? C.emerald : paybackMonths != null && paybackMonths <= 6 ? C.amber : C.rose,
+                      },
+                      {
+                        label: "Units to recoup",
+                        value: unitsToBreakEven != null ? fmtK(unitsToBreakEven) : "∞",
+                        sub: "units to recover COGS investment",
+                        color: C.cyan,
+                      },
+                      {
+                        label: "Stockout date",
+                        value: depletionDate,
+                        sub: depletionDays != null ? `${fmt(depletionDays, 0)} days of inventory` : "—",
+                        color: C.amber,
+                      },
+                    ].map(({ label, value, sub, color }) => (
+                      <div key={label} style={{ background: C.s95, borderRadius: 12, padding: "16px 18px" }}>
+                        <div style={LABEL}>{label}</div>
+                        <div style={{ fontSize: 22, fontWeight: 700, color, ...MONO, marginBottom: 4 }}>{value}</div>
+                        <div style={{ fontSize: 10, color: C.s5 }}>{sub}</div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
+              <div style={{ marginTop: 20, padding: "12px 16px", background: C.s95, borderRadius: 10, border: `1px solid ${C.s8}`, fontSize: 12, color: C.s4, lineHeight: 1.6 }}>
+                <strong style={{ color: "#e2e8f0" }}>Rule of thumb:</strong> Payback under 3 months = aggressive scaling candidate. 3–6 months = healthy. Over 6 months = cash flow risk, consider smaller orders.
               </div>
             </div>
           )}
