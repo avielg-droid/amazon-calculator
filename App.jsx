@@ -183,7 +183,7 @@ const DEFAULTS = {
 
 export default function App() {
   const [channelMode, setChannelMode] = useState("amazon"); // amazon | dtc
-  const [marketMode, setMarketMode] = useState("intl");    // us | intl
+  const [marketMode, setMarketMode] = useState("us");    // us | intl
   const [inputs, setInputs] = useState(() => {
     try {
       const params = new URLSearchParams(window.location.search);
@@ -467,7 +467,7 @@ export default function App() {
             <div style={{ flex: 2, minWidth: 280 }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
                 <StatCard label="Net profit / unit" value={`$${fmt(s.netProfitPerUnit)}`} signed />
-                <StatCard label="Net margin" value={`${fmt(s.netMargin, 1)}%`} color={s.netMargin > 20 ? C.emerald : s.netMargin > 10 ? C.amber : C.rose} />
+                <StatCard label="Margin on price" value={`${fmt(s.netMargin, 1)}%`} signed />
                 <StatCard label="ROI on COGS" value={`${fmt(s.roi, 0)}%`} signed />
                 <StatCard label="Monthly profit" value={`$${fmtK(s.totalMonthlyProfit)}`} color={C.emerald} big />
               </div>
@@ -487,11 +487,17 @@ export default function App() {
           {/* ── TAB: BREAKDOWN ── */}
           {activeTab === "breakdown" && (
             <div style={CARD}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
                 <span style={{ fontSize: 13, fontWeight: 600 }}>Unit P&L waterfall</span>
                 <span style={{ fontSize: 11, color: C.s5, display: "flex", alignItems: "center", gap: 4 }}>
                   <Info size={12} />{isUS ? "US: pre-tax analysis" : "Intl: post-VAT analysis"}
                 </span>
+              </div>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 8 }}>
+                <span style={{ width: 150, flexShrink: 0 }} />
+                <span style={{ flex: 1 }} />
+                <span style={{ fontSize: 9, color: C.s6, textTransform: "uppercase", letterSpacing: "0.08em", width: 58, textAlign: "right" }}>$/unit</span>
+                <span style={{ fontSize: 9, color: C.s6, textTransform: "uppercase", letterSpacing: "0.08em", width: 42, textAlign: "right" }}>% of price</span>
               </div>
 
               <WaterfallBar label="Gross selling price" value={s.sellingPrice} total={s.sellingPrice} color={C.cyan} />
