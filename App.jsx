@@ -401,7 +401,8 @@ export default function App() {
 
           <div style={CARD}>
             <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: C.emerald }}>
-              <Package size={14} />Core Product & Tax
+              <span style={{ background: C.emerald, color: "#000", borderRadius: 4, fontSize: 9, fontWeight: 800, padding: "1px 5px" }}>1</span>
+              <Package size={14} />Product & Tax
             </div>
             <InputField label="Selling price (gross incl. VAT)" name="sellingPrice" value={inputs.sellingPrice} onChange={handleChange} prefix="$" highlight={C.emerald} tooltip="The price customers pay on Amazon. For EU, include VAT." error={inputErrors.sellingPrice} />
             <InputField
@@ -428,6 +429,7 @@ export default function App() {
 
           <div style={CARD}>
             <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: C.cyan }}>
+              <span style={{ background: C.cyan, color: "#000", borderRadius: 4, fontSize: 9, fontWeight: 800, padding: "1px 5px" }}>2</span>
               {channelMode === "amazon" ? <><BarChart3 size={14} />Amazon Fees</> : <><ShieldCheck size={14} />DTC Logistics</>}
             </div>
             {channelMode === "amazon" ? (
@@ -454,6 +456,7 @@ export default function App() {
 
           <div style={CARD}>
             <div style={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", display: "flex", alignItems: "center", gap: 8, marginBottom: 16, color: C.orange }}>
+              <span style={{ background: C.orange, color: "#000", borderRadius: 4, fontSize: 9, fontWeight: 800, padding: "1px 5px" }}>3</span>
               <TrendingUp size={14} />Marketing & Scale
             </div>
             <InputField label="TACOS (ad spend / revenue)" name="adSpendShare" value={inputs.adSpendShare} onChange={handleChange} suffix="%" highlight={C.orange} tooltip="Total ad spend as % of revenue (TACOS). Includes PPC and external ads." error={inputErrors.adSpendShare} />
