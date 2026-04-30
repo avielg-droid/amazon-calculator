@@ -71,10 +71,16 @@ function InputField({ label, name, value, onChange, prefix, suffix, highlight, d
   );
 }
 
-function StatCard({ label, value, color, signed, big }) {
-  const resolvedColor = signed
-    ? (parseFloat(value) >= 0 ? C.emerald : C.rose)
-    : (color || C.s4);
+function StatCard({ label, value, numericValue, thresholds, color, big }) {
+  let resolvedColor = color || C.s4;
+  if (numericValue !== undefined) {
+    if (thresholds) {
+      const [lo, hi] = thresholds;
+      resolvedColor = numericValue >= hi ? C.emerald : numericValue >= lo ? C.amber : C.rose;
+    } else {
+      resolvedColor = numericValue >= 0 ? C.emerald : C.rose;
+    }
+  }
   return (
     <div style={{
       background: big ? `${resolvedColor}10` : C.s9,
@@ -477,10 +483,10 @@ export default function App() {
           <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-start" }}>
             <div style={{ flex: 2, minWidth: 280 }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 12 }}>
-                <StatCard label="Monthly profit" value={`$${fmtK(s.totalMonthlyProfit)}`} signed big />
-                <StatCard label="Profit per unit" value={`$${fmt(s.netProfitPerUnit)}`} signed />
-                <StatCard label="Profit % of price" value={`${fmt(s.netMargin, 1)}%`} signed />
-                <StatCard label="ROI on COGS" value={`${fmt(s.roi, 0)}%`} signed />
+                <StatCard label="Monthly profit" value={`$${fmtK(s.totalMonthlyProfit)}`} numericValue={s.totalMonthlyProfit} big />
+                <StatCard label="Profit per unit" value={`$${fmt(s.netProfitPerUnit)}`} numericValue={s.netProfitPerUnit} thresholds={[1, 3]} />
+                <StatCard label="Profit % of price" value={`${fmt(s.netMargin, 1)}%`} numericValue={s.netMargin} thresholds={[10, 20]} />
+                <StatCard label="ROI on COGS" value={`${fmt(s.roi, 0)}%`} numericValue={s.roi} thresholds={[40, 80]} />
               </div>
             </div>
             <CostChart s={s} />
