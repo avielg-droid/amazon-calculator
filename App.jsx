@@ -14,8 +14,8 @@ const C = {
   s7: "#334155", s8: "#1e293b", s9: "#0f172a", s95: "#020617",
 };
 
-const fmt = (n, d = 2) => isFinite(n) ? n.toFixed(d) : "—";
-const fmtK = n => isFinite(n) ? (Math.abs(n) >= 1000 ? `${(n / 1000).toFixed(1)}k` : Math.round(n).toString()) : "—";
+const fmt = (n, d = 2) => { const v = Number(n); return isFinite(v) ? v.toFixed(d) : "—"; };
+const fmtK = n => { const v = Number(n); return isFinite(v) ? (Math.abs(v) >= 1000 ? `${(v / 1000).toFixed(1)}k` : Math.round(v).toString()) : "—"; };
 
 const LABEL = { fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: C.s5, marginBottom: 4, display: "block" };
 const ROW = { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: `1px solid ${C.s8}` };
