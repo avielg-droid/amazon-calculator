@@ -82,7 +82,7 @@ function StatCard({ label, value, color, signed, big }) {
       borderRadius: 14, padding: big ? "18px 20px" : "14px 16px",
     }}>
       <span style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", color: C.s5, display: "block", marginBottom: 4 }}>{label}</span>
-      <span style={{ fontSize: big ? 26 : 20, fontWeight: 700, color: resolvedColor, ...MONO, lineHeight: 1.1 }}>{value}</span>
+      <span style={{ fontSize: big ? "clamp(18px, 4vw, 26px)" : "clamp(16px, 3.5vw, 20px)", fontWeight: 700, color: resolvedColor, ...MONO, lineHeight: 1.1, wordBreak: "break-all" }}>{value}</span>
     </div>
   );
 }
