@@ -477,7 +477,7 @@ export default function App() {
           <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-start" }}>
             <div style={{ flex: 2, minWidth: 280 }}>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 12 }}>
-                <StatCard label="Net profit / unit" value={`$${fmt(s.netProfitPerUnit)}`} signed />
+                <StatCard label="Profit per unit" value={`$${fmt(s.netProfitPerUnit)}`} signed />
                 <StatCard label="Profit % of price" value={`${fmt(s.netMargin, 1)}%`} signed />
                 <StatCard label="ROI on COGS" value={`${fmt(s.roi, 0)}%`} signed />
                 <StatCard label="Monthly profit" value={`$${fmtK(s.totalMonthlyProfit)}`} color={C.emerald} big />
