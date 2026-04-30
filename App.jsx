@@ -342,10 +342,10 @@ export default function App() {
                 <BarChart3 size={16} color={C.emerald} />
               </div>
               <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, background: "linear-gradient(90deg, #10b981, #06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                Omni-Channel Profit Engine
+                Amazon FBA Profit Calculator
               </h1>
             </div>
-            <p style={{ fontSize: 12, color: C.s5, margin: 0 }}>Strategic unit economics & multi-channel margin simulator</p>
+            <p style={{ fontSize: 12, color: C.s5, margin: 0 }}>Unit economics & multi-channel margin simulator</p>
           </div>
 
           {/* Two toggle groups */}
