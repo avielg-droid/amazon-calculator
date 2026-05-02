@@ -16,22 +16,25 @@ const LABEL = { fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTran
 
 export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp }) {
   const [activeSub, setActiveSub] = useState("str");
+  const [hoveredSub, setHoveredSub] = useState(null);
 
   const subTabBtn = (t) => ({
     padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600,
-    background: activeSub === t ? C.violet : "transparent",
-    color: activeSub === t ? "#fff" : C.s4,
+    background: activeSub === t ? C.violet : hoveredSub === t ? C.s7 : "transparent",
+    color: activeSub === t ? "#fff" : hoveredSub === t ? "#e2e8f0" : C.s4,
     transition: "all 0.15s",
+    outline: "none",
   });
 
   return (
     <div style={CARD}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
         <span style={{ fontSize: 13, fontWeight: 700 }}>PPC Lab</span>
         <span style={{ fontSize: 10, color: C.s5, background: C.s8, borderRadius: 6, padding: "3px 8px" }}>Beta</span>
         <div style={{ marginLeft: "auto", display: "flex", gap: 4, background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 10, padding: 3 }}>
-          <button style={subTabBtn("str")} onClick={() => setActiveSub("str")}>Search Terms</button>
-          <button style={subTabBtn("sqp")} onClick={() => setActiveSub("sqp")}>Search Query Perf</button>
+          <button style={subTabBtn("str")} onClick={() => setActiveSub("str")} onMouseEnter={() => setHoveredSub("str")} onMouseLeave={() => setHoveredSub(null)}>Search Terms</button>
+          <button style={subTabBtn("sqp")} onClick={() => setActiveSub("sqp")} onMouseEnter={() => setHoveredSub("sqp")} onMouseLeave={() => setHoveredSub(null)}>Search Query Perf</button>
         </div>
       </div>
 
@@ -122,61 +125,71 @@ function SummaryCard({ label, value, color }) {
 }
 
 function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefix, columns, onExport, exportLabel }) {
+  const [hoveredExport, setHoveredExport] = useState(false);
   return (
     <div style={{ border: `1px solid ${color}22`, borderRadius: 12, overflow: "hidden" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: `${color}08`, borderBottom: `1px solid ${color}20` }}>
         <span style={{ fontSize: 12, fontWeight: 700, color }}>{title}</span>
         <span style={{ fontSize: 11, color: C.s5 }}>({items.length})</span>
         <button onClick={onExport}
-          style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.s4, background: C.s8, border: "none", borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>
+          onMouseEnter={() => setHoveredExport(true)} onMouseLeave={() => setHoveredExport(false)}
+          style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.s4, background: hoveredExport ? C.s7 : C.s8, border: "none", borderRadius: 6, padding: "4px 10px", cursor: "pointer", transition: "background 0.15s", outline: "none" }}>
           <Download size={11} />{exportLabel}
         </button>
       </div>
-      <div style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-          <thead>
-            <tr style={{ background: C.s95 }}>
-              {columns.map(col => (
-                <th key={col.key} style={{ padding: "8px 12px", textAlign: "left", color: C.s5, fontWeight: 600, fontSize: 11, whiteSpace: "nowrap" }}>
-                  <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                    {col.label} <Tooltip text={col.tip} />
-                  </span>
-                </th>
-              ))}
-              <th style={{ padding: "8px 12px", color: C.s5, fontWeight: 600, fontSize: 11 }}>Why?</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item, i) => {
-              const id = `${idPrefix}-${i}`;
-              const isOpen = expandedWhy === id;
-              return (
-                <React.Fragment key={id}>
-                  <tr style={{ borderTop: `1px solid ${C.s8}`, background: isOpen ? C.s95 : "transparent" }}>
-                    {columns.map(col => (
-                      <td key={col.key} style={{ padding: "8px 12px", color: "#e2e8f0", whiteSpace: col.key === "term" || col.key === "query" || col.key === "recommendedAction" || col.key === "insight" ? "normal" : "nowrap" }}>
-                        {col.render ? col.render(item) : col.key === "spend" ? `$${Number(item[col.key]).toFixed(2)}` : item[col.key]}
-                      </td>
-                    ))}
-                    <td style={{ padding: "8px 12px" }}>
-                      <button onClick={() => setExpandedWhy(isOpen ? null : id)}
-                        style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "2px 8px", cursor: "pointer" }}>
-                        {isOpen ? "hide" : "why?"}
-                      </button>
-                    </td>
-                  </tr>
-                  {isOpen && (
-                    <tr key={id + "-why"}>
-                      <td colSpan={columns.length + 1} style={{ padding: "8px 12px 10px 24px", fontSize: 11, color: C.s4, lineHeight: 1.6, background: `${color}06` }}>
-                        <strong style={{ color }}>Flagged because:</strong> {item.whyFlag}
+      <div style={{ position: "relative" }}>
+        <div style={{ overflowX: "auto" }}>
+          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+            <thead>
+              <tr style={{ background: C.s95 }}>
+                {columns.map(col => (
+                  <th key={col.key} style={{ padding: "8px 12px", textAlign: "left", color: C.s5, fontWeight: 600, fontSize: 11, whiteSpace: "nowrap" }}>
+                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      {col.label} <Tooltip text={col.tip} />
+                    </span>
+                  </th>
+                ))}
+                <th style={{ padding: "8px 12px", color: C.s5, fontWeight: 600, fontSize: 11 }}>Why?</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((item, i) => {
+                const id = `${idPrefix}-${i}`;
+                const isOpen = expandedWhy === id;
+                return (
+                  <React.Fragment key={id}>
+                    <tr style={{ borderTop: `1px solid ${C.s8}`, background: isOpen ? C.s95 : "transparent" }}>
+                      {columns.map(col => (
+                        <td key={col.key} style={{ padding: "8px 12px", color: "#e2e8f0", whiteSpace: col.key === "term" || col.key === "query" || col.key === "recommendedAction" || col.key === "insight" ? "normal" : "nowrap" }}>
+                          {col.render ? col.render(item) : col.key === "spend" ? `$${Number(item[col.key]).toFixed(2)}` : item[col.key]}
+                        </td>
+                      ))}
+                      <td style={{ padding: "8px 12px" }}>
+                        <button onClick={() => setExpandedWhy(isOpen ? null : id)}
+                          style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer" }}>
+                          {isOpen ? "hide" : "why?"}
+                        </button>
                       </td>
                     </tr>
-                  )}
-                </React.Fragment>
-              );
-            })}
-          </tbody>
-        </table>
+                    {isOpen && (
+                      <tr key={id + "-why"}>
+                        <td colSpan={columns.length + 1} style={{ padding: "8px 12px 10px 24px", fontSize: 11, color: C.s4, lineHeight: 1.6, background: `${color}06` }}>
+                          <strong style={{ color }}>Flagged because:</strong> {item.whyFlag}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        {/* Right-edge fade hint for horizontal scroll */}
+        <div style={{
+          position: "absolute", top: 0, right: 0, height: "100%", width: 40,
+          background: `linear-gradient(to right, transparent, ${C.s9})`,
+          pointerEvents: "none",
+        }} />
       </div>
     </div>
   );
@@ -190,23 +203,29 @@ function StrTab({ data, setData }) {
   const [error, setError] = useState(null);
   const [expandedWhy, setExpandedWhy] = useState(null);
   const [brandFilter, setBrandFilter] = useState("");
+  const [parsing, setParsing] = useState(false);
 
   const analysis = useMemo(() => {
     if (!data.rows.length) return null;
     return analyzeStr(data.rows, thresholds);
   }, [data.rows, thresholds]);
 
-  const handleFile = (file, fileError, data, fileType) => {
+  const handleFile = (file, fileError, fileData, fileType) => {
     if (fileError) { setError(fileError); return; }
-    try {
-      const parsed = fileType === "xlsx" ? parseXlsx(data) : parseCsv(data);
-      const colError = validateColumns(parsed.headers, STR_REQUIRED_COLUMNS);
-      if (colError) { setError(colError); return; }
-      setError(null);
-      setData({ rows: parsed.rows, file });
-    } catch (e) {
-      setError(e.message);
-    }
+    setParsing(true);
+    setTimeout(() => {
+      try {
+        const parsed = fileType === "xlsx" ? parseXlsx(fileData) : parseCsv(fileData);
+        const colError = validateColumns(parsed.headers, STR_REQUIRED_COLUMNS);
+        if (colError) { setError(colError); setParsing(false); return; }
+        setError(null);
+        setData({ rows: parsed.rows, file });
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setParsing(false);
+      }
+    }, 30);
   };
 
   const downloadCsv = (content, filename) => {
@@ -249,7 +268,14 @@ function StrTab({ data, setData }) {
           <span>Recommended: Use a 30–60 day report for best results. A 1-day report may show 0 recommendations due to low spend data.</span>
         </div>
         {error && <div style={{ background: "#f43f5e10", border: "1px solid #f43f5e30", borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.rose, display: "flex", gap: 8, alignItems: "flex-start" }}><AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
-        <UploadZone onFile={handleFile} label="Drop your Search Term Report here or click to browse (CSV or Excel)" />
+        {parsing ? (
+          <div style={{ padding: "40px 24px", textAlign: "center", color: C.s4, fontSize: 13 }}>
+            <div style={{ display: "inline-block", width: 20, height: 20, border: `2px solid ${C.s7}`, borderTopColor: C.violet, borderRadius: "50%", animation: "spin 0.8s linear infinite", marginBottom: 12 }} />
+            <div>Analyzing file…</div>
+          </div>
+        ) : (
+          <UploadZone onFile={handleFile} label="Drop your Search Term Report here or click to browse (CSV or Excel)" />
+        )}
       </div>
     );
   }
@@ -267,7 +293,7 @@ function StrTab({ data, setData }) {
         <CheckCircle size={13} color={C.emerald} />
         <span>{data.file?.name} · {totalTerms.toLocaleString()} terms</span>
         <button onClick={() => { setData({ rows: [], file: null }); setError(null); }}
-          style={{ marginLeft: "auto", fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "3px 10px", cursor: "pointer" }}>
+          style={{ marginLeft: "auto", fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 12px", cursor: "pointer" }}>
           Upload new file
         </button>
       </div>
@@ -278,7 +304,7 @@ function StrTab({ data, setData }) {
         <input type="text" placeholder="e.g. your brand name" value={brandFilter} onChange={e => setBrandFilter(e.target.value)}
           style={{ flex: 1, background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: "7px 12px", fontSize: 12, color: "#e2e8f0", outline: "none" }} />
         {brandFilter && <button onClick={() => setBrandFilter("")}
-          style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "3px 8px", cursor: "pointer" }}>clear</button>}
+          style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer" }}>clear</button>}
       </div>
 
       {/* Thresholds panel */}
@@ -304,7 +330,7 @@ function StrTab({ data, setData }) {
                   <span style={LABEL}>{label}</span>
                   <Tooltip text={tip} />
                   <button onClick={() => setThresholds(t => ({ ...t, [key]: STR_THRESHOLD_DEFAULTS[key] }))}
-                    style={{ marginLeft: "auto", fontSize: 9, color: C.s6, background: "none", border: "none", cursor: "pointer", padding: 0 }}>reset</button>
+                    style={{ marginLeft: "auto", fontSize: 9, color: C.s6, background: "none", border: "none", cursor: "pointer", padding: "4px 6px" }}>reset</button>
                 </div>
                 <div style={{ position: "relative" }}>
                   {prefix && <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: C.s5, pointerEvents: "none" }}>{prefix}</span>}
@@ -385,23 +411,29 @@ function SqpTab({ data, setData }) {
   const [error, setError] = useState(null);
   const [expandedWhy, setExpandedWhy] = useState(null);
   const [brandFilter, setBrandFilter] = useState("");
+  const [parsing, setParsing] = useState(false);
 
   const analysis = useMemo(() => {
     if (!data.rows.length) return null;
     return analyzeSqp(data.rows, thresholds);
   }, [data.rows, thresholds]);
 
-  const handleFile = (file, fileError, data, fileType) => {
+  const handleFile = (file, fileError, fileData, fileType) => {
     if (fileError) { setError(fileError); return; }
-    try {
-      const parsed = fileType === "xlsx" ? parseXlsx(data) : parseCsv(data);
-      const colError = validateColumns(parsed.headers, SQP_REQUIRED_COLUMNS);
-      if (colError) { setError(colError); return; }
-      setError(null);
-      setData({ rows: parsed.rows, file });
-    } catch (e) {
-      setError(e.message);
-    }
+    setParsing(true);
+    setTimeout(() => {
+      try {
+        const parsed = fileType === "xlsx" ? parseXlsx(fileData) : parseCsv(fileData);
+        const colError = validateColumns(parsed.headers, SQP_REQUIRED_COLUMNS);
+        if (colError) { setError(colError); setParsing(false); return; }
+        setError(null);
+        setData({ rows: parsed.rows, file });
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setParsing(false);
+      }
+    }, 30);
   };
 
   const downloadCsv = (content, filename) => {
@@ -443,7 +475,14 @@ function SqpTab({ data, setData }) {
           <span>Recommended: Use a 90-day report for best results. Short date ranges may not have enough search volume data to surface meaningful insights.</span>
         </div>
         {error && <div style={{ background: "#f43f5e10", border: "1px solid #f43f5e30", borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.rose, display: "flex", gap: 8, alignItems: "flex-start" }}><AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
-        <UploadZone onFile={handleFile} label="Drop your Search Query Performance CSV here or click to browse" />
+        {parsing ? (
+          <div style={{ padding: "40px 24px", textAlign: "center", color: C.s4, fontSize: 13 }}>
+            <div style={{ display: "inline-block", width: 20, height: 20, border: `2px solid ${C.s7}`, borderTopColor: C.violet, borderRadius: "50%", animation: "spin 0.8s linear infinite", marginBottom: 12 }} />
+            <div>Analyzing file…</div>
+          </div>
+        ) : (
+          <UploadZone onFile={handleFile} label="Drop your Search Query Performance CSV here or click to browse" />
+        )}
       </div>
     );
   }
@@ -461,7 +500,7 @@ function SqpTab({ data, setData }) {
         <CheckCircle size={13} color={C.emerald} />
         <span>{data.file?.name} · {totalQueries.toLocaleString()} queries</span>
         <button onClick={() => { setData({ rows: [], file: null }); setError(null); }}
-          style={{ marginLeft: "auto", fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "3px 10px", cursor: "pointer" }}>
+          style={{ marginLeft: "auto", fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 12px", cursor: "pointer" }}>
           Upload new file
         </button>
       </div>
@@ -472,7 +511,7 @@ function SqpTab({ data, setData }) {
         <input type="text" placeholder="e.g. your brand name" value={brandFilter} onChange={e => setBrandFilter(e.target.value)}
           style={{ flex: 1, background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: "7px 12px", fontSize: 12, color: "#e2e8f0", outline: "none" }} />
         {brandFilter && <button onClick={() => setBrandFilter("")}
-          style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "3px 8px", cursor: "pointer" }}>clear</button>}
+          style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer" }}>clear</button>}
       </div>
 
       {/* Thresholds panel */}
@@ -500,7 +539,7 @@ function SqpTab({ data, setData }) {
                   <span style={LABEL}>{label}</span>
                   <Tooltip text={tip} />
                   <button onClick={() => setThresholds(t => ({ ...t, [key]: SQP_THRESHOLD_DEFAULTS[key] }))}
-                    style={{ marginLeft: "auto", fontSize: 9, color: C.s6, background: "none", border: "none", cursor: "pointer", padding: 0 }}>reset</button>
+                    style={{ marginLeft: "auto", fontSize: 9, color: C.s6, background: "none", border: "none", cursor: "pointer", padding: "4px 6px" }}>reset</button>
                 </div>
                 <div style={{ position: "relative" }}>
                   <input type="number" value={thresholds[key]}

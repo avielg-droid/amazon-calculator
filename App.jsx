@@ -204,6 +204,10 @@ export default function App() {
     return DEFAULTS;
   });
   const [activeTab, setActiveTab] = useState("breakdown");
+  const [hoveredTab, setHoveredTab] = useState(null);
+  const [hoveredChannel, setHoveredChannel] = useState(null);
+  const [hoveredMarket, setHoveredMarket] = useState(null);
+  const [hoveredShare, setHoveredShare] = useState(false);
   const [ppcStr, setPpcStr] = useState({ rows: [], file: null });
   const [ppcSqp, setPpcSqp] = useState({ rows: [], file: null });
   const [inputErrors, setInputErrors] = useState({});
@@ -315,24 +319,27 @@ export default function App() {
     return out;
   }, [s, isUS, channelMode, inputs.referralFee]);
 
-  const tabBtn = t => ({
-    padding: "7px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600,
-    cursor: "pointer", border: "none", transition: "all 0.2s", whiteSpace: "nowrap",
-    background: activeTab === t ? C.emerald : "transparent",
-    color: activeTab === t ? "#fff" : C.s4,
+  const tabBtn = (t) => ({
+    padding: "7px 14px", borderRadius: 8, border: "none", cursor: "pointer",
+    fontSize: 12, fontWeight: 600, whiteSpace: "nowrap",
+    transition: "all 0.15s", outline: "none", boxShadow: "none",
+    background: activeTab === t ? C.emerald : hoveredTab === t ? C.s8 : "transparent",
+    color: activeTab === t ? "#fff" : hoveredTab === t ? "#e2e8f0" : C.s4,
   });
 
   const modeBtn = (cur, val) => ({
     padding: "7px 18px", borderRadius: 9, fontSize: 12, fontWeight: 600,
     cursor: "pointer", border: "none", transition: "all 0.2s",
-    background: cur === val ? C.emerald : "transparent",
+    outline: "none", boxShadow: "none",
+    background: cur === val ? C.emerald : hoveredChannel === val ? C.s7 : "transparent",
     color: cur === val ? "#fff" : C.s4,
   });
 
-  const marketBtn = (val, Icon, label) => ({
+  const marketBtn = (val) => ({
     padding: "7px 16px", borderRadius: 9, fontSize: 12, fontWeight: 600,
     cursor: "pointer", border: "none", transition: "all 0.2s",
-    background: marketMode === val ? (val === "us" ? "#3b82f6" : C.violet) : "transparent",
+    outline: "none", boxShadow: "none",
+    background: marketMode === val ? (val === "us" ? "#3b82f6" : C.violet) : hoveredMarket === val ? C.s7 : "transparent",
     color: marketMode === val ? "#fff" : C.s4,
     display: "flex", alignItems: "center", gap: 6,
   });
@@ -361,25 +368,41 @@ export default function App() {
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
             {/* Market toggle */}
             <div style={{ display: "flex", background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 12, padding: 4, gap: 4, alignItems: "center" }}>
-              <button style={marketBtn("us")} onClick={() => setMarketMode("us")}>
+              <button style={marketBtn("us")} onClick={() => setMarketMode("us")}
+                onMouseEnter={() => setHoveredMarket("us")}
+                onMouseLeave={() => setHoveredMarket(null)}
+              >
                 <Flag size={12} />US Marketplace
               </button>
-              <button style={marketBtn("intl")} onClick={() => setMarketMode("intl")}>
+              <button style={marketBtn("intl")} onClick={() => setMarketMode("intl")}
+                onMouseEnter={() => setHoveredMarket("intl")}
+                onMouseLeave={() => setHoveredMarket(null)}
+              >
                 <Globe size={12} />International (VAT)
               </button>
             </div>
             {/* Channel toggle */}
             <div style={{ display: "flex", background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 12, padding: 4, gap: 4 }}>
-              <button style={modeBtn(channelMode, "amazon")} onClick={() => setChannelMode("amazon")}>Amazon FBA</button>
-              <button style={modeBtn(channelMode, "dtc")} onClick={() => setChannelMode("dtc")}>DTC / Shopify</button>
+              <button style={modeBtn(channelMode, "amazon")} onClick={() => setChannelMode("amazon")}
+                onMouseEnter={() => setHoveredChannel("amazon")}
+                onMouseLeave={() => setHoveredChannel(null)}
+              >Amazon FBA</button>
+              <button style={modeBtn(channelMode, "dtc")} onClick={() => setChannelMode("dtc")}
+                onMouseEnter={() => setHoveredChannel("dtc")}
+                onMouseLeave={() => setHoveredChannel(null)}
+              >DTC / Shopify</button>
             </div>
             {/* Share button */}
             <button onClick={handleShare} style={{
               display: "flex", alignItems: "center", gap: 6,
               padding: "8px 14px", borderRadius: 9, fontSize: 12, fontWeight: 600,
-              background: C.s8, border: `1px solid ${C.s7}`, color: C.s4,
-              cursor: "pointer",
-            }}>
+              background: hoveredShare ? C.s7 : C.s8, border: `1px solid ${C.s7}`, color: C.s4,
+              cursor: "pointer", outline: "none", boxShadow: "none",
+              transition: "all 0.15s",
+            }}
+              onMouseEnter={() => setHoveredShare(true)}
+              onMouseLeave={() => setHoveredShare(false)}
+            >
               <Share2 size={13} /> Share
             </button>
           </div>
@@ -485,11 +508,26 @@ export default function App() {
           {/* KPI row + pie chart */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-start" }}>
             <div style={{ flex: 2, minWidth: 280 }}>
+              {(Number(inputs.sellingPrice) === 0 || Number(inputs.unitCost) === 0) && (
+                <div style={{
+                  display: "flex", alignItems: "flex-start", gap: 8,
+                  background: "#f59e0b08", border: "1px solid #f59e0b30",
+                  borderRadius: 10, padding: "10px 14px", fontSize: 12, color: "#f59e0b",
+                  marginBottom: 4,
+                }}>
+                  <span style={{ flexShrink: 0 }}>⚠</span>
+                  <span>
+                    {Number(inputs.sellingPrice) === 0
+                      ? "Selling price is $0 — enter a price to see accurate results."
+                      : "Unit cost is $0 — enter a cost to see accurate results."}
+                  </span>
+                </div>
+              )}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 12 }}>
                 <StatCard label="Monthly profit" value={`$${fmtK(s.totalMonthlyProfit)}`} numericValue={s.totalMonthlyProfit} big />
                 <StatCard label="Profit per unit" value={`$${fmt(s.netProfitPerUnit)}`} numericValue={s.netProfitPerUnit} thresholds={[1, 3]} />
-                <StatCard label="Profit % of price" value={`${fmt(s.netMargin, 1)}%`} numericValue={s.netMargin} thresholds={[10, 20]} />
-                <StatCard label="ROI on COGS" value={`${fmt(s.roi, 0)}%`} numericValue={s.roi} thresholds={[40, 80]} />
+                <StatCard label="Profit % of price" value={isFinite(s.netMargin) ? `${fmt(s.netMargin, 1)}%` : "—"} numericValue={isFinite(s.netMargin) ? s.netMargin : undefined} thresholds={[10, 20]} />
+                <StatCard label="ROI on COGS" value={isFinite(s.roi) ? `${fmt(s.roi, 0)}%` : "—"} numericValue={isFinite(s.roi) ? s.roi : undefined} thresholds={[40, 80]} />
               </div>
             </div>
             <CostChart s={s} />
@@ -505,7 +543,10 @@ export default function App() {
               ["insights", "Insights"],
               ["ppc", "PPC Lab"],
             ].map(([t, label]) => (
-              <button key={t} style={tabBtn(t)} onClick={() => setActiveTab(t)}>{label}</button>
+              <button key={t} style={tabBtn(t)} onClick={() => setActiveTab(t)}
+                onMouseEnter={() => setHoveredTab(t)}
+                onMouseLeave={() => setHoveredTab(null)}
+              >{label}</button>
             ))}
           </div>
 
@@ -592,21 +633,21 @@ export default function App() {
               <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 20 }}>Efficiency metrics & benchmarks</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
                 {[{
-                  label: "Break-even ACOS", val: s.breakEvenAcos, max: 60,
-                  color: inputs.adSpendShare <= s.breakEvenAcos ? C.emerald : C.rose,
-                  note: `Ads must convert below ${fmt(s.breakEvenAcos, 1)}% ACOS to be profitable`
+                  label: "Break-even ACOS", val: isFinite(s.breakEvenAcos) ? s.breakEvenAcos : 0, max: 60,
+                  color: isFinite(s.breakEvenAcos) && inputs.adSpendShare <= s.breakEvenAcos ? C.emerald : C.rose,
+                  note: isFinite(s.breakEvenAcos) ? `Ads must convert below ${fmt(s.breakEvenAcos, 1)}% ACOS to be profitable` : "Price is $0 — cannot calculate break-even ACOS"
                 }, {
                   label: "Current TACOS", val: inputs.adSpendShare, max: 60,
                   color: inputs.adSpendShare < 15 ? C.emerald : inputs.adSpendShare < 25 ? C.amber : C.rose,
                   note: inputs.adSpendShare < 15 ? "Efficient" : inputs.adSpendShare < 25 ? "Moderate — target <15%" : "High — reduce ad dependency"
                 }, {
-                  label: "Net margin", val: s.netMargin, max: 50,
-                  color: s.netMargin > 20 ? C.emerald : s.netMargin > 10 ? C.amber : C.rose,
-                  note: s.netMargin > 20 ? "Scale-ready" : s.netMargin > 10 ? "Viable — aim for 20%+" : "Below minimum viable threshold"
+                  label: "Net margin", val: isFinite(s.netMargin) ? s.netMargin : 0, max: 50,
+                  color: isFinite(s.netMargin) && s.netMargin > 20 ? C.emerald : isFinite(s.netMargin) && s.netMargin > 10 ? C.amber : C.rose,
+                  note: !isFinite(s.netMargin) ? "Enter a selling price to calculate margin" : s.netMargin > 20 ? "Scale-ready" : s.netMargin > 10 ? "Viable — aim for 20%+" : "Below minimum viable threshold"
                 }, {
-                  label: "ROI on landed cost", val: Math.max(0, s.roi), max: 200,
-                  color: s.roi > 80 ? C.emerald : s.roi > 40 ? C.amber : C.rose,
-                  note: `${s.roi > 80 ? "Exceptional" : s.roi > 40 ? "Good" : "Low"} — ${fmt(s.roi, 0)}% return on capital deployed`
+                  label: "ROI on landed cost", val: isFinite(s.roi) ? Math.max(0, s.roi) : 0, max: 200,
+                  color: isFinite(s.roi) && s.roi > 80 ? C.emerald : isFinite(s.roi) && s.roi > 40 ? C.amber : C.rose,
+                  note: !isFinite(s.roi) ? "Enter a unit cost to calculate ROI" : `${s.roi > 80 ? "Exceptional" : s.roi > 40 ? "Good" : "Low"} — ${fmt(s.roi, 0)}% return on capital deployed`
                 }].map(({ label, val, max, color, note }) => (
                   <div key={label}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
@@ -621,7 +662,7 @@ export default function App() {
                   {[
                     { label: "Safety buffer", val: `$${fmt(s.bufferAmount)}`, color: C.violet, sub: "per unit reserved" },
                     { label: "Monthly ad spend", val: `$${fmtK(s.adSpendPerUnit * s.monthlyUnits)}`, color: C.orange, sub: `at ${s.monthlyUnits} units/mo` },
-                    { label: "Break-even vol.", val: s.breakevenUnits, color: C.cyan, sub: "units to cover COGS" },
+                    { label: "Break-even vol.", val: s.netProfitPerUnit <= 0 ? "∞ (loss)" : (typeof s.breakevenUnits === "number" ? fmtK(s.breakevenUnits) : s.breakevenUnits), color: C.cyan, sub: "units to cover COGS" },
                   ].map(({ label, val, color, sub }) => (
                     <div key={label} style={{ background: C.s95, borderRadius: 10, padding: "12px 14px", textAlign: "center" }}>
                       <div style={{ ...LABEL, textAlign: "center" }}>{label}</div>
@@ -916,6 +957,7 @@ export default function App() {
         {toast}
       </div>
     )}
+    <style>{`button:focus-visible { outline: none; box-shadow: 0 0 0 2px #10b98166 !important; border-radius: 8px; }`}</style>
     <Analytics />
     </>
   );
