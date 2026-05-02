@@ -18,6 +18,7 @@ export const SQP_THRESHOLD_DEFAULTS = {
   maxClickShareOpportunity: 20,     // % — but own little traffic
   minImpressionShareRisk: 30,       // % — visible but...
   maxPurchaseShareRisk: 3,          // % — ...not converting
+  minPurchaseShareLeader: 20,  // % — you dominate this query
 };
 
 // Parse share values (may be "12.34%" or "0.12" format depending on report version)
@@ -40,10 +41,12 @@ export function analyzeSqp(rows, thresholds = SQP_THRESHOLD_DEFAULTS) {
     maxClickShareOpportunity,
     minImpressionShareRisk,
     maxPurchaseShareRisk,
+    minPurchaseShareLeader = 20,
   } = thresholds;
 
   const opportunities = [];
   const risks = [];
+  const leaders = [];
 
   for (const row of rows) {
     const query = (row["Search Query"] || "").trim();
@@ -88,15 +91,27 @@ export function analyzeSqp(rows, thresholds = SQP_THRESHOLD_DEFAULTS) {
         whyFlag: `Impression share ${impressionShare.toFixed(1)}% ≥ ${minImpressionShareRisk}% threshold, purchase share ${purchaseShare.toFixed(1)}% ≤ ${maxPurchaseShareRisk}% threshold`,
       });
     }
+
+    // Market Leader: you dominate this query — defend budget
+    if (purchaseShare >= minPurchaseShareLeader) {
+      leaders.push({
+        query, volume, impressionShare: impressionShare.toFixed(1),
+        clickShare: clickShare.toFixed(1), purchaseShare: purchaseShare.toFixed(1),
+        impressions, clicks, purchases,
+        insight: "You dominate this query — protect your budget, don't let spend run out",
+        whyFlag: `Purchase share ${purchaseShare.toFixed(1)}% ≥ ${minPurchaseShareLeader}% leader threshold`,
+      });
+    }
   }
 
-  return { opportunities, risks, totalQueries: rows.length };
+  return { opportunities, risks, leaders, totalQueries: rows.length };
 }
 
 // Generate CSV export
-export function exportSqpCsv(opportunities, risks) {
+export function exportSqpCsv(opportunities, risks, leaders = []) {
   const headers = ["Type", "Search Query", "Volume", "Impression Share %", "Click Share %", "Purchase Share %", "Insight", "Recommended Action"];
   const oppRows = opportunities.map(o => ["Opportunity", o.query, o.volume, o.impressionShare, o.clickShare, o.purchaseShare, o.insight, "Increase bids / add Exact target"]);
   const riskRows = risks.map(r => ["Risk", r.query, r.volume, r.impressionShare, r.clickShare, r.purchaseShare, r.insight, "Review relevance / consider negative"]);
-  return [headers, ...oppRows, ...riskRows].map(r => r.map(v => `"${v}"`).join(",")).join("\n");
+  const leaderRows = leaders.map(l => ["Market Leader", l.query, l.volume, l.impressionShare, l.clickShare, l.purchaseShare, l.insight, "Defend budget — ensure spend doesn't cap out"]);
+  return [headers, ...oppRows, ...riskRows, ...leaderRows].map(r => r.map(v => `"${v}"`).join(",")).join("\n");
 }
