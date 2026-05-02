@@ -173,10 +173,184 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
   );
 }
 
-// ── Tab stubs (filled in Tasks 7 & 8) ──
+// ── StrTab ──
 
 function StrTab({ data, setData }) {
-  return <div style={{ color: C.s4, fontSize: 13, padding: "24px 0", textAlign: "center" }}>STR analysis — coming soon</div>;
+  const [thresholds, setThresholds] = useState({ ...STR_THRESHOLD_DEFAULTS });
+  const [thresholdsOpen, setThresholdsOpen] = useState(false);
+  const [error, setError] = useState(null);
+  const [expandedWhy, setExpandedWhy] = useState(null);
+
+  const analysis = useMemo(() => {
+    if (!data.rows.length) return null;
+    return analyzeStr(data.rows, thresholds);
+  }, [data.rows, thresholds]);
+
+  const handleFile = (file, fileError, text) => {
+    if (fileError) { setError(fileError); return; }
+    try {
+      const { headers, rows } = parseCsv(text);
+      const colError = validateColumns(headers, STR_REQUIRED_COLUMNS);
+      if (colError) { setError(colError); return; }
+      setError(null);
+      setData({ rows, file });
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  const downloadCsv = (content, filename) => {
+    const blob = new Blob([content], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ── Onboarding (no file loaded) ──
+  if (!data.rows.length) {
+    return (
+      <div>
+        <div style={{ background: "#8b5cf608", border: "1px solid #8b5cf620", borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.violet, marginBottom: 10 }}>How to get your Search Term Report</div>
+          {[
+            "Go to Seller Central → Reports → Advertising Reports",
+            "Select report type: Search Term Report",
+            "Choose date range (last 30–60 days recommended)",
+            "Click Create Report, then Download when ready",
+            "Upload the CSV below",
+          ].map((step, i) => (
+            <div key={i} style={{ display: "flex", gap: 10, marginBottom: 6, alignItems: "flex-start" }}>
+              <span style={{ minWidth: 20, height: 20, borderRadius: "50%", background: C.s8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: C.violet }}>{i + 1}</span>
+              <span style={{ fontSize: 12, color: C.s4, lineHeight: 1.5 }}>{step}</span>
+            </div>
+          ))}
+          <div style={{ marginTop: 12, padding: "10px 14px", background: C.s95, borderRadius: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: C.s5, marginBottom: 4 }}>What you'll get</div>
+            <div style={{ fontSize: 12, color: C.s4, lineHeight: 1.7 }}>
+              • Negative keyword candidates (spending money with 0 conversions)<br />
+              • Harvest opportunities (converting search terms not yet targeted as Exact match)<br />
+              • Full data table for verification<br />
+              • Export-ready CSVs for Amazon Bulk Operations
+            </div>
+          </div>
+        </div>
+        {error && <div style={{ background: "#f43f5e10", border: "1px solid #f43f5e30", borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.rose, display: "flex", gap: 8, alignItems: "flex-start" }}><AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
+        <UploadZone onFile={handleFile} label="Drop your Search Term Report CSV here or click to browse" />
+      </div>
+    );
+  }
+
+  // ── Analysis view ──
+  const { negatives, harvest, totalTerms } = analysis;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* File info + re-upload */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.s5 }}>
+        <CheckCircle size={13} color={C.emerald} />
+        <span>{data.file?.name} · {totalTerms.toLocaleString()} terms</span>
+        <button onClick={() => { setData({ rows: [], file: null }); setError(null); }}
+          style={{ marginLeft: "auto", fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "3px 10px", cursor: "pointer" }}>
+          Upload new file
+        </button>
+      </div>
+
+      {/* Thresholds panel */}
+      <div style={{ border: `1px solid ${C.s8}`, borderRadius: 10, overflow: "hidden" }}>
+        <button onClick={() => setThresholdsOpen(o => !o)}
+          style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: C.s95, border: "none", cursor: "pointer", color: C.s4, fontSize: 12 }}>
+          {thresholdsOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+          <span>Thresholds</span>
+          <span style={{ marginLeft: "auto", fontSize: 11, color: C.s6 }}>
+            {JSON.stringify(thresholds) === JSON.stringify(STR_THRESHOLD_DEFAULTS) ? "using defaults" : "customized"}
+          </span>
+        </button>
+        {thresholdsOpen && (
+          <div style={{ padding: "12px 14px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+            {[
+              { key: "minSpendNegative", label: "Min Spend (Negative)", prefix: "$", tip: "Terms spending above this with 0 orders are flagged as negative candidates" },
+              { key: "minClicksNegative", label: "Min Clicks (Negative)", tip: "Terms with this many clicks and 0 orders are flagged as negative candidates" },
+              { key: "minOrdersHarvest", label: "Min Orders (Harvest)", tip: "Terms with at least this many orders are considered for harvesting" },
+              { key: "maxAcosHarvest", label: "Max ACoS (Harvest)", suffix: "%", tip: "Only harvest terms with ACoS at or below this threshold" },
+            ].map(({ key, label, prefix, suffix, tip }) => (
+              <div key={key}>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
+                  <span style={LABEL}>{label}</span>
+                  <Tooltip text={tip} />
+                  <button onClick={() => setThresholds(t => ({ ...t, [key]: STR_THRESHOLD_DEFAULTS[key] }))}
+                    style={{ marginLeft: "auto", fontSize: 9, color: C.s6, background: "none", border: "none", cursor: "pointer", padding: 0 }}>reset</button>
+                </div>
+                <div style={{ position: "relative" }}>
+                  {prefix && <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: C.s5, pointerEvents: "none" }}>{prefix}</span>}
+                  <input type="number" value={thresholds[key]}
+                    onChange={e => setThresholds(t => ({ ...t, [key]: parseFloat(e.target.value) || 0 }))}
+                    style={{ width: "100%", background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: `7px ${suffix ? 28 : 10}px 7px ${prefix ? 22 : 10}px`, fontSize: 12, color: "#e2e8f0", outline: "none", boxSizing: "border-box" }} />
+                  {suffix && <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: C.s5, pointerEvents: "none" }}>{suffix}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Summary cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+        <SummaryCard label="Negative Candidates" value={negatives.length} color={C.rose} />
+        <SummaryCard label="Harvest Opportunities" value={harvest.length} color={C.emerald} />
+        <SummaryCard label="Terms Analyzed" value={totalTerms.toLocaleString()} color={C.s4} />
+      </div>
+
+      {/* Negatives list */}
+      {negatives.length > 0 && (
+        <RecoSection
+          title="Negative Keyword Candidates"
+          color={C.rose}
+          items={negatives}
+          expandedWhy={expandedWhy}
+          setExpandedWhy={setExpandedWhy}
+          idPrefix="neg"
+          columns={[
+            { key: "term", label: "Search Term", tip: "The exact customer search query" },
+            { key: "spend", label: "Spend ($)", tip: "Total ad spend on this term" },
+            { key: "clicks", label: "Clicks", tip: "Total clicks" },
+            { key: "orders", label: "Orders", tip: "Total orders attributed" },
+            { key: "campaign", label: "Campaign", tip: "Campaign name" },
+            { key: "recommendedNegType", label: "Neg. Type", tip: "Recommended negative match type to add" },
+          ]}
+          onExport={() => downloadCsv(exportNegativesCsv(negatives), "negatives.csv")}
+          exportLabel="Export negatives.csv"
+        />
+      )}
+
+      {/* Harvest list */}
+      {harvest.length > 0 && (
+        <RecoSection
+          title="Harvest Opportunities"
+          color={C.emerald}
+          items={harvest}
+          expandedWhy={expandedWhy}
+          setExpandedWhy={setExpandedWhy}
+          idPrefix="harv"
+          columns={[
+            { key: "term", label: "Search Term", tip: "The converting search query" },
+            { key: "orders", label: "Orders", tip: "Number of orders from this term" },
+            { key: "cvr", label: "CVR %", tip: "Conversion rate: orders / clicks" },
+            { key: "acos", label: "ACoS %", tip: "Advertising Cost of Sales: spend / revenue" },
+            { key: "matchType", label: "Current Match", tip: "Current keyword match type in your campaign" },
+            { key: "recommendedAction", label: "Action", tip: "What to do with this term" },
+          ]}
+          onExport={() => downloadCsv(exportHarvestCsv(harvest), "harvest.csv")}
+          exportLabel="Export harvest.csv"
+        />
+      )}
+
+      {negatives.length === 0 && harvest.length === 0 && (
+        <div style={{ textAlign: "center", padding: "24px", color: C.s5, fontSize: 13 }}>
+          No candidates found with current thresholds. Try lowering the thresholds above.
+        </div>
+      )}
+    </div>
+  );
 }
 
 function SqpTab({ data, setData }) {
