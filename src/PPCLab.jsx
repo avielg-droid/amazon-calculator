@@ -146,7 +146,7 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
                   <tr style={{ borderTop: `1px solid ${C.s8}`, background: isOpen ? C.s95 : "transparent" }}>
                     {columns.map(col => (
                       <td key={col.key} style={{ padding: "8px 12px", color: "#e2e8f0", whiteSpace: col.key === "term" || col.key === "query" || col.key === "recommendedAction" || col.key === "insight" ? "normal" : "nowrap" }}>
-                        {col.key === "spend" ? `$${Number(item[col.key]).toFixed(2)}` : item[col.key]}
+                        {col.render ? col.render(item) : col.key === "spend" ? `$${Number(item[col.key]).toFixed(2)}` : item[col.key]}
                       </td>
                     ))}
                     <td style={{ padding: "8px 12px" }}>
@@ -180,6 +180,7 @@ function StrTab({ data, setData }) {
   const [thresholdsOpen, setThresholdsOpen] = useState(false);
   const [error, setError] = useState(null);
   const [expandedWhy, setExpandedWhy] = useState(null);
+  const [brandFilter, setBrandFilter] = useState("");
 
   const analysis = useMemo(() => {
     if (!data.rows.length) return null;
@@ -234,6 +235,10 @@ function StrTab({ data, setData }) {
             </div>
           </div>
         </div>
+        <div style={{ marginTop: 10, marginBottom: 12, display: "flex", alignItems: "flex-start", gap: 8, fontSize: 11, color: C.amber, background: "#f59e0b08", border: "1px solid #f59e0b20", borderRadius: 8, padding: "8px 12px" }}>
+          <span style={{ flexShrink: 0 }}>⚠</span>
+          <span>Recommended: Use a 30–60 day report for best results. A 1-day report may show 0 recommendations due to low spend data.</span>
+        </div>
         {error && <div style={{ background: "#f43f5e10", border: "1px solid #f43f5e30", borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.rose, display: "flex", gap: 8, alignItems: "flex-start" }}><AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
         <UploadZone onFile={handleFile} label="Drop your Search Term Report CSV here or click to browse" />
       </div>
@@ -242,6 +247,9 @@ function StrTab({ data, setData }) {
 
   // ── Analysis view ──
   const { negatives, harvest, totalTerms } = analysis;
+  const brandLower = brandFilter.trim().toLowerCase();
+  const filteredNegatives = brandLower ? negatives.filter(n => !n.term.toLowerCase().includes(brandLower)) : negatives;
+  const filteredHarvest = brandLower ? harvest.filter(h => !h.term.toLowerCase().includes(brandLower)) : harvest;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -253,6 +261,15 @@ function StrTab({ data, setData }) {
           style={{ marginLeft: "auto", fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "3px 10px", cursor: "pointer" }}>
           Upload new file
         </button>
+      </div>
+
+      {/* Brand filter */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: C.s4, whiteSpace: "nowrap" }}>Exclude brand:</span>
+        <input type="text" placeholder="e.g. your brand name" value={brandFilter} onChange={e => setBrandFilter(e.target.value)}
+          style={{ flex: 1, background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: "7px 12px", fontSize: 12, color: "#e2e8f0", outline: "none" }} />
+        {brandFilter && <button onClick={() => setBrandFilter("")}
+          style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "3px 8px", cursor: "pointer" }}>clear</button>}
       </div>
 
       {/* Thresholds panel */}
@@ -295,17 +312,17 @@ function StrTab({ data, setData }) {
 
       {/* Summary cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-        <SummaryCard label="Negative Candidates" value={negatives.length} color={C.rose} />
-        <SummaryCard label="Harvest Opportunities" value={harvest.length} color={C.emerald} />
+        <SummaryCard label="Negative Candidates" value={filteredNegatives.length} color={C.rose} />
+        <SummaryCard label="Harvest Opportunities" value={filteredHarvest.length} color={C.emerald} />
         <SummaryCard label="Terms Analyzed" value={totalTerms.toLocaleString()} color={C.s4} />
       </div>
 
       {/* Negatives list */}
-      {negatives.length > 0 && (
+      {filteredNegatives.length > 0 && (
         <RecoSection
           title="Negative Keyword Candidates"
           color={C.rose}
-          items={negatives}
+          items={filteredNegatives}
           expandedWhy={expandedWhy}
           setExpandedWhy={setExpandedWhy}
           idPrefix="neg"
@@ -317,17 +334,17 @@ function StrTab({ data, setData }) {
             { key: "campaign", label: "Campaign", tip: "Campaign name" },
             { key: "recommendedNegType", label: "Neg. Type", tip: "Recommended negative match type to add" },
           ]}
-          onExport={() => downloadCsv(exportNegativesCsv(negatives), "negatives.csv")}
+          onExport={() => downloadCsv(exportNegativesCsv(filteredNegatives), "negatives.csv")}
           exportLabel="Export negatives.csv"
         />
       )}
 
       {/* Harvest list */}
-      {harvest.length > 0 && (
+      {filteredHarvest.length > 0 && (
         <RecoSection
           title="Harvest Opportunities"
           color={C.emerald}
-          items={harvest}
+          items={filteredHarvest}
           expandedWhy={expandedWhy}
           setExpandedWhy={setExpandedWhy}
           idPrefix="harv"
@@ -339,12 +356,12 @@ function StrTab({ data, setData }) {
             { key: "matchType", label: "Current Match", tip: "Current keyword match type in your campaign" },
             { key: "recommendedAction", label: "Action", tip: "What to do with this term" },
           ]}
-          onExport={() => downloadCsv(exportHarvestCsv(harvest), "harvest.csv")}
+          onExport={() => downloadCsv(exportHarvestCsv(filteredHarvest), "harvest.csv")}
           exportLabel="Export harvest.csv"
         />
       )}
 
-      {negatives.length === 0 && harvest.length === 0 && (
+      {filteredNegatives.length === 0 && filteredHarvest.length === 0 && (
         <div style={{ textAlign: "center", padding: "24px", color: C.s5, fontSize: 13 }}>
           No candidates found with current thresholds. Try lowering the thresholds above.
         </div>
@@ -358,6 +375,7 @@ function SqpTab({ data, setData }) {
   const [thresholdsOpen, setThresholdsOpen] = useState(false);
   const [error, setError] = useState(null);
   const [expandedWhy, setExpandedWhy] = useState(null);
+  const [brandFilter, setBrandFilter] = useState("");
 
   const analysis = useMemo(() => {
     if (!data.rows.length) return null;
@@ -405,10 +423,15 @@ function SqpTab({ data, setData }) {
             <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: C.s5, marginBottom: 4 }}>What you'll get</div>
             <div style={{ fontSize: 12, color: C.s4, lineHeight: 1.7 }}>
               • Opportunity keywords — good conversion but low market share (increase bids)<br />
+              • Market Leader keywords — you dominate these queries (protect budget)<br />
               • Risk keywords — high impressions but poor conversion (review relevance)<br />
               • Export-ready CSV with labels and recommended actions
             </div>
           </div>
+        </div>
+        <div style={{ marginTop: 10, marginBottom: 12, display: "flex", alignItems: "flex-start", gap: 8, fontSize: 11, color: C.amber, background: "#f59e0b08", border: "1px solid #f59e0b20", borderRadius: 8, padding: "8px 12px" }}>
+          <span style={{ flexShrink: 0 }}>⚠</span>
+          <span>Recommended: Use a 90-day report for best results. Short date ranges may not have enough search volume data to surface meaningful insights.</span>
         </div>
         {error && <div style={{ background: "#f43f5e10", border: "1px solid #f43f5e30", borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.rose, display: "flex", gap: 8, alignItems: "flex-start" }}><AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
         <UploadZone onFile={handleFile} label="Drop your Search Query Performance CSV here or click to browse" />
@@ -416,7 +439,11 @@ function SqpTab({ data, setData }) {
     );
   }
 
-  const { opportunities, risks, totalQueries } = analysis;
+  const { opportunities, risks, leaders, totalQueries } = analysis;
+  const brandLower = brandFilter.trim().toLowerCase();
+  const filteredOpportunities = brandLower ? opportunities.filter(o => !o.query.toLowerCase().includes(brandLower)) : opportunities;
+  const filteredRisks = brandLower ? risks.filter(r => !r.query.toLowerCase().includes(brandLower)) : risks;
+  const filteredLeaders = brandLower ? leaders.filter(l => !l.query.toLowerCase().includes(brandLower)) : leaders;
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
@@ -428,6 +455,15 @@ function SqpTab({ data, setData }) {
           style={{ marginLeft: "auto", fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "3px 10px", cursor: "pointer" }}>
           Upload new file
         </button>
+      </div>
+
+      {/* Brand filter */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: C.s4, whiteSpace: "nowrap" }}>Exclude brand:</span>
+        <input type="text" placeholder="e.g. your brand name" value={brandFilter} onChange={e => setBrandFilter(e.target.value)}
+          style={{ flex: 1, background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: "7px 12px", fontSize: 12, color: "#e2e8f0", outline: "none" }} />
+        {brandFilter && <button onClick={() => setBrandFilter("")}
+          style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "3px 8px", cursor: "pointer" }}>clear</button>}
       </div>
 
       {/* Thresholds panel */}
@@ -448,6 +484,7 @@ function SqpTab({ data, setData }) {
               { key: "maxClickShareOpportunity", label: "Max Click Share (Opp.)", suffix: "%", tip: "Your click share must be at or below this to flag as low market share" },
               { key: "minImpressionShareRisk", label: "Min Impression Share (Risk)", suffix: "%", tip: "Impression share must be at least this to consider a query over-indexed for impressions" },
               { key: "maxPurchaseShareRisk", label: "Max Purchase Share (Risk)", suffix: "%", tip: "Purchase share must be at or below this to flag as under-converting" },
+              { key: "minPurchaseShareLeader", label: "Min Purchase Share (Leader)", suffix: "%", tip: "Queries where your purchase share is this high — you are the market leader" },
             ].map(({ key, label, suffix, tip }) => (
               <div key={key}>
                 <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
@@ -469,40 +506,83 @@ function SqpTab({ data, setData }) {
       </div>
 
       {/* Summary cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-        <SummaryCard label="Opportunities" value={opportunities.length} color={C.emerald} />
-        <SummaryCard label="Risk Keywords" value={risks.length} color={C.rose} />
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+        <SummaryCard label="Opportunities" value={filteredOpportunities.length} color={C.emerald} />
+        <SummaryCard label="Market Leaders" value={filteredLeaders.length} color={C.cyan} />
+        <SummaryCard label="Risk Keywords" value={filteredRisks.length} color={C.rose} />
         <SummaryCard label="Queries Analyzed" value={totalQueries.toLocaleString()} color={C.s4} />
       </div>
 
       {/* Opportunities */}
-      {opportunities.length > 0 && (
+      {filteredOpportunities.length > 0 && (
         <RecoSection
           title="Opportunity Keywords"
           color={C.emerald}
-          items={opportunities}
+          items={filteredOpportunities}
           expandedWhy={expandedWhy}
           setExpandedWhy={setExpandedWhy}
           idPrefix="opp"
           columns={[
             { key: "query", label: "Search Query", tip: "The customer search query" },
             { key: "volume", label: "Volume", tip: "Monthly search query volume" },
-            { key: "purchaseShare", label: "Purchase Share %", tip: "Your share of purchases for this query" },
-            { key: "clickShare", label: "Click Share %", tip: "Your share of clicks for this query" },
-            { key: "impressionShare", label: "Imp. Share %", tip: "Your share of impressions for this query" },
+            { key: "purchaseShare", label: "Purchase Share %", tip: "Your share of purchases — you convert well here" },
+            {
+              key: "gap",
+              label: "Market Gap",
+              tip: "Impression share vs click share. Green bar = your clicks, gray = untapped impressions. Wider gap = bigger opportunity.",
+              render: (item) => {
+                const imp = parseFloat(item.impressionShare);
+                const clk = parseFloat(item.clickShare);
+                const gap = Math.max(0, imp - clk);
+                const gapColor = gap >= 20 ? C.emerald : gap >= 10 ? C.amber : C.s5;
+                return (
+                  <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 160 }}>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: gapColor, fontFamily: "ui-monospace, monospace", minWidth: 38 }}>+{gap.toFixed(1)}%</span>
+                    <div style={{ flex: 1, height: 6, background: C.s8, borderRadius: 3, overflow: "hidden", minWidth: 70 }}>
+                      <div style={{ height: "100%", width: `${Math.min(imp, 100)}%`, background: C.s7, borderRadius: 3, position: "relative" }}>
+                        <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${imp > 0 ? (clk / imp) * 100 : 0}%`, background: gapColor, borderRadius: 3 }} />
+                      </div>
+                    </div>
+                    <span style={{ fontSize: 10, color: C.s5, whiteSpace: "nowrap" }}>{clk}% / {imp}%</span>
+                  </div>
+                );
+              },
+            },
             { key: "insight", label: "Insight", tip: "Recommended action" },
           ]}
-          onExport={() => downloadCsv(exportSqpCsv(opportunities, []), "sqp-opportunities.csv")}
+          onExport={() => downloadCsv(exportSqpCsv(filteredOpportunities, [], []), "sqp-opportunities.csv")}
           exportLabel="Export opportunities.csv"
         />
       )}
 
+      {/* Market Leaders */}
+      {filteredLeaders.length > 0 && (
+        <RecoSection
+          title="Market Leader Keywords"
+          color={C.cyan}
+          items={filteredLeaders}
+          expandedWhy={expandedWhy}
+          setExpandedWhy={setExpandedWhy}
+          idPrefix="lead"
+          columns={[
+            { key: "query", label: "Search Query", tip: "The customer search query" },
+            { key: "volume", label: "Volume", tip: "Monthly search query volume" },
+            { key: "purchaseShare", label: "Purchase Share %", tip: "Your dominant share of purchases for this query" },
+            { key: "clickShare", label: "Click Share %", tip: "Your share of clicks" },
+            { key: "impressionShare", label: "Imp. Share %", tip: "Your share of impressions" },
+            { key: "insight", label: "Insight", tip: "Strategic recommendation" },
+          ]}
+          onExport={() => downloadCsv(exportSqpCsv([], [], filteredLeaders), "sqp-leaders.csv")}
+          exportLabel="Export leaders.csv"
+        />
+      )}
+
       {/* Risks */}
-      {risks.length > 0 && (
+      {filteredRisks.length > 0 && (
         <RecoSection
           title="Risk Keywords"
           color={C.rose}
-          items={risks}
+          items={filteredRisks}
           expandedWhy={expandedWhy}
           setExpandedWhy={setExpandedWhy}
           idPrefix="risk"
@@ -514,12 +594,12 @@ function SqpTab({ data, setData }) {
             { key: "clickShare", label: "Click Share %", tip: "Your share of clicks" },
             { key: "insight", label: "Insight", tip: "Recommended action" },
           ]}
-          onExport={() => downloadCsv(exportSqpCsv([], risks), "sqp-risks.csv")}
+          onExport={() => downloadCsv(exportSqpCsv([], filteredRisks, []), "sqp-risks.csv")}
           exportLabel="Export risks.csv"
         />
       )}
 
-      {opportunities.length === 0 && risks.length === 0 && (
+      {filteredOpportunities.length === 0 && filteredRisks.length === 0 && filteredLeaders.length === 0 && (
         <div style={{ textAlign: "center", padding: "24px", color: C.s5, fontSize: 13 }}>
           No keywords flagged with current thresholds. Try adjusting the thresholds above.
         </div>
