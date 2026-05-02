@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
+import PPCLab from "./src/PPCLab.jsx";
 import { Analytics } from "@vercel/analytics/react";
 import { PieChart, Pie, Cell, Tooltip as ReTooltip, ResponsiveContainer } from "recharts";
 import {
@@ -203,6 +204,8 @@ export default function App() {
     return DEFAULTS;
   });
   const [activeTab, setActiveTab] = useState("breakdown");
+  const [ppcStr, setPpcStr] = useState({ rows: [], file: null });
+  const [ppcSqp, setPpcSqp] = useState({ rows: [], file: null });
   const [inputErrors, setInputErrors] = useState({});
   const [toast, setToast] = useState(null);
   const [orderQty, setOrderQty] = useState(500);
@@ -500,6 +503,7 @@ export default function App() {
               ["cashflow", "Cash Flow"],
               ["pricing", "Pricing Tools"],
               ["insights", "Insights"],
+              ["ppc", "PPC Lab"],
             ].map(([t, label]) => (
               <button key={t} style={tabBtn(t)} onClick={() => setActiveTab(t)}>{label}</button>
             ))}
@@ -891,6 +895,14 @@ export default function App() {
                 </div>
               </div>
             </div>
+          )}
+
+          {/* ── TAB: PPC LAB ── */}
+          {activeTab === "ppc" && (
+            <PPCLab
+              ppcStr={ppcStr} setPpcStr={setPpcStr}
+              ppcSqp={ppcSqp} setPpcSqp={setPpcSqp}
+            />
           )}
         </div>
       </div>
