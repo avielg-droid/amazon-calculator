@@ -203,6 +203,8 @@ export default function App() {
     return DEFAULTS;
   });
   const [activeTab, setActiveTab] = useState("breakdown");
+  const [ppcStr, setPpcStr] = useState({ rows: [], file: null });
+  const [ppcSqp, setPpcSqp] = useState({ rows: [], file: null });
   const [inputErrors, setInputErrors] = useState({});
   const [toast, setToast] = useState(null);
   const [orderQty, setOrderQty] = useState(500);
@@ -500,6 +502,7 @@ export default function App() {
               ["cashflow", "Cash Flow"],
               ["pricing", "Pricing Tools"],
               ["insights", "Insights"],
+              ["ppc", "PPC Lab"],
             ].map(([t, label]) => (
               <button key={t} style={tabBtn(t)} onClick={() => setActiveTab(t)}>{label}</button>
             ))}
@@ -890,6 +893,13 @@ export default function App() {
                   </p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* ── TAB: PPC LAB ── */}
+          {activeTab === "ppc" && (
+            <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 16, padding: "16px 18px" }}>
+              <span style={{ fontSize: 13, color: "#94a3b8" }}>PPC Lab — coming soon</span>
             </div>
           )}
         </div>
