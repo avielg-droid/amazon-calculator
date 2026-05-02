@@ -354,5 +354,176 @@ function StrTab({ data, setData }) {
 }
 
 function SqpTab({ data, setData }) {
-  return <div style={{ color: C.s4, fontSize: 13, padding: "24px 0", textAlign: "center" }}>SQP analysis — coming soon</div>;
+  const [thresholds, setThresholds] = useState({ ...SQP_THRESHOLD_DEFAULTS });
+  const [thresholdsOpen, setThresholdsOpen] = useState(false);
+  const [error, setError] = useState(null);
+  const [expandedWhy, setExpandedWhy] = useState(null);
+
+  const analysis = useMemo(() => {
+    if (!data.rows.length) return null;
+    return analyzeSqp(data.rows, thresholds);
+  }, [data.rows, thresholds]);
+
+  const handleFile = (file, fileError, text) => {
+    if (fileError) { setError(fileError); return; }
+    try {
+      const { headers, rows } = parseCsv(text);
+      const colError = validateColumns(headers, SQP_REQUIRED_COLUMNS);
+      if (colError) { setError(colError); return; }
+      setError(null);
+      setData({ rows, file });
+    } catch (e) {
+      setError(e.message);
+    }
+  };
+
+  const downloadCsv = (content, filename) => {
+    const blob = new Blob([content], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ── Onboarding ──
+  if (!data.rows.length) {
+    return (
+      <div>
+        <div style={{ background: "#06b6d408", border: "1px solid #06b6d420", borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.cyan, marginBottom: 10 }}>How to get your Search Query Performance Report</div>
+          {[
+            "Go to Seller Central → Brand Analytics → Search Query Performance",
+            "Select your ASIN and date range (last 90 days recommended for volume)",
+            "Click Export → Download CSV",
+            "Upload the CSV below",
+          ].map((step, i) => (
+            <div key={i} style={{ display: "flex", gap: 10, marginBottom: 6, alignItems: "flex-start" }}>
+              <span style={{ minWidth: 20, height: 20, borderRadius: "50%", background: C.s8, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: C.cyan }}>{i + 1}</span>
+              <span style={{ fontSize: 12, color: C.s4, lineHeight: 1.5 }}>{step}</span>
+            </div>
+          ))}
+          <div style={{ marginTop: 12, padding: "10px 14px", background: C.s95, borderRadius: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: C.s5, marginBottom: 4 }}>What you'll get</div>
+            <div style={{ fontSize: 12, color: C.s4, lineHeight: 1.7 }}>
+              • Opportunity keywords — good conversion but low market share (increase bids)<br />
+              • Risk keywords — high impressions but poor conversion (review relevance)<br />
+              • Export-ready CSV with labels and recommended actions
+            </div>
+          </div>
+        </div>
+        {error && <div style={{ background: "#f43f5e10", border: "1px solid #f43f5e30", borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.rose, display: "flex", gap: 8, alignItems: "flex-start" }}><AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
+        <UploadZone onFile={handleFile} label="Drop your Search Query Performance CSV here or click to browse" />
+      </div>
+    );
+  }
+
+  const { opportunities, risks, totalQueries } = analysis;
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* File info + re-upload */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.s5 }}>
+        <CheckCircle size={13} color={C.emerald} />
+        <span>{data.file?.name} · {totalQueries.toLocaleString()} queries</span>
+        <button onClick={() => { setData({ rows: [], file: null }); setError(null); }}
+          style={{ marginLeft: "auto", fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "3px 10px", cursor: "pointer" }}>
+          Upload new file
+        </button>
+      </div>
+
+      {/* Thresholds panel */}
+      <div style={{ border: `1px solid ${C.s8}`, borderRadius: 10, overflow: "hidden" }}>
+        <button onClick={() => setThresholdsOpen(o => !o)}
+          style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: C.s95, border: "none", cursor: "pointer", color: C.s4, fontSize: 12 }}>
+          {thresholdsOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+          <span>Thresholds</span>
+          <span style={{ marginLeft: "auto", fontSize: 11, color: C.s6 }}>
+            {JSON.stringify(thresholds) === JSON.stringify(SQP_THRESHOLD_DEFAULTS) ? "using defaults" : "customized"}
+          </span>
+        </button>
+        {thresholdsOpen && (
+          <div style={{ padding: "12px 14px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
+            {[
+              { key: "minSearchVolume", label: "Min Search Volume", tip: "Ignore queries below this monthly search volume — filters out noise" },
+              { key: "minPurchaseShareOpportunity", label: "Min Purchase Share (Opp.)", suffix: "%", tip: "Your purchase share must be at least this high to flag as an opportunity" },
+              { key: "maxClickShareOpportunity", label: "Max Click Share (Opp.)", suffix: "%", tip: "Your click share must be at or below this to flag as low market share" },
+              { key: "minImpressionShareRisk", label: "Min Impression Share (Risk)", suffix: "%", tip: "Impression share must be at least this to consider a query over-indexed for impressions" },
+              { key: "maxPurchaseShareRisk", label: "Max Purchase Share (Risk)", suffix: "%", tip: "Purchase share must be at or below this to flag as under-converting" },
+            ].map(({ key, label, suffix, tip }) => (
+              <div key={key}>
+                <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
+                  <span style={LABEL}>{label}</span>
+                  <Tooltip text={tip} />
+                  <button onClick={() => setThresholds(t => ({ ...t, [key]: SQP_THRESHOLD_DEFAULTS[key] }))}
+                    style={{ marginLeft: "auto", fontSize: 9, color: C.s6, background: "none", border: "none", cursor: "pointer", padding: 0 }}>reset</button>
+                </div>
+                <div style={{ position: "relative" }}>
+                  <input type="number" value={thresholds[key]}
+                    onChange={e => setThresholds(t => ({ ...t, [key]: parseFloat(e.target.value) || 0 }))}
+                    style={{ width: "100%", background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: `7px ${suffix ? 28 : 10}px 7px 10px`, fontSize: 12, color: "#e2e8f0", outline: "none", boxSizing: "border-box" }} />
+                  {suffix && <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: C.s5, pointerEvents: "none" }}>{suffix}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Summary cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+        <SummaryCard label="Opportunities" value={opportunities.length} color={C.emerald} />
+        <SummaryCard label="Risk Keywords" value={risks.length} color={C.rose} />
+        <SummaryCard label="Queries Analyzed" value={totalQueries.toLocaleString()} color={C.s4} />
+      </div>
+
+      {/* Opportunities */}
+      {opportunities.length > 0 && (
+        <RecoSection
+          title="Opportunity Keywords"
+          color={C.emerald}
+          items={opportunities}
+          expandedWhy={expandedWhy}
+          setExpandedWhy={setExpandedWhy}
+          idPrefix="opp"
+          columns={[
+            { key: "query", label: "Search Query", tip: "The customer search query" },
+            { key: "volume", label: "Volume", tip: "Monthly search query volume" },
+            { key: "purchaseShare", label: "Purchase Share %", tip: "Your share of purchases for this query" },
+            { key: "clickShare", label: "Click Share %", tip: "Your share of clicks for this query" },
+            { key: "impressionShare", label: "Imp. Share %", tip: "Your share of impressions for this query" },
+            { key: "insight", label: "Insight", tip: "Recommended action" },
+          ]}
+          onExport={() => downloadCsv(exportSqpCsv(opportunities, []), "sqp-opportunities.csv")}
+          exportLabel="Export opportunities.csv"
+        />
+      )}
+
+      {/* Risks */}
+      {risks.length > 0 && (
+        <RecoSection
+          title="Risk Keywords"
+          color={C.rose}
+          items={risks}
+          expandedWhy={expandedWhy}
+          setExpandedWhy={setExpandedWhy}
+          idPrefix="risk"
+          columns={[
+            { key: "query", label: "Search Query", tip: "The customer search query" },
+            { key: "volume", label: "Volume", tip: "Monthly search query volume" },
+            { key: "impressionShare", label: "Imp. Share %", tip: "Your share of impressions — high visibility" },
+            { key: "purchaseShare", label: "Purchase Share %", tip: "Your share of purchases — low conversion" },
+            { key: "clickShare", label: "Click Share %", tip: "Your share of clicks" },
+            { key: "insight", label: "Insight", tip: "Recommended action" },
+          ]}
+          onExport={() => downloadCsv(exportSqpCsv([], risks), "sqp-risks.csv")}
+          exportLabel="Export risks.csv"
+        />
+      )}
+
+      {opportunities.length === 0 && risks.length === 0 && (
+        <div style={{ textAlign: "center", padding: "24px", color: C.s5, fontSize: 13 }}>
+          No keywords flagged with current thresholds. Try adjusting the thresholds above.
+        </div>
+      )}
+    </div>
+  );
 }
