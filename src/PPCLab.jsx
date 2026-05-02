@@ -1,7 +1,7 @@
 // src/PPCLab.jsx
 import React, { useState, useMemo } from "react";
 import { Upload, ChevronDown, ChevronRight, Download, AlertCircle, Info, CheckCircle } from "lucide-react";
-import { parseCsv, validateColumns } from "./parseCsv.js";
+import { parseCsv, parseXlsx, validateColumns } from "./parseCsv.js";
 import { analyzeStr, exportNegativesCsv, exportHarvestCsv, STR_REQUIRED_COLUMNS, STR_THRESHOLD_DEFAULTS } from "./analyzeStr.js";
 import { analyzeSqp, exportSqpCsv, SQP_REQUIRED_COLUMNS, SQP_THRESHOLD_DEFAULTS } from "./analyzeSqp.js";
 
@@ -43,20 +43,29 @@ export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp }) {
 
 // ── Upload Zone ──
 
-function UploadZone({ onFile, label = "Drop CSV here or click to browse" }) {
+function UploadZone({ onFile, label = "Drop file here or click to browse" }) {
   const [dragging, setDragging] = useState(false);
   const inputId = "ppc-file-" + label.replace(/\s/g, "").slice(0, 10);
 
   const handleFile = (file) => {
     if (!file) return;
-    if (!file.name.toLowerCase().endsWith(".csv")) {
+    const name = file.name.toLowerCase();
+    const isXlsx = name.endsWith(".xlsx") || name.endsWith(".xls");
+    const isCsv = name.endsWith(".csv");
+    if (!isXlsx && !isCsv) {
       const ext = file.name.split(".").pop().toUpperCase();
-      onFile(null, `Looks like a ${ext} file. PPC Lab needs a CSV.`, null);
+      onFile(null, `Unsupported file type (.${ext}). Upload a CSV or Excel (.xlsx) file.`, null);
       return;
     }
-    const reader = new FileReader();
-    reader.onload = (e) => onFile(file, null, e.target.result);
-    reader.readAsText(file);
+    if (isXlsx) {
+      const reader = new FileReader();
+      reader.onload = (e) => onFile(file, null, e.target.result, "xlsx");
+      reader.readAsArrayBuffer(file);
+    } else {
+      const reader = new FileReader();
+      reader.onload = (e) => onFile(file, null, e.target.result, "csv");
+      reader.readAsText(file);
+    }
   };
 
   return (
@@ -74,8 +83,8 @@ function UploadZone({ onFile, label = "Drop CSV here or click to browse" }) {
     >
       <Upload size={24} color={C.s5} style={{ marginBottom: 8 }} />
       <div style={{ fontSize: 13, color: C.s4, marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 11, color: C.s6 }}>CSV files only</div>
-      <input id={inputId} type="file" accept=".csv" style={{ display: "none" }}
+      <div style={{ fontSize: 11, color: C.s6 }}>CSV or Excel (.xlsx) files</div>
+      <input id={inputId} type="file" accept=".csv,.xlsx,.xls" style={{ display: "none" }}
         onChange={(e) => handleFile(e.target.files[0])} />
     </div>
   );
@@ -187,14 +196,14 @@ function StrTab({ data, setData }) {
     return analyzeStr(data.rows, thresholds);
   }, [data.rows, thresholds]);
 
-  const handleFile = (file, fileError, text) => {
+  const handleFile = (file, fileError, data, fileType) => {
     if (fileError) { setError(fileError); return; }
     try {
-      const { headers, rows } = parseCsv(text);
-      const colError = validateColumns(headers, STR_REQUIRED_COLUMNS);
+      const parsed = fileType === "xlsx" ? parseXlsx(data) : parseCsv(data);
+      const colError = validateColumns(parsed.headers, STR_REQUIRED_COLUMNS);
       if (colError) { setError(colError); return; }
       setError(null);
-      setData({ rows, file });
+      setData({ rows: parsed.rows, file });
     } catch (e) {
       setError(e.message);
     }
@@ -240,7 +249,7 @@ function StrTab({ data, setData }) {
           <span>Recommended: Use a 30–60 day report for best results. A 1-day report may show 0 recommendations due to low spend data.</span>
         </div>
         {error && <div style={{ background: "#f43f5e10", border: "1px solid #f43f5e30", borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.rose, display: "flex", gap: 8, alignItems: "flex-start" }}><AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
-        <UploadZone onFile={handleFile} label="Drop your Search Term Report CSV here or click to browse" />
+        <UploadZone onFile={handleFile} label="Drop your Search Term Report here or click to browse (CSV or Excel)" />
       </div>
     );
   }
@@ -382,14 +391,14 @@ function SqpTab({ data, setData }) {
     return analyzeSqp(data.rows, thresholds);
   }, [data.rows, thresholds]);
 
-  const handleFile = (file, fileError, text) => {
+  const handleFile = (file, fileError, data, fileType) => {
     if (fileError) { setError(fileError); return; }
     try {
-      const { headers, rows } = parseCsv(text);
-      const colError = validateColumns(headers, SQP_REQUIRED_COLUMNS);
+      const parsed = fileType === "xlsx" ? parseXlsx(data) : parseCsv(data);
+      const colError = validateColumns(parsed.headers, SQP_REQUIRED_COLUMNS);
       if (colError) { setError(colError); return; }
       setError(null);
-      setData({ rows, file });
+      setData({ rows: parsed.rows, file });
     } catch (e) {
       setError(e.message);
     }

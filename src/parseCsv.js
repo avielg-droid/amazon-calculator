@@ -1,6 +1,8 @@
 // src/parseCsv.js
-// Parses Amazon advertising CSV/TSV reports (auto-detects separator, handles BOM)
+// Parses Amazon advertising CSV/TSV/XLSX reports
 // Returns: { headers: string[], rows: object[] } or throws Error with user-facing message
+
+import * as XLSX from "xlsx";
 
 // Maps known Amazon column name variations → canonical names used by analysis functions
 const COLUMN_ALIASES = {
@@ -27,20 +29,28 @@ const COLUMN_ALIASES = {
   "total advertising cost of sales (acos)": "ACOS",
   "campaign name": "Campaign Name",
   "ad group name": "Ad Group Name",
-  // Search Query Performance
+  // Search Query Performance — "Brand View" format (Impressions: Brand Count etc.)
   "search query": "Search Query",
   "search query volume": "Search Query Volume",
+  "impressions: brand count": "Impressions",
+  "impressions: total count": "Impressions Total",
+  "impressions: brand share %": "Impression Share",
+  "clicks: brand count": "Clicks",
+  "clicks: total count": "Clicks Total",
+  "clicks: brand share %": "Click Share",
+  "purchases: brand count": "Purchases",
+  "purchases: total count": "Purchases Total",
+  "purchases: brand share %": "Purchase Share",
+  "cart adds: brand count": "Cart Adds",
+  "cart adds: brand share %": "Cart Add Share",
+  // SQP alternative formats
   "impression share": "Impression Share",
   "impression share (%)": "Impression Share",
-  "impressions share": "Impression Share",
   "click share": "Click Share",
   "click share (%)": "Click Share",
-  "clicks share": "Click Share",
-  "purchases": "Purchases",
   "purchase share": "Purchase Share",
   "purchase share (%)": "Purchase Share",
-  "cart adds": "Cart Adds",
-  "cart add share": "Cart Add Share",
+  "purchases": "Purchases",
 };
 
 function normalizeHeader(h) {
@@ -48,27 +58,31 @@ function normalizeHeader(h) {
   return COLUMN_ALIASES[lower] || h.trim();
 }
 
+// Parse CSV or TSV text → { headers, rows }
 export function parseCsv(text) {
-  // Strip BOM (UTF-8 BOM = \uFEFF, sometimes present in Amazon exports)
+  // Strip BOM (UTF-8 BOM = \uFEFF, present in many Amazon exports)
   const clean = text.replace(/^\uFEFF/, "").trim();
   const lines = clean.split(/\r?\n/);
   if (lines.length < 2) throw new Error("File has no data rows.");
 
-  // Auto-detect separator: count tabs vs commas in first 5 non-empty lines
+  // Auto-detect separator: count tabs vs commas across first 5 lines
   const sample = lines.slice(0, 5).join("\n");
   const tabCount = (sample.match(/\t/g) || []).length;
   const commaCount = (sample.match(/,/g) || []).length;
   const sep = tabCount > commaCount ? "\t" : ",";
-  const sepRe = new RegExp(sep === "\t" ? "\t" : ",", "g");
+  const countSep = (line) => (line.match(sep === "\t" ? /\t/g : /,/g) || []).length;
 
-  // Find header row: scan up to 15 rows for first row with >= 3 separators
+  // Find header row: pick the row with the MOST separators in first 15 rows
+  // (metadata rows have few columns; the real header has many)
   let headerIdx = 0;
+  let maxSeps = 0;
   for (let i = 0; i < Math.min(lines.length, 15); i++) {
-    if ((lines[i].match(sepRe) || []).length >= 3) { headerIdx = i; break; }
+    const n = countSep(lines[i]);
+    if (n > maxSeps) { maxSeps = n; headerIdx = i; }
   }
+  if (maxSeps < 2) throw new Error("File has no data rows.");
 
   const splitRow = sep === "\t" ? splitTsvRow : splitCsvRow;
-  // Normalize headers to canonical names via alias map
   const headers = splitRow(lines[headerIdx]).map(h => normalizeHeader(h.replace(/^"|"$/g, "")));
   const rows = [];
 
@@ -78,6 +92,36 @@ export function parseCsv(text) {
     const vals = splitRow(line).map(v => v.trim().replace(/^"|"$/g, ""));
     const row = {};
     headers.forEach((h, idx) => { row[h] = vals[idx] ?? ""; });
+    rows.push(row);
+  }
+
+  return { headers, rows };
+}
+
+// Parse an Excel (.xlsx / .xls) ArrayBuffer → { headers, rows }
+export function parseXlsx(arrayBuffer) {
+  const wb = XLSX.read(arrayBuffer, { type: "array" });
+  const ws = wb.Sheets[wb.SheetNames[0]];
+  const data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: "" });
+
+  if (data.length < 2) throw new Error("File has no data rows.");
+
+  // Find row with most columns (same heuristic as CSV)
+  let headerIdx = 0;
+  let maxCols = 0;
+  for (let i = 0; i < Math.min(data.length, 15); i++) {
+    const n = data[i].filter(c => c !== "").length;
+    if (n > maxCols) { maxCols = n; headerIdx = i; }
+  }
+
+  const headers = data[headerIdx].map(h => normalizeHeader(String(h)));
+  const rows = [];
+
+  for (let i = headerIdx + 1; i < data.length; i++) {
+    const vals = data[i];
+    if (vals.every(v => v === "" || v === null || v === undefined)) continue;
+    const row = {};
+    headers.forEach((h, idx) => { row[h] = vals[idx] != null ? String(vals[idx]) : ""; });
     rows.push(row);
   }
 
@@ -99,18 +143,17 @@ function splitCsvRow(line) {
   return result;
 }
 
-// TSV: tabs are never inside quoted fields in Amazon exports
 function splitTsvRow(line) {
   return line.split("\t");
 }
 
-// Validates that all required columns exist in headers (case-insensitive, alias-aware)
-// Returns null if OK, or error message string showing what was found
+// Validates that all required columns exist in (already-normalized) headers
+// Returns null if OK, or error string showing what was found
 export function validateColumns(headers, required) {
   const headersLower = headers.map(h => h.toLowerCase());
   const missing = required.filter(col => !headersLower.includes(col.toLowerCase()));
   if (missing.length === 0) return null;
-  return `Couldn't recognize this report format. Missing: ${missing.join(", ")}. Found in your file: ${headers.join(", ")}. If the column names look different, contact support with these column names.`;
+  return `Couldn't recognize this report format. Missing: ${missing.join(", ")}. Found in your file: ${headers.join(", ")}. Contact support with these column names.`;
 }
 
 // Parse a number from an Amazon report cell (handles %, $, commas, dashes)
