@@ -204,6 +204,10 @@ export default function App() {
     return DEFAULTS;
   });
   const [activeTab, setActiveTab] = useState("breakdown");
+  const [hoveredTab, setHoveredTab] = useState(null);
+  const [hoveredChannel, setHoveredChannel] = useState(null);
+  const [hoveredMarket, setHoveredMarket] = useState(null);
+  const [hoveredShare, setHoveredShare] = useState(false);
   const [ppcStr, setPpcStr] = useState({ rows: [], file: null });
   const [ppcSqp, setPpcSqp] = useState({ rows: [], file: null });
   const [inputErrors, setInputErrors] = useState({});
@@ -315,24 +319,27 @@ export default function App() {
     return out;
   }, [s, isUS, channelMode, inputs.referralFee]);
 
-  const tabBtn = t => ({
-    padding: "7px 12px", borderRadius: 8, fontSize: 11, fontWeight: 600,
-    cursor: "pointer", border: "none", transition: "all 0.2s", whiteSpace: "nowrap",
-    background: activeTab === t ? C.emerald : "transparent",
-    color: activeTab === t ? "#fff" : C.s4,
+  const tabBtn = (t) => ({
+    padding: "7px 14px", borderRadius: 8, border: "none", cursor: "pointer",
+    fontSize: 12, fontWeight: 600, whiteSpace: "nowrap",
+    transition: "all 0.15s", outline: "none", boxShadow: "none",
+    background: activeTab === t ? C.emerald : hoveredTab === t ? C.s8 : "transparent",
+    color: activeTab === t ? "#fff" : hoveredTab === t ? "#e2e8f0" : C.s4,
   });
 
   const modeBtn = (cur, val) => ({
     padding: "7px 18px", borderRadius: 9, fontSize: 12, fontWeight: 600,
     cursor: "pointer", border: "none", transition: "all 0.2s",
-    background: cur === val ? C.emerald : "transparent",
+    outline: "none", boxShadow: "none",
+    background: cur === val ? C.emerald : hoveredChannel === val ? C.s7 : "transparent",
     color: cur === val ? "#fff" : C.s4,
   });
 
-  const marketBtn = (val, Icon, label) => ({
+  const marketBtn = (val) => ({
     padding: "7px 16px", borderRadius: 9, fontSize: 12, fontWeight: 600,
     cursor: "pointer", border: "none", transition: "all 0.2s",
-    background: marketMode === val ? (val === "us" ? "#3b82f6" : C.violet) : "transparent",
+    outline: "none", boxShadow: "none",
+    background: marketMode === val ? (val === "us" ? "#3b82f6" : C.violet) : hoveredMarket === val ? C.s7 : "transparent",
     color: marketMode === val ? "#fff" : C.s4,
     display: "flex", alignItems: "center", gap: 6,
   });
@@ -361,25 +368,41 @@ export default function App() {
           <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
             {/* Market toggle */}
             <div style={{ display: "flex", background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 12, padding: 4, gap: 4, alignItems: "center" }}>
-              <button style={marketBtn("us")} onClick={() => setMarketMode("us")}>
+              <button style={marketBtn("us")} onClick={() => setMarketMode("us")}
+                onMouseEnter={() => setHoveredMarket("us")}
+                onMouseLeave={() => setHoveredMarket(null)}
+              >
                 <Flag size={12} />US Marketplace
               </button>
-              <button style={marketBtn("intl")} onClick={() => setMarketMode("intl")}>
+              <button style={marketBtn("intl")} onClick={() => setMarketMode("intl")}
+                onMouseEnter={() => setHoveredMarket("intl")}
+                onMouseLeave={() => setHoveredMarket(null)}
+              >
                 <Globe size={12} />International (VAT)
               </button>
             </div>
             {/* Channel toggle */}
             <div style={{ display: "flex", background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 12, padding: 4, gap: 4 }}>
-              <button style={modeBtn(channelMode, "amazon")} onClick={() => setChannelMode("amazon")}>Amazon FBA</button>
-              <button style={modeBtn(channelMode, "dtc")} onClick={() => setChannelMode("dtc")}>DTC / Shopify</button>
+              <button style={modeBtn(channelMode, "amazon")} onClick={() => setChannelMode("amazon")}
+                onMouseEnter={() => setHoveredChannel("amazon")}
+                onMouseLeave={() => setHoveredChannel(null)}
+              >Amazon FBA</button>
+              <button style={modeBtn(channelMode, "dtc")} onClick={() => setChannelMode("dtc")}
+                onMouseEnter={() => setHoveredChannel("dtc")}
+                onMouseLeave={() => setHoveredChannel(null)}
+              >DTC / Shopify</button>
             </div>
             {/* Share button */}
             <button onClick={handleShare} style={{
               display: "flex", alignItems: "center", gap: 6,
               padding: "8px 14px", borderRadius: 9, fontSize: 12, fontWeight: 600,
-              background: C.s8, border: `1px solid ${C.s7}`, color: C.s4,
-              cursor: "pointer",
-            }}>
+              background: hoveredShare ? C.s7 : C.s8, border: `1px solid ${C.s7}`, color: C.s4,
+              cursor: "pointer", outline: "none", boxShadow: "none",
+              transition: "all 0.15s",
+            }}
+              onMouseEnter={() => setHoveredShare(true)}
+              onMouseLeave={() => setHoveredShare(false)}
+            >
               <Share2 size={13} /> Share
             </button>
           </div>
@@ -505,7 +528,10 @@ export default function App() {
               ["insights", "Insights"],
               ["ppc", "PPC Lab"],
             ].map(([t, label]) => (
-              <button key={t} style={tabBtn(t)} onClick={() => setActiveTab(t)}>{label}</button>
+              <button key={t} style={tabBtn(t)} onClick={() => setActiveTab(t)}
+                onMouseEnter={() => setHoveredTab(t)}
+                onMouseLeave={() => setHoveredTab(null)}
+              >{label}</button>
             ))}
           </div>
 
@@ -916,6 +942,7 @@ export default function App() {
         {toast}
       </div>
     )}
+    <style>{`button:focus-visible { outline: none; box-shadow: 0 0 0 2px #10b98166 !important; border-radius: 8px; }`}</style>
     <Analytics />
     </>
   );
