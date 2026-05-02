@@ -1,4 +1,5 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
+import PPCLab from "./src/PPCLab.jsx";
 import { Analytics } from "@vercel/analytics/react";
 import { PieChart, Pie, Cell, Tooltip as ReTooltip, ResponsiveContainer } from "recharts";
 import {
@@ -898,9 +899,10 @@ export default function App() {
 
           {/* ── TAB: PPC LAB ── */}
           {activeTab === "ppc" && (
-            <div style={{ background: "#0f172a", border: "1px solid #1e293b", borderRadius: 16, padding: "16px 18px" }}>
-              <span style={{ fontSize: 13, color: "#94a3b8" }}>PPC Lab — coming soon</span>
-            </div>
+            <PPCLab
+              ppcStr={ppcStr} setPpcStr={setPpcStr}
+              ppcSqp={ppcSqp} setPpcSqp={setPpcSqp}
+            />
           )}
         </div>
       </div>
