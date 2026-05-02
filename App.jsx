@@ -508,11 +508,26 @@ export default function App() {
           {/* KPI row + pie chart */}
           <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-start" }}>
             <div style={{ flex: 2, minWidth: 280 }}>
+              {(Number(inputs.sellingPrice) === 0 || Number(inputs.unitCost) === 0) && (
+                <div style={{
+                  display: "flex", alignItems: "flex-start", gap: 8,
+                  background: "#f59e0b08", border: "1px solid #f59e0b30",
+                  borderRadius: 10, padding: "10px 14px", fontSize: 12, color: "#f59e0b",
+                  marginBottom: 4,
+                }}>
+                  <span style={{ flexShrink: 0 }}>⚠</span>
+                  <span>
+                    {Number(inputs.sellingPrice) === 0
+                      ? "Selling price is $0 — enter a price to see accurate results."
+                      : "Unit cost is $0 — enter a cost to see accurate results."}
+                  </span>
+                </div>
+              )}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(110px, 1fr))", gap: 12 }}>
                 <StatCard label="Monthly profit" value={`$${fmtK(s.totalMonthlyProfit)}`} numericValue={s.totalMonthlyProfit} big />
                 <StatCard label="Profit per unit" value={`$${fmt(s.netProfitPerUnit)}`} numericValue={s.netProfitPerUnit} thresholds={[1, 3]} />
-                <StatCard label="Profit % of price" value={`${fmt(s.netMargin, 1)}%`} numericValue={s.netMargin} thresholds={[10, 20]} />
-                <StatCard label="ROI on COGS" value={`${fmt(s.roi, 0)}%`} numericValue={s.roi} thresholds={[40, 80]} />
+                <StatCard label="Profit % of price" value={isFinite(s.netMargin) ? `${fmt(s.netMargin, 1)}%` : "—"} numericValue={isFinite(s.netMargin) ? s.netMargin : undefined} thresholds={[10, 20]} />
+                <StatCard label="ROI on COGS" value={isFinite(s.roi) ? `${fmt(s.roi, 0)}%` : "—"} numericValue={isFinite(s.roi) ? s.roi : undefined} thresholds={[40, 80]} />
               </div>
             </div>
             <CostChart s={s} />
@@ -618,21 +633,21 @@ export default function App() {
               <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 20 }}>Efficiency metrics & benchmarks</div>
               <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
                 {[{
-                  label: "Break-even ACOS", val: s.breakEvenAcos, max: 60,
-                  color: inputs.adSpendShare <= s.breakEvenAcos ? C.emerald : C.rose,
-                  note: `Ads must convert below ${fmt(s.breakEvenAcos, 1)}% ACOS to be profitable`
+                  label: "Break-even ACOS", val: isFinite(s.breakEvenAcos) ? s.breakEvenAcos : 0, max: 60,
+                  color: isFinite(s.breakEvenAcos) && inputs.adSpendShare <= s.breakEvenAcos ? C.emerald : C.rose,
+                  note: isFinite(s.breakEvenAcos) ? `Ads must convert below ${fmt(s.breakEvenAcos, 1)}% ACOS to be profitable` : "Price is $0 — cannot calculate break-even ACOS"
                 }, {
                   label: "Current TACOS", val: inputs.adSpendShare, max: 60,
                   color: inputs.adSpendShare < 15 ? C.emerald : inputs.adSpendShare < 25 ? C.amber : C.rose,
                   note: inputs.adSpendShare < 15 ? "Efficient" : inputs.adSpendShare < 25 ? "Moderate — target <15%" : "High — reduce ad dependency"
                 }, {
-                  label: "Net margin", val: s.netMargin, max: 50,
-                  color: s.netMargin > 20 ? C.emerald : s.netMargin > 10 ? C.amber : C.rose,
-                  note: s.netMargin > 20 ? "Scale-ready" : s.netMargin > 10 ? "Viable — aim for 20%+" : "Below minimum viable threshold"
+                  label: "Net margin", val: isFinite(s.netMargin) ? s.netMargin : 0, max: 50,
+                  color: isFinite(s.netMargin) && s.netMargin > 20 ? C.emerald : isFinite(s.netMargin) && s.netMargin > 10 ? C.amber : C.rose,
+                  note: !isFinite(s.netMargin) ? "Enter a selling price to calculate margin" : s.netMargin > 20 ? "Scale-ready" : s.netMargin > 10 ? "Viable — aim for 20%+" : "Below minimum viable threshold"
                 }, {
-                  label: "ROI on landed cost", val: Math.max(0, s.roi), max: 200,
-                  color: s.roi > 80 ? C.emerald : s.roi > 40 ? C.amber : C.rose,
-                  note: `${s.roi > 80 ? "Exceptional" : s.roi > 40 ? "Good" : "Low"} — ${fmt(s.roi, 0)}% return on capital deployed`
+                  label: "ROI on landed cost", val: isFinite(s.roi) ? Math.max(0, s.roi) : 0, max: 200,
+                  color: isFinite(s.roi) && s.roi > 80 ? C.emerald : isFinite(s.roi) && s.roi > 40 ? C.amber : C.rose,
+                  note: !isFinite(s.roi) ? "Enter a unit cost to calculate ROI" : `${s.roi > 80 ? "Exceptional" : s.roi > 40 ? "Good" : "Low"} — ${fmt(s.roi, 0)}% return on capital deployed`
                 }].map(({ label, val, max, color, note }) => (
                   <div key={label}>
                     <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
@@ -647,7 +662,7 @@ export default function App() {
                   {[
                     { label: "Safety buffer", val: `$${fmt(s.bufferAmount)}`, color: C.violet, sub: "per unit reserved" },
                     { label: "Monthly ad spend", val: `$${fmtK(s.adSpendPerUnit * s.monthlyUnits)}`, color: C.orange, sub: `at ${s.monthlyUnits} units/mo` },
-                    { label: "Break-even vol.", val: s.breakevenUnits, color: C.cyan, sub: "units to cover COGS" },
+                    { label: "Break-even vol.", val: s.netProfitPerUnit <= 0 ? "∞ (loss)" : (typeof s.breakevenUnits === "number" ? fmtK(s.breakevenUnits) : s.breakevenUnits), color: C.cyan, sub: "units to cover COGS" },
                   ].map(({ label, val, color, sub }) => (
                     <div key={label} style={{ background: C.s95, borderRadius: 10, padding: "12px 14px", textAlign: "center" }}>
                       <div style={{ ...LABEL, textAlign: "center" }}>{label}</div>
