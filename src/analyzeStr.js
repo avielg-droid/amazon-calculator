@@ -12,11 +12,11 @@ export const STR_REQUIRED_COLUMNS = [
 ];
 
 export const STR_THRESHOLD_DEFAULTS = {
-  minSpendNegative: 10,   // $ spend with 0 orders → negative candidate
-  minClicksNegative: 15,  // clicks with 0 orders → negative candidate (alternative)
-  maxAcosNegative: 80,    // ACOS% above this (even with orders) → negative candidate
-  minOrdersHarvest: 2,    // minimum orders to consider harvesting
-  maxAcosHarvest: 40,     // maximum ACoS% to consider harvesting
+  minSpendNegative: 10,    // $ spend with 0 orders → negative candidate
+  minClicksNegative: 15,   // clicks with 0 orders → negative candidate (OR condition)
+  maxAcosNegative: 100,    // ACOS% above this (with orders) → "poor performer" negative
+  minOrdersHarvest: 2,     // minimum orders to qualify for harvest
+  maxAcosHarvest: 40,      // maximum ACoS% to qualify for harvest
 };
 
 // Main analysis function
@@ -27,7 +27,16 @@ export function analyzeStr(rows, thresholds = STR_THRESHOLD_DEFAULTS) {
   const { minSpendNegative, minClicksNegative, maxAcosNegative, minOrdersHarvest, maxAcosHarvest } = thresholds;
   const negatives = [];
   const harvest = [];
-  const seen = new Set(); // deduplicate by search term
+  const seen = new Set();
+
+  // Pre-collect all terms already targeted as Exact in ANY campaign.
+  // These should not be flagged as harvest opportunities.
+  const exactTargeted = new Set();
+  for (const row of rows) {
+    const mt = (row["Match Type"] || "").trim().toLowerCase();
+    const term = (row["Customer Search Term"] || "").trim();
+    if (mt === "exact" && term && term !== "--") exactTargeted.add(term.toLowerCase());
+  }
 
   for (const row of rows) {
     const term = (row["Customer Search Term"] || "").trim();
@@ -73,16 +82,16 @@ export function analyzeStr(rows, thresholds = STR_THRESHOLD_DEFAULTS) {
       });
     }
 
-    // Harvest candidate — only non-exact match types
-    const isExact = matchType === "exact";
+    // Harvest candidate — term must not already be targeted as Exact anywhere in the report
+    const alreadyExact = exactTargeted.has(term.toLowerCase());
     const goodOrders = orders >= minOrdersHarvest;
     const goodAcos = acos !== null && acos <= maxAcosHarvest;
-    if (!isExact && goodOrders && goodAcos && !seen.has(key + "__harvest")) {
+    if (!alreadyExact && goodOrders && goodAcos && !seen.has(key + "__harvest")) {
       seen.add(key + "__harvest");
       harvest.push({
         term, matchType, orders, spend, sales, cvr: cvr.toFixed(1),
         acos: acos.toFixed(1), campaign,
-        whyFlag: `${orders} orders, ACoS ${acos.toFixed(1)}% (under ${maxAcosHarvest}% threshold), match type is ${matchType || "unknown"} — not yet targeted as Exact`,
+        whyFlag: `${orders} order${orders !== 1 ? "s" : ""} at ${acos.toFixed(1)}% ACoS (below ${maxAcosHarvest}% ceiling). Running under ${matchType || "unknown"} match — not yet targeted as Exact in any campaign.`,
         recommendedAction: `Add as Exact to "${campaign}"`,
       });
     }
