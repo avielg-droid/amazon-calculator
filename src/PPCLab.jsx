@@ -7,7 +7,8 @@ import { analyzeSqp, exportSqpCsv, SQP_REQUIRED_COLUMNS, SQP_THRESHOLD_DEFAULTS 
 
 const C = {
   emerald: "#10b981", cyan: "#06b6d4", orange: "#f97316",
-  rose: "#f43f5e", violet: "#8b5cf6", amber: "#f59e0b",
+  rose: "#f43f5e", violet: "#8b5cf6", amber: "#f59e0b", blue: "#3b82f6",
+  light: "#e2e8f0",
   s4: "#94a3b8", s5: "#64748b", s6: "#475569",
   s7: "#334155", s8: "#1e293b", s9: "#0f172a", s95: "#020617",
 };
@@ -112,15 +113,16 @@ function UploadZone({ onFile, label = "Drop file here or click to browse" }) {
 
 // ── Shared helpers ──
 
-function Tooltip({ text }) {
+function Tooltip({ text, dir = "right" }) {
   const [v, setV] = useState(false);
+  const pos = dir === "left" ? { right: 16, left: "auto" } : { left: 16, right: "auto" };
   return (
     <span style={{ position: "relative", display: "inline-flex", alignItems: "center", cursor: "help" }}
       onMouseEnter={() => setV(true)} onMouseLeave={() => setV(false)}>
       <Info size={11} color={C.s5} />
       {v && (
         <div style={{
-          position: "absolute", left: 16, top: -4, zIndex: 50,
+          position: "absolute", ...pos, top: -4, zIndex: 50,
           background: C.s8, border: `1px solid ${C.s7}`, borderRadius: 8,
           padding: "8px 10px", width: 200, fontSize: 11, color: C.s4,
           lineHeight: 1.5, boxShadow: "0 4px 16px #00000060", pointerEvents: "none",
@@ -162,7 +164,7 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
                 {columns.map(col => (
                   <th key={col.key} style={{ padding: "8px 12px", textAlign: "left", color: C.s5, fontWeight: 600, fontSize: 11, whiteSpace: "nowrap" }}>
                     <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                      {col.label} <Tooltip text={col.tip} />
+                      {col.label} <Tooltip text={col.tip} dir={col.tipDir || "right"} />
                     </span>
                   </th>
                 ))}
@@ -221,6 +223,7 @@ function StrTab({ data, setData }) {
   const [expandedWhy, setExpandedWhy] = useState(null);
   const [brandFilter, setBrandFilter] = useState("");
   const [parsing, setParsing] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const analysis = useMemo(() => {
     if (!data.rows.length) return null;
@@ -309,19 +312,32 @@ function StrTab({ data, setData }) {
       <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.s5 }}>
         <CheckCircle size={13} color={C.emerald} />
         <span>{data.file?.name} · {totalTerms.toLocaleString()} terms</span>
-        <button onClick={() => { setData({ rows: [], file: null }); setError(null); }}
-          style={{ marginLeft: "auto", fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 12px", cursor: "pointer" }}>
-          Upload new file
-        </button>
+        {confirmClear ? (
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 11, color: C.s4 }}>Discard data?</span>
+            <button onClick={() => { setData({ rows: [], file: null }); setError(null); setConfirmClear(false); }}
+              style={{ fontSize: 11, color: C.rose, background: "none", border: `1px solid ${C.rose}44`, borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Yes</button>
+            <button onClick={() => setConfirmClear(false)}
+              style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Cancel</button>
+          </div>
+        ) : (
+          <button onClick={() => setConfirmClear(true)}
+            style={{ marginLeft: "auto", fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 12px", cursor: "pointer" }}>
+            Upload new file
+          </button>
+        )}
       </div>
 
       {/* Brand filter */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: C.s4, whiteSpace: "nowrap" }}>Exclude brand:</span>
-        <input type="text" className="ppc-text" placeholder="e.g. your brand name" value={brandFilter} onChange={e => setBrandFilter(e.target.value)}
-          style={{ flex: 1, background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: "7px 12px", fontSize: 12, color: "#e2e8f0", outline: "none", transition: "border-color 0.15s" }} />
-        {brandFilter && <button onClick={() => setBrandFilter("")}
-          style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer" }}>clear</button>}
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: C.s4, whiteSpace: "nowrap" }}>Exclude brand:</span>
+          <input type="text" className="ppc-text" placeholder="e.g. nike" value={brandFilter} onChange={e => setBrandFilter(e.target.value)}
+            style={{ flex: 1, background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: "7px 12px", fontSize: 12, color: C.light, outline: "none", transition: "border-color 0.15s" }} />
+          {brandFilter && <button onClick={() => setBrandFilter("")}
+            style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer" }}>clear</button>}
+        </div>
+        <span style={{ fontSize: 10, color: C.s6, paddingLeft: 2 }}>Hides any result whose search term contains this substring</span>
       </div>
 
       {/* Thresholds panel */}
@@ -379,12 +395,12 @@ function StrTab({ data, setData }) {
           setExpandedWhy={setExpandedWhy}
           idPrefix="neg"
           columns={[
-            { key: "term", label: "Search Term", tip: "The exact customer search query" },
+            { key: "term", label: "Search term", tip: "The exact customer search query" },
             { key: "spend", label: "Spend ($)", tip: "Total ad spend on this term" },
             { key: "clicks", label: "Clicks", tip: "Total clicks" },
             { key: "orders", label: "Orders", tip: "Total orders attributed" },
             { key: "campaign", label: "Campaign", tip: "Campaign name" },
-            { key: "recommendedNegType", label: "Neg. Type", tip: "Recommended negative match type to add" },
+            { key: "recommendedNegType", label: "Neg. type", tip: "Recommended negative match type to add", tipDir: "left" },
           ]}
           onExport={() => downloadCsv(exportNegativesCsv(filteredNegatives), "negatives.csv")}
           exportLabel="Export negatives.csv"
@@ -401,12 +417,12 @@ function StrTab({ data, setData }) {
           setExpandedWhy={setExpandedWhy}
           idPrefix="harv"
           columns={[
-            { key: "term", label: "Search Term", tip: "The converting search query" },
+            { key: "term", label: "Search term", tip: "The converting search query" },
             { key: "orders", label: "Orders", tip: "Number of orders from this term" },
             { key: "cvr", label: "CVR %", tip: "Conversion rate: orders / clicks" },
             { key: "acos", label: "ACoS %", tip: "Advertising Cost of Sales: spend / revenue" },
-            { key: "matchType", label: "Current Match", tip: "Current keyword match type in your campaign" },
-            { key: "recommendedAction", label: "Action", tip: "What to do with this term" },
+            { key: "matchType", label: "Current match", tip: "Current keyword match type in your campaign" },
+            { key: "recommendedAction", label: "Action", tip: "What to do with this term", tipDir: "left" },
           ]}
           onExport={() => downloadCsv(exportHarvestCsv(filteredHarvest), "harvest.csv")}
           exportLabel="Export harvest.csv"
@@ -415,9 +431,15 @@ function StrTab({ data, setData }) {
 
       {filteredNegatives.length === 0 && filteredHarvest.length === 0 && (
         <div style={{ textAlign: "center", padding: "24px", color: C.s5, fontSize: 13 }}>
-          {brandLower
-            ? `All results filtered by brand "${brandFilter}". Clear the brand filter or try a different term.`
-            : "No candidates found with current thresholds. Try lowering the thresholds above."}
+          {brandLower ? (
+            <>All results filtered by brand &ldquo;{brandFilter}&rdquo;.{" "}
+              <button onClick={() => setBrandFilter("")} style={{ fontSize: 13, color: C.violet, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>Clear filter</button>
+            </>
+          ) : (
+            <>No candidates found with current thresholds.{" "}
+              <button onClick={() => { setThresholds({ ...STR_THRESHOLD_DEFAULTS }); setThresholdsOpen(true); }} style={{ fontSize: 13, color: C.violet, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>Reset to defaults</button>
+            </>
+          )}
         </div>
       )}
     </div>
@@ -431,6 +453,7 @@ function SqpTab({ data, setData }) {
   const [expandedWhy, setExpandedWhy] = useState(null);
   const [brandFilter, setBrandFilter] = useState("");
   const [parsing, setParsing] = useState(false);
+  const [confirmClear, setConfirmClear] = useState(false);
 
   const analysis = useMemo(() => {
     if (!data.rows.length) return null;
@@ -518,19 +541,32 @@ function SqpTab({ data, setData }) {
       <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.s5 }}>
         <CheckCircle size={13} color={C.emerald} />
         <span>{data.file?.name} · {totalQueries.toLocaleString()} queries</span>
-        <button onClick={() => { setData({ rows: [], file: null }); setError(null); }}
-          style={{ marginLeft: "auto", fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 12px", cursor: "pointer" }}>
-          Upload new file
-        </button>
+        {confirmClear ? (
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 11, color: C.s4 }}>Discard data?</span>
+            <button onClick={() => { setData({ rows: [], file: null }); setError(null); setConfirmClear(false); }}
+              style={{ fontSize: 11, color: C.rose, background: "none", border: `1px solid ${C.rose}44`, borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Yes</button>
+            <button onClick={() => setConfirmClear(false)}
+              style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Cancel</button>
+          </div>
+        ) : (
+          <button onClick={() => setConfirmClear(true)}
+            style={{ marginLeft: "auto", fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 12px", cursor: "pointer" }}>
+            Upload new file
+          </button>
+        )}
       </div>
 
       {/* Brand filter */}
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: C.s4, whiteSpace: "nowrap" }}>Exclude brand:</span>
-        <input type="text" className="ppc-text" placeholder="e.g. your brand name" value={brandFilter} onChange={e => setBrandFilter(e.target.value)}
-          style={{ flex: 1, background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: "7px 12px", fontSize: 12, color: "#e2e8f0", outline: "none", transition: "border-color 0.15s" }} />
-        {brandFilter && <button onClick={() => setBrandFilter("")}
-          style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer" }}>clear</button>}
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: C.s4, whiteSpace: "nowrap" }}>Exclude brand:</span>
+          <input type="text" className="ppc-text" placeholder="e.g. nike" value={brandFilter} onChange={e => setBrandFilter(e.target.value)}
+            style={{ flex: 1, background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: "7px 12px", fontSize: 12, color: C.light, outline: "none", transition: "border-color 0.15s" }} />
+          {brandFilter && <button onClick={() => setBrandFilter("")}
+            style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer" }}>clear</button>}
+        </div>
+        <span style={{ fontSize: 10, color: C.s6, paddingLeft: 2 }}>Hides any result whose search query contains this substring</span>
       </div>
 
       {/* Thresholds panel */}
@@ -590,12 +626,12 @@ function SqpTab({ data, setData }) {
           setExpandedWhy={setExpandedWhy}
           idPrefix="opp"
           columns={[
-            { key: "query", label: "Search Query", tip: "The customer search query" },
+            { key: "query", label: "Search query", tip: "The customer search query" },
             { key: "volume", label: "Volume", tip: "Monthly search query volume" },
-            { key: "purchaseShare", label: "Purchase Share %", tip: "Your share of purchases — you convert well here" },
+            { key: "purchaseShare", label: "Purchase share %", tip: "Your share of purchases — you convert well here" },
             {
               key: "gap",
-              label: "Market Gap",
+              label: "Market gap",
               tip: "Impression share vs click share. Green bar = your clicks, gray = untapped impressions. Wider gap = bigger opportunity.",
               render: (item) => {
                 const imp = parseFloat(item.impressionShare);
@@ -615,7 +651,7 @@ function SqpTab({ data, setData }) {
                 );
               },
             },
-            { key: "insight", label: "Insight", tip: "Recommended action" },
+            { key: "insight", label: "Insight", tip: "Recommended action", tipDir: "left" },
           ]}
           onExport={() => downloadCsv(exportSqpCsv(filteredOpportunities, [], []), "sqp-opportunities.csv")}
           exportLabel="Export opportunities.csv"
@@ -634,10 +670,10 @@ function SqpTab({ data, setData }) {
           columns={[
             { key: "query", label: "Search Query", tip: "The customer search query" },
             { key: "volume", label: "Volume", tip: "Monthly search query volume" },
-            { key: "purchaseShare", label: "Purchase Share %", tip: "Your dominant share of purchases for this query" },
-            { key: "clickShare", label: "Click Share %", tip: "Your share of clicks" },
-            { key: "impressionShare", label: "Imp. Share %", tip: "Your share of impressions" },
-            { key: "insight", label: "Insight", tip: "Strategic recommendation" },
+            { key: "purchaseShare", label: "Purchase share %", tip: "Your dominant share of purchases for this query" },
+            { key: "clickShare", label: "Click share %", tip: "Your share of clicks" },
+            { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions" },
+            { key: "insight", label: "Insight", tip: "Strategic recommendation", tipDir: "left" },
           ]}
           onExport={() => downloadCsv(exportSqpCsv([], [], filteredLeaders), "sqp-leaders.csv")}
           exportLabel="Export leaders.csv"
@@ -656,10 +692,10 @@ function SqpTab({ data, setData }) {
           columns={[
             { key: "query", label: "Search Query", tip: "The customer search query" },
             { key: "volume", label: "Volume", tip: "Monthly search query volume" },
-            { key: "impressionShare", label: "Imp. Share %", tip: "Your share of impressions — high visibility" },
-            { key: "purchaseShare", label: "Purchase Share %", tip: "Your share of purchases — low conversion" },
-            { key: "clickShare", label: "Click Share %", tip: "Your share of clicks" },
-            { key: "insight", label: "Insight", tip: "Recommended action" },
+            { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions — high visibility" },
+            { key: "purchaseShare", label: "Purchase share %", tip: "Your share of purchases — low conversion" },
+            { key: "clickShare", label: "Click share %", tip: "Your share of clicks" },
+            { key: "insight", label: "Insight", tip: "Recommended action", tipDir: "left" },
           ]}
           onExport={() => downloadCsv(exportSqpCsv([], filteredRisks, []), "sqp-risks.csv")}
           exportLabel="Export risks.csv"
@@ -668,9 +704,15 @@ function SqpTab({ data, setData }) {
 
       {filteredOpportunities.length === 0 && filteredRisks.length === 0 && filteredLeaders.length === 0 && (
         <div style={{ textAlign: "center", padding: "24px", color: C.s5, fontSize: 13 }}>
-          {brandLower
-            ? `All results filtered by brand "${brandFilter}". Clear the brand filter or try a different term.`
-            : "No keywords flagged with current thresholds. Try adjusting the thresholds above."}
+          {brandLower ? (
+            <>All results filtered by brand &ldquo;{brandFilter}&rdquo;.{" "}
+              <button onClick={() => setBrandFilter("")} style={{ fontSize: 13, color: C.violet, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>Clear filter</button>
+            </>
+          ) : (
+            <>No keywords flagged with current thresholds.{" "}
+              <button onClick={() => { setThresholds({ ...SQP_THRESHOLD_DEFAULTS }); setThresholdsOpen(true); }} style={{ fontSize: 13, color: C.violet, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>Reset to defaults</button>
+            </>
+          )}
         </div>
       )}
     </div>
