@@ -4,9 +4,7 @@ import { Upload, ChevronDown, ChevronRight, Download, AlertCircle, AlertTriangle
 import { parseCsv, parseXlsx, validateColumns } from "./parseCsv.js";
 import { analyzeStr, exportNegativesCsv, exportHarvestCsv, STR_REQUIRED_COLUMNS, STR_THRESHOLD_DEFAULTS } from "./analyzeStr.js";
 import { analyzeSqp, exportSqpCsv, SQP_REQUIRED_COLUMNS, SQP_THRESHOLD_DEFAULTS } from "./analyzeSqp.js";
-import { C } from "./tokens.js";
-const CARD = { background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 16, padding: "16px 18px", boxShadow: "0 4px 24px #00000040" };
-const LABEL = { fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: C.s4, marginBottom: 4, display: "block" };
+import { C, CARD, LABEL } from "./tokens.js";
 
 export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp }) {
   const [activeSub, setActiveSub] = useState("str");

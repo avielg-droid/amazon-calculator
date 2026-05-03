@@ -1,6 +1,7 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import PPCLab from "./src/PPCLab.jsx";
-import { C } from "./src/tokens.js";
+import { C, CARD, LABEL, MONO, ROW } from "./src/tokens.js";
+import { fmt, fmtK } from "./src/utils.js";
 import { Analytics } from "@vercel/analytics/react";
 import { PieChart, Pie, Cell, Tooltip as ReTooltip, ResponsiveContainer } from "recharts";
 import {
@@ -8,15 +9,6 @@ import {
   ShieldCheck, RefreshCw, Info, Zap, Target, ArrowUpRight,
   ArrowDownRight, Activity, Globe, Flag, Share2
 } from "lucide-react";
-
-
-const fmt = (n, d = 2) => { const v = Number(n); return isFinite(v) ? v.toFixed(d) : "—"; };
-const fmtK = n => { const v = Number(n); return isFinite(v) ? (Math.abs(v) >= 1000 ? `${(v / 1000).toFixed(1)}k` : Math.round(v).toString()) : "—"; };
-
-const LABEL = { fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: C.s4, marginBottom: 4, display: "block" };
-const ROW = { display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: `1px solid ${C.s8}` };
-const CARD = { background: C.s9, border: `1px solid ${C.s8}`, borderRadius: 16, padding: "16px 18px", boxShadow: "0 4px 24px #00000040" };
-const MONO = { fontFamily: "ui-monospace, monospace" };
 
 function InputField({ label, name, value, onChange, prefix, suffix, highlight, disabled, dimNote, tooltip, error }) {
   const [focused, setFocused] = useState(false);
