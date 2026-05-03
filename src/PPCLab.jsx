@@ -1,6 +1,6 @@
 // src/PPCLab.jsx
 import React, { useState, useMemo } from "react";
-import { Upload, ChevronDown, ChevronRight, Download, AlertCircle, Info, CheckCircle } from "lucide-react";
+import { Upload, ChevronDown, ChevronRight, Download, AlertCircle, AlertTriangle, Info, CheckCircle } from "lucide-react";
 import { parseCsv, parseXlsx, validateColumns } from "./parseCsv.js";
 import { analyzeStr, exportNegativesCsv, exportHarvestCsv, STR_REQUIRED_COLUMNS, STR_THRESHOLD_DEFAULTS } from "./analyzeStr.js";
 import { analyzeSqp, exportSqpCsv, SQP_REQUIRED_COLUMNS, SQP_THRESHOLD_DEFAULTS } from "./analyzeSqp.js";
@@ -22,7 +22,7 @@ export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp }) {
   const subTabBtn = (t) => ({
     padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600,
     background: activeSub === t ? C.violet : hoveredSub === t ? C.s7 : "transparent",
-    color: activeSub === t ? "#fff" : hoveredSub === t ? "#e2e8f0" : C.s4,
+    color: activeSub === t ? "#fff" : hoveredSub === t ? C.light : C.s4,
     transition: "all 0.15s",
     outline: "none",
   });
@@ -33,9 +33,9 @@ export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp }) {
         @keyframes spin { to { transform: rotate(360deg); } }
         .ppc-num::-webkit-inner-spin-button, .ppc-num::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         .ppc-num { -moz-appearance: textfield; }
-        .ppc-num:focus { border-color: #8b5cf6 !important; box-shadow: 0 0 0 1px #8b5cf622 !important; }
-        .ppc-text:focus { border-color: #8b5cf6 !important; outline: none !important; }
-        .why-btn:hover { background: #334155 !important; color: #e2e8f0 !important; }
+        .ppc-num:focus { border-color: ${C.violet} !important; box-shadow: 0 0 0 1px ${C.violet}22 !important; }
+        .ppc-text:focus { border-color: ${C.violet} !important; outline: none !important; }
+        .why-btn:hover { background: ${C.s7} !important; color: ${C.light} !important; }
       `}</style>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
         <span style={{ fontSize: 13, fontWeight: 700 }}>PPC Lab</span>
@@ -97,7 +97,7 @@ function UploadZone({ onFile, label = "Drop file here or click to browse" }) {
         border: `2px dashed ${dragging || focused ? C.violet : C.s7}`,
         borderRadius: 12, padding: "32px 24px", textAlign: "center",
         cursor: "pointer", transition: "border-color 0.2s",
-        background: dragging ? "#8b5cf608" : "transparent",
+        background: dragging ? `${C.violet}08` : "transparent",
         outline: focused ? `2px solid ${C.violet}40` : "none",
         outlineOffset: 2,
       }}
@@ -124,7 +124,7 @@ function Tooltip({ text, dir = "right" }) {
         <div style={{
           position: "absolute", ...pos, top: -4, zIndex: 50,
           background: C.s8, border: `1px solid ${C.s7}`, borderRadius: 8,
-          padding: "8px 10px", width: 200, fontSize: 11, color: C.s4,
+          padding: "8px 10px", width: 220, fontSize: 11, color: C.s4,
           lineHeight: 1.5, boxShadow: "0 4px 16px #00000060", pointerEvents: "none",
         }}>
           {text}
@@ -137,7 +137,7 @@ function Tooltip({ text, dir = "right" }) {
 function SummaryCard({ label, value, color }) {
   return (
     <div style={{ background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 12, padding: "12px 14px", textAlign: "center" }}>
-      <div style={{ fontSize: 22, fontWeight: 700, color, fontFamily: "ui-monospace, monospace" }}>{value}</div>
+      <div style={{ fontSize: "clamp(16px, 4vw, 22px)", fontWeight: 700, color, fontFamily: "ui-monospace, monospace" }}>{value}</div>
       <div style={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: C.s5, marginTop: 4 }}>{label}</div>
     </div>
   );
@@ -152,7 +152,7 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
         <span style={{ fontSize: 11, color: C.s5 }}>({items.length})</span>
         <button onClick={onExport}
           onMouseEnter={() => setHoveredExport(true)} onMouseLeave={() => setHoveredExport(false)}
-          style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.s4, background: hoveredExport ? C.s7 : C.s8, border: "none", borderRadius: 6, padding: "4px 10px", cursor: "pointer", transition: "background 0.15s", outline: "none" }}>
+          style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.s4, background: hoveredExport ? C.s7 : C.s8, border: "none", borderRadius: 6, padding: "5px 10px", cursor: "pointer", transition: "background 0.15s", outline: "none" }}>
           <Download size={11} />{exportLabel}
         </button>
       </div>
@@ -179,7 +179,7 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
                   <React.Fragment key={id}>
                     <tr style={{ borderTop: `1px solid ${C.s8}`, background: isOpen ? C.s95 : "transparent" }}>
                       {columns.map(col => (
-                        <td key={col.key} style={{ padding: "8px 12px", color: "#e2e8f0", whiteSpace: col.key === "term" || col.key === "query" || col.key === "recommendedAction" || col.key === "insight" ? "normal" : "nowrap" }}>
+                        <td key={col.key} style={{ padding: "8px 12px", color: C.light, fontSize: 12, whiteSpace: col.key === "term" || col.key === "query" || col.key === "recommendedAction" || col.key === "insight" ? "normal" : "nowrap" }}>
                           {col.render ? col.render(item) : col.key === "spend" ? `$${Number(item[col.key]).toFixed(2)}` : item[col.key]}
                         </td>
                       ))}
@@ -259,7 +259,7 @@ function StrTab({ data, setData }) {
   if (!data.rows.length) {
     return (
       <div>
-        <div style={{ background: "#8b5cf608", border: "1px solid #8b5cf620", borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
+        <div style={{ background: `${C.violet}08`, border: `1px solid ${C.violet}20`, borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.violet, marginBottom: 10 }}>How to get your Search Term Report</div>
           {[
             "Go to Seller Central → Reports → Advertising Reports",
@@ -275,7 +275,7 @@ function StrTab({ data, setData }) {
           ))}
           <div style={{ marginTop: 12, padding: "10px 14px", background: C.s95, borderRadius: 8 }}>
             <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: C.s5, marginBottom: 4 }}>What you'll get</div>
-            <div style={{ fontSize: 12, color: C.s4, lineHeight: 1.7 }}>
+            <div style={{ fontSize: 12, color: C.s4, lineHeight: 1.6 }}>
               • Negative keyword candidates (spending money with 0 conversions)<br />
               • Harvest opportunities (converting search terms not yet targeted as Exact match)<br />
               • Full data table for verification<br />
@@ -283,11 +283,11 @@ function StrTab({ data, setData }) {
             </div>
           </div>
         </div>
-        <div style={{ marginTop: 10, marginBottom: 12, display: "flex", alignItems: "flex-start", gap: 8, fontSize: 11, color: C.amber, background: "#f59e0b08", border: "1px solid #f59e0b20", borderRadius: 8, padding: "8px 12px" }}>
-          <span style={{ flexShrink: 0 }}>⚠</span>
+        <div style={{ marginTop: 10, marginBottom: 12, display: "flex", alignItems: "flex-start", gap: 8, fontSize: 11, color: C.amber, background: `${C.amber}08`, border: `1px solid ${C.amber}20`, borderRadius: 8, padding: "8px 12px" }}>
+          <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 1 }} />
           <span>Recommended: Use a 30–60 day report for best results. A 1-day report may show 0 recommendations due to low spend data.</span>
         </div>
-        {error && <div style={{ background: "#f43f5e10", border: "1px solid #f43f5e30", borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.rose, display: "flex", gap: 8, alignItems: "flex-start" }}><AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
+        {error && <div style={{ background: `${C.rose}10`, border: `1px solid ${C.rose}30`, borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.rose, display: "flex", gap: 8, alignItems: "flex-start" }}><AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
         {parsing ? (
           <div style={{ padding: "40px 24px", textAlign: "center", color: C.s4, fontSize: 13 }}>
             <div style={{ display: "inline-block", width: 20, height: 20, border: `2px solid ${C.s7}`, borderTopColor: C.violet, borderRadius: "50%", animation: "spin 0.8s linear infinite", marginBottom: 12 }} />
@@ -337,7 +337,7 @@ function StrTab({ data, setData }) {
           {brandFilter && <button onClick={() => setBrandFilter("")}
             style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer" }}>clear</button>}
         </div>
-        <span style={{ fontSize: 10, color: C.s6, paddingLeft: 2 }}>Hides any result whose search term contains this substring</span>
+        <span style={{ fontSize: 10, color: C.s6, paddingLeft: 4 }}>Hides any result whose search term contains this substring</span>
       </div>
 
       {/* Thresholds panel */}
@@ -363,13 +363,13 @@ function StrTab({ data, setData }) {
                   <span style={LABEL}>{label}</span>
                   <Tooltip text={tip} />
                   <button onClick={() => setThresholds(t => ({ ...t, [key]: STR_THRESHOLD_DEFAULTS[key] }))}
-                    style={{ marginLeft: "auto", fontSize: 9, color: C.s6, background: "none", border: "none", cursor: "pointer", padding: "4px 6px" }}>reset</button>
+                    style={{ marginLeft: "auto", fontSize: 10, color: C.s6, background: "none", border: "none", cursor: "pointer", padding: "4px 6px" }}>reset</button>
                 </div>
                 <div style={{ position: "relative" }}>
                   {prefix && <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: C.s5, pointerEvents: "none" }}>{prefix}</span>}
                   <input type="number" className="ppc-num" value={thresholds[key]}
                     onChange={e => setThresholds(t => ({ ...t, [key]: parseFloat(e.target.value) || 0 }))}
-                    style={{ width: "100%", background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: `7px ${suffix ? 28 : 10}px 7px ${prefix ? 22 : 10}px`, fontSize: 12, color: "#e2e8f0", outline: "none", boxSizing: "border-box", transition: "border-color 0.15s, box-shadow 0.15s" }} />
+                    style={{ width: "100%", background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: `7px ${suffix ? 28 : 10}px 7px ${prefix ? 22 : 10}px`, fontSize: 12, color: C.light, outline: "none", boxSizing: "border-box", transition: "border-color 0.15s, box-shadow 0.15s" }} />
                   {suffix && <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: C.s5, pointerEvents: "none" }}>{suffix}</span>}
                 </div>
               </div>
@@ -489,7 +489,7 @@ function SqpTab({ data, setData }) {
   if (!data.rows.length) {
     return (
       <div>
-        <div style={{ background: "#06b6d408", border: "1px solid #06b6d420", borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
+        <div style={{ background: `${C.cyan}08`, border: `1px solid ${C.cyan}20`, borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.cyan, marginBottom: 10 }}>How to get your Search Query Performance Report</div>
           {[
             "Go to Seller Central → Brand Analytics → Search Query Performance",
@@ -504,7 +504,7 @@ function SqpTab({ data, setData }) {
           ))}
           <div style={{ marginTop: 12, padding: "10px 14px", background: C.s95, borderRadius: 8 }}>
             <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: C.s5, marginBottom: 4 }}>What you'll get</div>
-            <div style={{ fontSize: 12, color: C.s4, lineHeight: 1.7 }}>
+            <div style={{ fontSize: 12, color: C.s4, lineHeight: 1.6 }}>
               • Opportunity keywords — good conversion but low market share (increase bids)<br />
               • Market Leader keywords — you dominate these queries (protect budget)<br />
               • Risk keywords — high impressions but poor conversion (review relevance)<br />
@@ -512,11 +512,11 @@ function SqpTab({ data, setData }) {
             </div>
           </div>
         </div>
-        <div style={{ marginTop: 10, marginBottom: 12, display: "flex", alignItems: "flex-start", gap: 8, fontSize: 11, color: C.amber, background: "#f59e0b08", border: "1px solid #f59e0b20", borderRadius: 8, padding: "8px 12px" }}>
-          <span style={{ flexShrink: 0 }}>⚠</span>
+        <div style={{ marginTop: 10, marginBottom: 12, display: "flex", alignItems: "flex-start", gap: 8, fontSize: 11, color: C.amber, background: `${C.amber}08`, border: `1px solid ${C.amber}20`, borderRadius: 8, padding: "8px 12px" }}>
+          <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 1 }} />
           <span>Recommended: Use a 90-day report for best results. Short date ranges may not have enough search volume data to surface meaningful insights.</span>
         </div>
-        {error && <div style={{ background: "#f43f5e10", border: "1px solid #f43f5e30", borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.rose, display: "flex", gap: 8, alignItems: "flex-start" }}><AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
+        {error && <div style={{ background: `${C.rose}10`, border: `1px solid ${C.rose}30`, borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.rose, display: "flex", gap: 8, alignItems: "flex-start" }}><AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
         {parsing ? (
           <div style={{ padding: "40px 24px", textAlign: "center", color: C.s4, fontSize: 13 }}>
             <div style={{ display: "inline-block", width: 20, height: 20, border: `2px solid ${C.s7}`, borderTopColor: C.violet, borderRadius: "50%", animation: "spin 0.8s linear infinite", marginBottom: 12 }} />
@@ -566,7 +566,7 @@ function SqpTab({ data, setData }) {
           {brandFilter && <button onClick={() => setBrandFilter("")}
             style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer" }}>clear</button>}
         </div>
-        <span style={{ fontSize: 10, color: C.s6, paddingLeft: 2 }}>Hides any result whose search query contains this substring</span>
+        <span style={{ fontSize: 10, color: C.s6, paddingLeft: 4 }}>Hides any result whose search query contains this substring</span>
       </div>
 
       {/* Thresholds panel */}
@@ -594,12 +594,12 @@ function SqpTab({ data, setData }) {
                   <span style={LABEL}>{label}</span>
                   <Tooltip text={tip} />
                   <button onClick={() => setThresholds(t => ({ ...t, [key]: SQP_THRESHOLD_DEFAULTS[key] }))}
-                    style={{ marginLeft: "auto", fontSize: 9, color: C.s6, background: "none", border: "none", cursor: "pointer", padding: "4px 6px" }}>reset</button>
+                    style={{ marginLeft: "auto", fontSize: 10, color: C.s6, background: "none", border: "none", cursor: "pointer", padding: "4px 6px" }}>reset</button>
                 </div>
                 <div style={{ position: "relative" }}>
                   <input type="number" className="ppc-num" value={thresholds[key]}
                     onChange={e => setThresholds(t => ({ ...t, [key]: parseFloat(e.target.value) || 0 }))}
-                    style={{ width: "100%", background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: `7px ${suffix ? 28 : 10}px 7px 10px`, fontSize: 12, color: "#e2e8f0", outline: "none", boxSizing: "border-box", transition: "border-color 0.15s, box-shadow 0.15s" }} />
+                    style={{ width: "100%", background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: `7px ${suffix ? 28 : 10}px 7px 10px`, fontSize: 12, color: C.light, outline: "none", boxSizing: "border-box", transition: "border-color 0.15s, box-shadow 0.15s" }} />
                   {suffix && <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: C.s5, pointerEvents: "none" }}>{suffix}</span>}
                 </div>
               </div>

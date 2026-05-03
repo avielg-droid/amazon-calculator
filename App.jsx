@@ -11,6 +11,7 @@ import {
 const C = {
   emerald: "#10b981", cyan: "#06b6d4", orange: "#f97316",
   rose: "#f43f5e", violet: "#8b5cf6", amber: "#f59e0b",
+  light: "#e2e8f0",
   s4: "#94a3b8", s5: "#64748b", s6: "#475569",
   s7: "#334155", s8: "#1e293b", s9: "#0f172a", s95: "#020617",
 };
@@ -27,7 +28,7 @@ function InputField({ label, name, value, onChange, prefix, suffix, highlight, d
   const [focused, setFocused] = useState(false);
   const [tipVisible, setTipVisible] = useState(false);
   return (
-    <div style={{ marginBottom: 12, opacity: disabled ? 0.45 : 1 }}>
+    <div style={{ marginBottom: 12, opacity: disabled ? 0.55 : 1 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
         <label style={{ ...LABEL, marginBottom: 0 }}>{label}</label>
         {tooltip && (
@@ -59,7 +60,7 @@ function InputField({ label, name, value, onChange, prefix, suffix, highlight, d
           style={{
             width: "100%", background: C.s95, border: `1px solid ${error ? C.rose : focused ? (highlight || C.emerald) : C.s8}`,
             borderRadius: 8, padding: `8px ${suffix ? 28 : 12}px 8px ${prefix ? 24 : 12}px`,
-            fontSize: 13, color: "#e2e8f0", outline: "none", boxSizing: "border-box",
+            fontSize: 13, color: C.light, outline: "none", boxSizing: "border-box",
             transition: "border-color 0.2s", ...MONO,
             boxShadow: error ? `0 0 0 1px ${C.rose}22` : focused ? `0 0 0 1px ${(highlight || C.emerald)}22` : "none",
             cursor: disabled ? "not-allowed" : "auto",
@@ -324,7 +325,7 @@ export default function App() {
     fontSize: 12, fontWeight: 600, whiteSpace: "nowrap",
     transition: "all 0.15s", outline: "none", boxShadow: "none",
     background: activeTab === t ? C.emerald : hoveredTab === t ? C.s8 : "transparent",
-    color: activeTab === t ? "#fff" : hoveredTab === t ? "#e2e8f0" : C.s4,
+    color: activeTab === t ? "#fff" : hoveredTab === t ? C.light : C.s4,
   });
 
   const modeBtn = (cur, val) => ({
@@ -346,7 +347,7 @@ export default function App() {
 
   return (
     <>
-    <div style={{ background: C.s95, minHeight: "100vh", padding: "16px 12px", fontFamily: "ui-sans-serif, system-ui, sans-serif", color: "#e2e8f0" }}>
+    <div style={{ background: C.s95, minHeight: "100vh", padding: "16px 12px", fontFamily: "ui-sans-serif, system-ui, sans-serif", color: C.light }}>
       <h2 className="sr-only">Omni-Channel Profit Engine — global unit economics calculator</h2>
 
       {/* Header */}
@@ -601,7 +602,7 @@ export default function App() {
                   ].map(([l, v]) => (
                     <div key={l} style={ROW}><span style={{ fontSize: 12, color: C.s4 }}>{l}</span><span style={{ fontSize: 12, fontWeight: 600, ...MONO }}>${fmt(v)}</span></div>
                   ))}
-                  <div style={{ ...ROW, borderBottom: "none" }}><span style={{ fontSize: 12, color: "#e2e8f0", fontWeight: 600 }}>Total landed</span><span style={{ fontSize: 12, fontWeight: 600, color: C.amber, ...MONO }}>${fmt(s.landedCost)}</span></div>
+                  <div style={{ ...ROW, borderBottom: "none" }}><span style={{ fontSize: 12, color: C.light, fontWeight: 600 }}>Total landed</span><span style={{ fontSize: 12, fontWeight: 600, color: C.amber, ...MONO }}>${fmt(s.landedCost)}</span></div>
                 </div>
                 <div style={{ background: C.s95, borderRadius: 10, padding: 14 }}>
                   <div style={LABEL}>{channelMode === "amazon" ? "Amazon fee detail" : "DTC cost detail"}</div>
@@ -621,7 +622,7 @@ export default function App() {
                       <div style={{ ...ROW, borderBottom: "none" }}><span style={{ fontSize: 12, color: C.s4 }}>Outbound ship</span><span style={{ fontSize: 12, fontWeight: 600, ...MONO }}>${fmt(inputs.shippingToCustomer)}</span></div>
                     </>
                   )}
-                  <div style={{ ...ROW, borderTop: `1px solid ${C.s8}`, marginTop: 6 }}><span style={{ fontSize: 12, color: "#e2e8f0", fontWeight: 600 }}>Total fees</span><span style={{ fontSize: 12, fontWeight: 600, color: C.rose, ...MONO }}>${fmt(s.channelFees)}</span></div>
+                  <div style={{ ...ROW, borderTop: `1px solid ${C.s8}`, marginTop: 6 }}><span style={{ fontSize: 12, color: C.light, fontWeight: 600 }}>Total fees</span><span style={{ fontSize: 12, fontWeight: 600, color: C.rose, ...MONO }}>${fmt(s.channelFees)}</span></div>
                 </div>
               </div>
             </div>
