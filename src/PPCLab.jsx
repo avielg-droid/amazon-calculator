@@ -143,73 +143,81 @@ function SummaryCard({ label, value, color }) {
   );
 }
 
-function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefix, columns, onExport, exportLabel }) {
+function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefix, columns, onExport, exportLabel, emptyMessage }) {
   const [hoveredExport, setHoveredExport] = useState(false);
   return (
     <div style={{ border: `1px solid ${color}22`, borderRadius: 12, overflow: "hidden" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: `${color}08`, borderBottom: `1px solid ${color}20` }}>
         <span style={{ fontSize: 12, fontWeight: 700, color }}>{title}</span>
         <span style={{ fontSize: 11, color: C.s5 }}>({items.length})</span>
-        <button onClick={onExport}
-          onMouseEnter={() => setHoveredExport(true)} onMouseLeave={() => setHoveredExport(false)}
-          style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.s4, background: hoveredExport ? C.s7 : C.s8, border: "none", borderRadius: 6, padding: "5px 10px", cursor: "pointer", transition: "background 0.15s", outline: "none" }}>
-          <Download size={11} />{exportLabel}
-        </button>
+        {items.length > 0 && (
+          <button onClick={onExport}
+            onMouseEnter={() => setHoveredExport(true)} onMouseLeave={() => setHoveredExport(false)}
+            style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.s4, background: hoveredExport ? C.s7 : C.s8, border: "none", borderRadius: 6, padding: "5px 10px", cursor: "pointer", transition: "background 0.15s", outline: "none" }}>
+            <Download size={11} />{exportLabel}
+          </button>
+        )}
       </div>
-      <div style={{ position: "relative" }}>
-        <div style={{ overflowX: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-            <thead>
-              <tr style={{ background: C.s95 }}>
-                {columns.map(col => (
-                  <th key={col.key} style={{ padding: "8px 12px", textAlign: "left", color: C.s5, fontWeight: 600, fontSize: 11, whiteSpace: "nowrap" }}>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                      {col.label} <Tooltip text={col.tip} dir={col.tipDir || "right"} />
-                    </span>
-                  </th>
-                ))}
-                <th style={{ padding: "8px 12px", color: C.s5, fontWeight: 600, fontSize: 11 }}>Why?</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item, i) => {
-                const id = `${idPrefix}-${i}`;
-                const isOpen = expandedWhy === id;
-                return (
-                  <React.Fragment key={id}>
-                    <tr style={{ borderTop: `1px solid ${C.s8}`, background: isOpen ? C.s95 : "transparent" }}>
-                      {columns.map(col => (
-                        <td key={col.key} style={{ padding: "8px 12px", color: C.light, fontSize: 12, whiteSpace: col.key === "term" || col.key === "query" || col.key === "recommendedAction" || col.key === "insight" ? "normal" : "nowrap" }}>
-                          {col.render ? col.render(item) : col.key === "spend" ? `$${Number(item[col.key]).toFixed(2)}` : item[col.key]}
-                        </td>
-                      ))}
-                      <td style={{ padding: "8px 12px" }}>
-                        <button className="why-btn" onClick={() => setExpandedWhy(isOpen ? null : id)}
-                          style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer", transition: "background 0.15s, color 0.15s" }}>
-                          {isOpen ? "hide" : "why?"}
-                        </button>
-                      </td>
-                    </tr>
-                    {isOpen && (
-                      <tr key={id + "-why"}>
-                        <td colSpan={columns.length + 1} style={{ padding: "8px 12px 10px 24px", fontSize: 11, color: C.s4, lineHeight: 1.6, background: `${color}06` }}>
-                          <strong style={{ color }}>Flagged because:</strong> {item.whyFlag}
+      {items.length === 0 ? (
+        <div style={{ padding: "16px 14px", fontSize: 12, color: C.s6, fontStyle: "italic" }}>
+          {emptyMessage || "None found with current thresholds."}
+        </div>
+      ) : (
+        <div style={{ position: "relative" }}>
+          <div style={{ overflowX: "auto" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+              <thead>
+                <tr style={{ background: C.s95 }}>
+                  {columns.map(col => (
+                    <th key={col.key} style={{ padding: "8px 12px", textAlign: "left", color: C.s5, fontWeight: 600, fontSize: 11, whiteSpace: "nowrap" }}>
+                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                        {col.label} <Tooltip text={col.tip} dir={col.tipDir || "right"} />
+                      </span>
+                    </th>
+                  ))}
+                  <th style={{ padding: "8px 12px", color: C.s5, fontWeight: 600, fontSize: 11 }}>Why?</th>
+                </tr>
+              </thead>
+              <tbody>
+                {items.map((item, i) => {
+                  const id = `${idPrefix}-${i}`;
+                  const isOpen = expandedWhy === id;
+                  return (
+                    <React.Fragment key={id}>
+                      <tr style={{ borderTop: `1px solid ${C.s8}`, background: isOpen ? C.s95 : "transparent" }}>
+                        {columns.map(col => (
+                          <td key={col.key} style={{ padding: "8px 12px", color: C.light, fontSize: 12, whiteSpace: col.key === "term" || col.key === "query" || col.key === "recommendedAction" || col.key === "insight" ? "normal" : "nowrap" }}>
+                            {col.render ? col.render(item) : col.key === "spend" ? `$${Number(item[col.key]).toFixed(2)}` : item[col.key]}
+                          </td>
+                        ))}
+                        <td style={{ padding: "8px 12px" }}>
+                          <button className="why-btn" onClick={() => setExpandedWhy(isOpen ? null : id)}
+                            style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer", transition: "background 0.15s, color 0.15s" }}>
+                            {isOpen ? "hide" : "why?"}
+                          </button>
                         </td>
                       </tr>
-                    )}
-                  </React.Fragment>
-                );
-              })}
-            </tbody>
-          </table>
+                      {isOpen && (
+                        <tr key={id + "-why"}>
+                          <td colSpan={columns.length + 1} style={{ padding: "8px 12px 10px 24px", fontSize: 11, color: C.s4, lineHeight: 1.6, background: `${color}06` }}>
+                            <strong style={{ color }}>Flagged because:</strong> {item.whyFlag}
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {/* Right-edge fade hint for horizontal scroll */}
+          <div style={{
+            position: "absolute", top: 0, right: 0, height: "100%", width: 40,
+            background: `linear-gradient(to right, transparent, ${C.s9})`,
+            pointerEvents: "none",
+          }} />
         </div>
-        {/* Right-edge fade hint for horizontal scroll */}
-        <div style={{
-          position: "absolute", top: 0, right: 0, height: "100%", width: 40,
-          background: `linear-gradient(to right, transparent, ${C.s9})`,
-          pointerEvents: "none",
-        }} />
-      </div>
+      )}
     </div>
   );
 }
@@ -617,104 +625,87 @@ function SqpTab({ data, setData }) {
       </div>
 
       {/* Opportunities */}
-      {filteredOpportunities.length > 0 && (
-        <RecoSection
-          title="Opportunity Keywords"
-          color={C.emerald}
-          items={filteredOpportunities}
-          expandedWhy={expandedWhy}
-          setExpandedWhy={setExpandedWhy}
-          idPrefix="opp"
-          columns={[
-            { key: "query", label: "Search query", tip: "The customer search query" },
-            { key: "volume", label: "Volume", tip: "Monthly search query volume" },
-            { key: "purchaseShare", label: "Purchase share %", tip: "Your share of purchases — you convert well here" },
-            {
-              key: "gap",
-              label: "Market gap",
-              tip: "Impression share vs click share. Green bar = your clicks, gray = untapped impressions. Wider gap = bigger opportunity.",
-              render: (item) => {
-                const imp = parseFloat(item.impressionShare);
-                const clk = parseFloat(item.clickShare);
-                const gap = Math.max(0, imp - clk);
-                const gapColor = gap >= 20 ? C.emerald : gap >= 10 ? C.amber : C.s5;
-                return (
-                  <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 160 }}>
-                    <span style={{ fontSize: 11, fontWeight: 700, color: gapColor, fontFamily: "ui-monospace, monospace", minWidth: 38 }}>+{gap.toFixed(1)}%</span>
-                    <div style={{ flex: 1, height: 6, background: C.s8, borderRadius: 3, overflow: "hidden", minWidth: 70 }}>
-                      <div style={{ height: "100%", width: `${Math.min(imp, 100)}%`, background: C.s7, borderRadius: 3, position: "relative" }}>
-                        <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${imp > 0 ? (clk / imp) * 100 : 0}%`, background: gapColor, borderRadius: 3 }} />
-                      </div>
+      <RecoSection
+        title="Opportunity Keywords"
+        color={C.emerald}
+        items={filteredOpportunities}
+        expandedWhy={expandedWhy}
+        setExpandedWhy={setExpandedWhy}
+        idPrefix="opp"
+        emptyMessage={brandLower ? `No opportunities match brand filter "${brandFilter}".` : "No opportunities found — try lowering Min Purchase Share or raising Max Click Share in thresholds."}
+        columns={[
+          { key: "query", label: "Search query", tip: "The customer search query" },
+          { key: "volume", label: "Volume", tip: "Monthly search query volume" },
+          { key: "purchaseShare", label: "Purchase share %", tip: "Your share of purchases — you convert well here" },
+          {
+            key: "gap",
+            label: "Market gap",
+            tip: "Impression share vs click share. Green bar = your clicks, gray = untapped impressions. Wider gap = bigger opportunity.",
+            render: (item) => {
+              const imp = parseFloat(item.impressionShare);
+              const clk = parseFloat(item.clickShare);
+              const gap = Math.max(0, imp - clk);
+              const gapColor = gap >= 20 ? C.emerald : gap >= 10 ? C.amber : C.s5;
+              return (
+                <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 160 }}>
+                  <span style={{ fontSize: 11, fontWeight: 700, color: gapColor, fontFamily: "ui-monospace, monospace", minWidth: 38 }}>+{gap.toFixed(1)}%</span>
+                  <div style={{ flex: 1, height: 6, background: C.s8, borderRadius: 3, overflow: "hidden", minWidth: 70 }}>
+                    <div style={{ height: "100%", width: `${Math.min(imp, 100)}%`, background: C.s7, borderRadius: 3, position: "relative" }}>
+                      <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${imp > 0 ? (clk / imp) * 100 : 0}%`, background: gapColor, borderRadius: 3 }} />
                     </div>
-                    <span style={{ fontSize: 10, color: C.s5, whiteSpace: "nowrap" }}>{clk}% / {imp}%</span>
                   </div>
-                );
-              },
+                  <span style={{ fontSize: 10, color: C.s5, whiteSpace: "nowrap" }}>{clk}% / {imp}%</span>
+                </div>
+              );
             },
-            { key: "insight", label: "Insight", tip: "Recommended action", tipDir: "left" },
-          ]}
-          onExport={() => downloadCsv(exportSqpCsv(filteredOpportunities, [], []), "sqp-opportunities.csv")}
-          exportLabel="Export opportunities.csv"
-        />
-      )}
+          },
+          { key: "insight", label: "Insight", tip: "Recommended action", tipDir: "left" },
+        ]}
+        onExport={() => downloadCsv(exportSqpCsv(filteredOpportunities, [], []), "sqp-opportunities.csv")}
+        exportLabel="Export opportunities.csv"
+      />
 
       {/* Market Leaders */}
-      {filteredLeaders.length > 0 && (
-        <RecoSection
-          title="Market Leader Keywords"
-          color={C.cyan}
-          items={filteredLeaders}
-          expandedWhy={expandedWhy}
-          setExpandedWhy={setExpandedWhy}
-          idPrefix="lead"
-          columns={[
-            { key: "query", label: "Search Query", tip: "The customer search query" },
-            { key: "volume", label: "Volume", tip: "Monthly search query volume" },
-            { key: "purchaseShare", label: "Purchase share %", tip: "Your dominant share of purchases for this query" },
-            { key: "clickShare", label: "Click share %", tip: "Your share of clicks" },
-            { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions" },
-            { key: "insight", label: "Insight", tip: "Strategic recommendation", tipDir: "left" },
-          ]}
-          onExport={() => downloadCsv(exportSqpCsv([], [], filteredLeaders), "sqp-leaders.csv")}
-          exportLabel="Export leaders.csv"
-        />
-      )}
+      <RecoSection
+        title="Market Leader Keywords"
+        color={C.cyan}
+        items={filteredLeaders}
+        expandedWhy={expandedWhy}
+        setExpandedWhy={setExpandedWhy}
+        idPrefix="lead"
+        emptyMessage={brandLower ? `No market leaders match brand filter "${brandFilter}".` : `No market leaders found — queries where your purchase share ≥ ${thresholds.minPurchaseShareLeader}%. Try lowering that threshold.`}
+        columns={[
+          { key: "query", label: "Search query", tip: "The customer search query" },
+          { key: "volume", label: "Volume", tip: "Monthly search query volume" },
+          { key: "purchaseShare", label: "Purchase share %", tip: "Your dominant share of purchases for this query" },
+          { key: "clickShare", label: "Click share %", tip: "Your share of clicks" },
+          { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions" },
+          { key: "insight", label: "Insight", tip: "Strategic recommendation", tipDir: "left" },
+        ]}
+        onExport={() => downloadCsv(exportSqpCsv([], [], filteredLeaders), "sqp-leaders.csv")}
+        exportLabel="Export leaders.csv"
+      />
 
       {/* Risks */}
-      {filteredRisks.length > 0 && (
-        <RecoSection
-          title="Risk Keywords"
-          color={C.rose}
-          items={filteredRisks}
-          expandedWhy={expandedWhy}
-          setExpandedWhy={setExpandedWhy}
-          idPrefix="risk"
-          columns={[
-            { key: "query", label: "Search Query", tip: "The customer search query" },
-            { key: "volume", label: "Volume", tip: "Monthly search query volume" },
-            { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions — high visibility" },
-            { key: "purchaseShare", label: "Purchase share %", tip: "Your share of purchases — low conversion" },
-            { key: "clickShare", label: "Click share %", tip: "Your share of clicks" },
-            { key: "insight", label: "Insight", tip: "Recommended action", tipDir: "left" },
-          ]}
-          onExport={() => downloadCsv(exportSqpCsv([], filteredRisks, []), "sqp-risks.csv")}
-          exportLabel="Export risks.csv"
-        />
-      )}
-
-      {filteredOpportunities.length === 0 && filteredRisks.length === 0 && filteredLeaders.length === 0 && (
-        <div style={{ textAlign: "center", padding: "24px", color: C.s5, fontSize: 13 }}>
-          {brandLower ? (
-            <>All results filtered by brand &ldquo;{brandFilter}&rdquo;.{" "}
-              <button onClick={() => setBrandFilter("")} style={{ fontSize: 13, color: C.violet, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>Clear filter</button>
-            </>
-          ) : (
-            <>No keywords flagged with current thresholds.{" "}
-              <button onClick={() => { setThresholds({ ...SQP_THRESHOLD_DEFAULTS }); setThresholdsOpen(true); }} style={{ fontSize: 13, color: C.violet, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>Reset to defaults</button>
-            </>
-          )}
-        </div>
-      )}
+      <RecoSection
+        title="Risk Keywords"
+        color={C.rose}
+        items={filteredRisks}
+        expandedWhy={expandedWhy}
+        setExpandedWhy={setExpandedWhy}
+        idPrefix="risk"
+        emptyMessage={brandLower ? `No risks match brand filter "${brandFilter}".` : `No risks found — queries where impression share ≥ ${thresholds.minImpressionShareRisk}% AND purchase share ≤ ${thresholds.maxPurchaseShareRisk}%. Adjust those thresholds to find under-converting terms.`}
+        columns={[
+          { key: "query", label: "Search query", tip: "The customer search query" },
+          { key: "volume", label: "Volume", tip: "Monthly search query volume" },
+          { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions — high visibility" },
+          { key: "purchaseShare", label: "Purchase share %", tip: "Your share of purchases — low conversion" },
+          { key: "clickShare", label: "Click share %", tip: "Your share of clicks" },
+          { key: "insight", label: "Insight", tip: "Recommended action", tipDir: "left" },
+        ]}
+        onExport={() => downloadCsv(exportSqpCsv([], filteredRisks, []), "sqp-risks.csv")}
+        exportLabel="Export risks.csv"
+      />
     </div>
   );
 }
