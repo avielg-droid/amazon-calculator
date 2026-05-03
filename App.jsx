@@ -181,6 +181,84 @@ function InsightCard({ type, title, desc, icon: Icon }) {
   );
 }
 
+function HomeScreen({ onSelect }) {
+  const [hoveredCard, setHoveredCard] = useState(null);
+
+  const card = (tool, accent) => ({
+    container: {
+      flex: "1 1 280px", maxWidth: 360, background: C.s9,
+      border: `1px solid ${hoveredCard === tool ? accent : C.s8}`,
+      borderRadius: 20, padding: "32px 28px", cursor: "pointer",
+      transition: "all 0.2s", boxShadow: hoveredCard === tool ? `0 8px 32px ${accent}20` : "0 4px 24px #00000040",
+      transform: hoveredCard === tool ? "translateY(-2px)" : "none",
+      display: "flex", flexDirection: "column", gap: 16,
+    },
+    icon: {
+      width: 48, height: 48, background: `${accent}15`, borderRadius: 14,
+      display: "flex", alignItems: "center", justifyContent: "center",
+    },
+    btn: {
+      marginTop: "auto", padding: "10px 18px", borderRadius: 10, border: "none",
+      background: hoveredCard === tool ? accent : `${accent}20`,
+      color: hoveredCard === tool ? "#fff" : accent,
+      fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s",
+      display: "flex", alignItems: "center", gap: 6,
+    },
+  });
+
+  const ppc = card("ppc", C.violet);
+  const calc = card("calculator", C.emerald);
+
+  return (
+    <div style={{
+      minHeight: "100vh", background: C.s95, display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center", padding: "40px 20px",
+      fontFamily: "ui-sans-serif, system-ui, sans-serif",
+    }}>
+      <div style={{ textAlign: "center", marginBottom: 48 }}>
+        <h1 style={{
+          fontSize: 36, fontWeight: 800, margin: "0 0 8px",
+          background: "linear-gradient(90deg, #10b981, #06b6d4)",
+          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+        }}>Danuly</h1>
+        <p style={{ fontSize: 14, color: C.s5, margin: 0 }}>Amazon seller tools</p>
+      </div>
+
+      <div style={{ display: "flex", flexWrap: "wrap", gap: 20, justifyContent: "center", maxWidth: 780, width: "100%" }}>
+
+        <div style={ppc.container}
+          onClick={() => onSelect("ppc")}
+          onMouseEnter={() => setHoveredCard("ppc")}
+          onMouseLeave={() => setHoveredCard(null)}>
+          <div style={ppc.icon}><BarChart3 size={22} color={C.violet} /></div>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: C.light, marginBottom: 6 }}>PPC Lab</div>
+            <div style={{ fontSize: 13, color: C.s4, lineHeight: 1.6 }}>
+              Analyze ad reports. Find negative keywords, harvest opportunities, and market insights.
+            </div>
+          </div>
+          <button style={ppc.btn} tabIndex={-1}>Open PPC Lab <span>→</span></button>
+        </div>
+
+        <div style={calc.container}
+          onClick={() => onSelect("calculator")}
+          onMouseEnter={() => setHoveredCard("calculator")}
+          onMouseLeave={() => setHoveredCard(null)}>
+          <div style={calc.icon}><DollarSign size={22} color={C.emerald} /></div>
+          <div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: C.light, marginBottom: 6 }}>Profit Calculator</div>
+            <div style={{ fontSize: 13, color: C.s4, lineHeight: 1.6 }}>
+              Unit economics & margin simulator. Amazon FBA and DTC channels with full P&L breakdown.
+            </div>
+          </div>
+          <button style={calc.btn} tabIndex={-1}>Open Calculator <span>→</span></button>
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 const DEFAULTS = {
   sellingPrice: 49.99, unitCost: 12.00, freightCost: 2.50,
   customsDuty: 5, prepFees: 1.50, safetyBuffer: 2, vatRate: 20,
