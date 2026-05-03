@@ -466,7 +466,7 @@ export default function App() {
     padding: "7px 16px", borderRadius: 9, fontSize: 12, fontWeight: 600,
     cursor: "pointer", border: "none", transition: "all 0.2s",
     outline: "none", boxShadow: "none",
-    background: marketMode === val ? (val === "us" ? "#3b82f6" : C.violet) : hoveredMarket === val ? C.s7 : "transparent",
+    background: marketMode === val ? (val === "us" ? C.blue : C.violet) : hoveredMarket === val ? C.s7 : "transparent",
     color: marketMode === val ? "#fff" : C.s4,
     display: "flex", alignItems: "center", gap: 6,
   });
@@ -714,7 +714,7 @@ export default function App() {
               <WaterfallBar label="Landed COGS" value={-s.totalCOGS} total={s.sellingPrice} color={C.rose} />
               <WaterfallBar
                 label="Channel fees"
-                value={-s.channelFees} total={s.sellingPrice} color="#f43f5e88"
+                value={-s.channelFees} total={s.sellingPrice} color={C.rose + "88"}
                 note={!isUS && channelMode === "amazon" ? `Referral on gross $${fmt(s.sellingPrice)} → $${fmt(s.referralActual)}` : undefined}
               />
               <WaterfallBar label="Contribution margin" value={s.contributionMargin} total={s.sellingPrice} color={C.amber} isTotal />
@@ -822,7 +822,7 @@ export default function App() {
                   onChange={e => setOrderQty(Math.max(1, parseInt(e.target.value) || 1))}
                   style={{
                     width: 160, background: C.s95, border: `1px solid ${C.s7}`, borderRadius: 8,
-                    padding: "8px 12px", fontSize: 13, color: "#e2e8f0", outline: "none",
+                    padding: "8px 12px", fontSize: 13, color: C.light, outline: "none",
                     fontFamily: "ui-monospace, monospace",
                   }}
                 />
@@ -877,7 +877,7 @@ export default function App() {
               })()}
 
               <div style={{ marginTop: 20, padding: "12px 16px", background: C.s95, borderRadius: 10, border: `1px solid ${C.s8}`, fontSize: 12, color: C.s4, lineHeight: 1.6 }}>
-                <strong style={{ color: "#e2e8f0" }}>Rule of thumb:</strong> Payback under 3 months = aggressive scaling candidate. 3–6 months = healthy. Over 6 months = cash flow risk, consider smaller orders.
+                <strong style={{ color: C.light }}>Rule of thumb:</strong> Payback under 3 months = aggressive scaling candidate. 3–6 months = healthy. Over 6 months = cash flow risk, consider smaller orders.
               </div>
             </div>
           )}
@@ -896,7 +896,7 @@ export default function App() {
             onChange={e => setTargetMargin(Math.min(99, Math.max(1, parseFloat(e.target.value) || 20)))}
             style={{
               width: 100, background: C.s95, border: `1px solid ${C.emerald}`, borderRadius: 8,
-              padding: "8px 12px", fontSize: 13, color: "#e2e8f0", outline: "none",
+              padding: "8px 12px", fontSize: 13, color: C.light, outline: "none",
               fontFamily: "ui-monospace, monospace",
             }}
           />
@@ -1015,7 +1015,7 @@ export default function App() {
                   borderBottom: `1px solid ${C.s8}`,
                   background: isCurrent ? `${C.emerald}10` : "transparent",
                 }}>
-                  <td style={{ padding: "8px 10px", textAlign: "right", fontWeight: isCurrent ? 700 : 400, color: isCurrent ? C.emerald : "#e2e8f0", ...MONO }}>
+                  <td style={{ padding: "8px 10px", textAlign: "right", fontWeight: isCurrent ? 700 : 400, color: isCurrent ? C.emerald : C.light, ...MONO }}>
                     ${fmt(P)} {isCurrent && <span style={{ fontSize: 9, color: C.s5 }}>current</span>}
                   </td>
                   <td style={{ padding: "8px 10px", textAlign: "right", color: profit >= 0 ? C.emerald : C.rose, ...MONO, fontWeight: 600 }}>
@@ -1024,7 +1024,7 @@ export default function App() {
                   <td style={{ padding: "8px 10px", textAlign: "right", color: margin > 20 ? C.emerald : margin > 10 ? C.amber : C.rose, ...MONO }}>
                     {fmt(margin, 1)}%
                   </td>
-                  <td style={{ padding: "8px 10px", textAlign: "right", color: monthlyProfit >= 0 ? "#e2e8f0" : C.rose, ...MONO }}>
+                  <td style={{ padding: "8px 10px", textAlign: "right", color: monthlyProfit >= 0 ? C.light : C.rose, ...MONO }}>
                     {monthlyProfit >= 0 ? `$${fmtK(monthlyProfit)}` : `-$${fmtK(Math.abs(monthlyProfit))}`}
                   </td>
                   <td style={{ padding: "8px 10px", textAlign: "right", color: roi > 50 ? C.emerald : roi > 20 ? C.amber : C.rose, ...MONO }}>
@@ -1052,13 +1052,13 @@ export default function App() {
                 {insights.map((ins, i) => <InsightCard key={i} {...ins} />)}
               </div>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 10, marginTop: 16 }}>
-                <div style={{ padding: "14px 16px", background: "#10b98108", border: "1px solid #10b98120", borderRadius: 12 }}>
+                <div style={{ padding: "14px 16px", background: "#10b98108", border: `1px solid ${C.emeraldDim}`, borderRadius: 12 }}>
                   <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.emerald, marginBottom: 8 }}>Price sensitivity</div>
                   <p style={{ fontSize: 12, color: C.s4, margin: 0, lineHeight: 1.6 }}>
-                    A $2 price increase → <strong style={{ color: "#e2e8f0" }}>${fmt(inputs.sellingPrice + 2)}</strong> gross would add <strong style={{ color: C.emerald }}>${fmt(2 * (1 - effectiveVat / (100 + effectiveVat)), 2)}/unit</strong> after VAT, or <strong style={{ color: C.emerald }}>${fmtK(2 * (1 - effectiveVat / (100 + effectiveVat)) * inputs.monthlyUnits)}/mo</strong> at current volume.
+                    A $2 price increase → <strong style={{ color: C.light }}>${fmt(inputs.sellingPrice + 2)}</strong> gross would add <strong style={{ color: C.emerald }}>${fmt(2 * (1 - effectiveVat / (100 + effectiveVat)), 2)}/unit</strong> after VAT, or <strong style={{ color: C.emerald }}>${fmtK(2 * (1 - effectiveVat / (100 + effectiveVat)) * inputs.monthlyUnits)}/mo</strong> at current volume.
                   </p>
                 </div>
-                <div style={{ padding: "14px 16px", background: "#06b6d408", border: "1px solid #06b6d420", borderRadius: 12 }}>
+                <div style={{ padding: "14px 16px", background: "#06b6d408", border: `1px solid ${C.cyanDim}`, borderRadius: 12 }}>
                   <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.cyan, marginBottom: 8 }}>Channel comparison</div>
                   <p style={{ fontSize: 12, color: C.s4, margin: 0, lineHeight: 1.6 }}>
                     {channelMode === "amazon"
