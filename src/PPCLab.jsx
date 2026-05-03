@@ -28,7 +28,14 @@ export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp }) {
 
   return (
     <div style={CARD}>
-      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      <style>{`
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .ppc-num::-webkit-inner-spin-button, .ppc-num::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        .ppc-num { -moz-appearance: textfield; }
+        .ppc-num:focus { border-color: #8b5cf6 !important; box-shadow: 0 0 0 1px #8b5cf622 !important; }
+        .ppc-text:focus { border-color: #8b5cf6 !important; outline: none !important; }
+        .why-btn:hover { background: #334155 !important; color: #e2e8f0 !important; }
+      `}</style>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
         <span style={{ fontSize: 13, fontWeight: 700 }}>PPC Lab</span>
         <span style={{ fontSize: 10, color: C.s5, background: C.s8, borderRadius: 6, padding: "3px 8px" }}>Beta</span>
@@ -48,6 +55,7 @@ export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp }) {
 
 function UploadZone({ onFile, label = "Drop file here or click to browse" }) {
   const [dragging, setDragging] = useState(false);
+  const [focused, setFocused] = useState(false);
   const inputId = "ppc-file-" + label.replace(/\s/g, "").slice(0, 10);
 
   const handleFile = (file) => {
@@ -71,17 +79,26 @@ function UploadZone({ onFile, label = "Drop file here or click to browse" }) {
     }
   };
 
+  const trigger = () => document.getElementById(inputId).click();
+
   return (
     <div
+      role="button"
+      tabIndex={0}
       onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
       onDragLeave={() => setDragging(false)}
       onDrop={(e) => { e.preventDefault(); setDragging(false); handleFile(e.dataTransfer.files[0]); }}
-      onClick={() => document.getElementById(inputId).click()}
+      onClick={trigger}
+      onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); trigger(); } }}
+      onFocus={() => setFocused(true)}
+      onBlur={() => setFocused(false)}
       style={{
-        border: `2px dashed ${dragging ? C.violet : C.s7}`,
+        border: `2px dashed ${dragging || focused ? C.violet : C.s7}`,
         borderRadius: 12, padding: "32px 24px", textAlign: "center",
         cursor: "pointer", transition: "border-color 0.2s",
         background: dragging ? "#8b5cf608" : "transparent",
+        outline: focused ? `2px solid ${C.violet}40` : "none",
+        outlineOffset: 2,
       }}
     >
       <Upload size={24} color={C.s5} style={{ marginBottom: 8 }} />
@@ -165,8 +182,8 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
                         </td>
                       ))}
                       <td style={{ padding: "8px 12px" }}>
-                        <button onClick={() => setExpandedWhy(isOpen ? null : id)}
-                          style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer" }}>
+                        <button className="why-btn" onClick={() => setExpandedWhy(isOpen ? null : id)}
+                          style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer", transition: "background 0.15s, color 0.15s" }}>
                           {isOpen ? "hide" : "why?"}
                         </button>
                       </td>
@@ -301,8 +318,8 @@ function StrTab({ data, setData }) {
       {/* Brand filter */}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: C.s4, whiteSpace: "nowrap" }}>Exclude brand:</span>
-        <input type="text" placeholder="e.g. your brand name" value={brandFilter} onChange={e => setBrandFilter(e.target.value)}
-          style={{ flex: 1, background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: "7px 12px", fontSize: 12, color: "#e2e8f0", outline: "none" }} />
+        <input type="text" className="ppc-text" placeholder="e.g. your brand name" value={brandFilter} onChange={e => setBrandFilter(e.target.value)}
+          style={{ flex: 1, background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: "7px 12px", fontSize: 12, color: "#e2e8f0", outline: "none", transition: "border-color 0.15s" }} />
         {brandFilter && <button onClick={() => setBrandFilter("")}
           style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer" }}>clear</button>}
       </div>
@@ -334,9 +351,9 @@ function StrTab({ data, setData }) {
                 </div>
                 <div style={{ position: "relative" }}>
                   {prefix && <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: C.s5, pointerEvents: "none" }}>{prefix}</span>}
-                  <input type="number" value={thresholds[key]}
+                  <input type="number" className="ppc-num" value={thresholds[key]}
                     onChange={e => setThresholds(t => ({ ...t, [key]: parseFloat(e.target.value) || 0 }))}
-                    style={{ width: "100%", background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: `7px ${suffix ? 28 : 10}px 7px ${prefix ? 22 : 10}px`, fontSize: 12, color: "#e2e8f0", outline: "none", boxSizing: "border-box" }} />
+                    style={{ width: "100%", background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: `7px ${suffix ? 28 : 10}px 7px ${prefix ? 22 : 10}px`, fontSize: 12, color: "#e2e8f0", outline: "none", boxSizing: "border-box", transition: "border-color 0.15s, box-shadow 0.15s" }} />
                   {suffix && <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: C.s5, pointerEvents: "none" }}>{suffix}</span>}
                 </div>
               </div>
@@ -398,7 +415,9 @@ function StrTab({ data, setData }) {
 
       {filteredNegatives.length === 0 && filteredHarvest.length === 0 && (
         <div style={{ textAlign: "center", padding: "24px", color: C.s5, fontSize: 13 }}>
-          No candidates found with current thresholds. Try lowering the thresholds above.
+          {brandLower
+            ? `All results filtered by brand "${brandFilter}". Clear the brand filter or try a different term.`
+            : "No candidates found with current thresholds. Try lowering the thresholds above."}
         </div>
       )}
     </div>
@@ -508,8 +527,8 @@ function SqpTab({ data, setData }) {
       {/* Brand filter */}
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: C.s4, whiteSpace: "nowrap" }}>Exclude brand:</span>
-        <input type="text" placeholder="e.g. your brand name" value={brandFilter} onChange={e => setBrandFilter(e.target.value)}
-          style={{ flex: 1, background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: "7px 12px", fontSize: 12, color: "#e2e8f0", outline: "none" }} />
+        <input type="text" className="ppc-text" placeholder="e.g. your brand name" value={brandFilter} onChange={e => setBrandFilter(e.target.value)}
+          style={{ flex: 1, background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: "7px 12px", fontSize: 12, color: "#e2e8f0", outline: "none", transition: "border-color 0.15s" }} />
         {brandFilter && <button onClick={() => setBrandFilter("")}
           style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer" }}>clear</button>}
       </div>
@@ -542,9 +561,9 @@ function SqpTab({ data, setData }) {
                     style={{ marginLeft: "auto", fontSize: 9, color: C.s6, background: "none", border: "none", cursor: "pointer", padding: "4px 6px" }}>reset</button>
                 </div>
                 <div style={{ position: "relative" }}>
-                  <input type="number" value={thresholds[key]}
+                  <input type="number" className="ppc-num" value={thresholds[key]}
                     onChange={e => setThresholds(t => ({ ...t, [key]: parseFloat(e.target.value) || 0 }))}
-                    style={{ width: "100%", background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: `7px ${suffix ? 28 : 10}px 7px 10px`, fontSize: 12, color: "#e2e8f0", outline: "none", boxSizing: "border-box" }} />
+                    style={{ width: "100%", background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: `7px ${suffix ? 28 : 10}px 7px 10px`, fontSize: 12, color: "#e2e8f0", outline: "none", boxSizing: "border-box", transition: "border-color 0.15s, box-shadow 0.15s" }} />
                   {suffix && <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: C.s5, pointerEvents: "none" }}>{suffix}</span>}
                 </div>
               </div>
@@ -554,7 +573,7 @@ function SqpTab({ data, setData }) {
       </div>
 
       {/* Summary cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 10 }}>
         <SummaryCard label="Opportunities" value={filteredOpportunities.length} color={C.emerald} />
         <SummaryCard label="Market Leaders" value={filteredLeaders.length} color={C.cyan} />
         <SummaryCard label="Risk Keywords" value={filteredRisks.length} color={C.rose} />
@@ -649,7 +668,9 @@ function SqpTab({ data, setData }) {
 
       {filteredOpportunities.length === 0 && filteredRisks.length === 0 && filteredLeaders.length === 0 && (
         <div style={{ textAlign: "center", padding: "24px", color: C.s5, fontSize: 13 }}>
-          No keywords flagged with current thresholds. Try adjusting the thresholds above.
+          {brandLower
+            ? `All results filtered by brand "${brandFilter}". Clear the brand filter or try a different term.`
+            : "No keywords flagged with current thresholds. Try adjusting the thresholds above."}
         </div>
       )}
     </div>
