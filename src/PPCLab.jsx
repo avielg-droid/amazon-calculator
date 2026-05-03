@@ -391,9 +391,10 @@ function StrTab({ data, setData }) {
           <SectionToggle enabled={negEnabled} onToggle={() => setNegEnabled(e => !e)} accent={C.rose} />
           {negEnabled && (
             <div style={{ marginLeft: "auto", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
-              <ThresholdInput fieldKey="minSpendNegative" label="Min spend" prefix="$" tip="Flag terms spending above this with 0 orders" />
+              <ThresholdInput fieldKey="minSpendNegative" label="Min spend" prefix="$" tip="Flag terms spending above this with 0 orders (also used as data floor for high-ACOS check)" />
               <ThresholdInput fieldKey="minClicksNegative" label="Min clicks" tip="Flag terms with this many clicks and 0 orders" />
-              <button onClick={() => setThresholds(t => ({ ...t, minSpendNegative: STR_THRESHOLD_DEFAULTS.minSpendNegative, minClicksNegative: STR_THRESHOLD_DEFAULTS.minClicksNegative }))}
+              <ThresholdInput fieldKey="maxAcosNegative" label="Max ACoS" suffix="%" tip="Flag terms that DO convert but at ACoS above this — spending more on ads than returned in profit" />
+              <button onClick={() => setThresholds(t => ({ ...t, minSpendNegative: STR_THRESHOLD_DEFAULTS.minSpendNegative, minClicksNegative: STR_THRESHOLD_DEFAULTS.minClicksNegative, maxAcosNegative: STR_THRESHOLD_DEFAULTS.maxAcosNegative }))}
                 style={{ fontSize: 10, color: C.s6, background: "none", border: "none", cursor: "pointer", padding: "2px 4px" }}>reset</button>
               {filteredNegatives.length > 0 && (
                 <button onClick={() => downloadCsv(exportNegativesCsv(filteredNegatives), "negatives.csv")}
@@ -409,7 +410,7 @@ function StrTab({ data, setData }) {
             <div style={{ padding: "16px 14px", fontSize: 12, color: C.s6, fontStyle: "italic" }}>
               {brandLower
                 ? <>All filtered by brand &ldquo;{brandFilter}&rdquo;. <button onClick={() => setBrandFilter("")} style={{ fontSize: 12, color: C.violet, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>Clear</button></>
-                : `No terms found. Try lowering Min spend (currently $${thresholds.minSpendNegative}) or Min clicks (currently ${thresholds.minClicksNegative}).`}
+                : `No terms found. Try lowering Min spend ($${thresholds.minSpendNegative}), Min clicks (${thresholds.minClicksNegative}), or Max ACoS (${thresholds.maxAcosNegative}%).`}
             </div>
           ) : (
             <div style={{ position: "relative" }}>

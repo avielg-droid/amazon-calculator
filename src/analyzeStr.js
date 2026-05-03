@@ -14,6 +14,7 @@ export const STR_REQUIRED_COLUMNS = [
 export const STR_THRESHOLD_DEFAULTS = {
   minSpendNegative: 10,   // $ spend with 0 orders → negative candidate
   minClicksNegative: 15,  // clicks with 0 orders → negative candidate (alternative)
+  maxAcosNegative: 80,    // ACOS% above this (even with orders) → negative candidate
   minOrdersHarvest: 2,    // minimum orders to consider harvesting
   maxAcosHarvest: 40,     // maximum ACoS% to consider harvesting
 };
@@ -23,7 +24,7 @@ export const STR_THRESHOLD_DEFAULTS = {
 // thresholds: object matching STR_THRESHOLD_DEFAULTS shape
 // Returns: { negatives, harvest, totalTerms }
 export function analyzeStr(rows, thresholds = STR_THRESHOLD_DEFAULTS) {
-  const { minSpendNegative, minClicksNegative, minOrdersHarvest, maxAcosHarvest } = thresholds;
+  const { minSpendNegative, minClicksNegative, maxAcosNegative, minOrdersHarvest, maxAcosHarvest } = thresholds;
   const negatives = [];
   const harvest = [];
   const seen = new Set(); // deduplicate by search term
@@ -43,18 +44,32 @@ export function analyzeStr(rows, thresholds = STR_THRESHOLD_DEFAULTS) {
     const campaign = row["Campaign Name"] || "";
     const key = `${term}__${campaign}`;
 
-    // Negative candidate
-    const highSpend = spend >= minSpendNegative && orders === 0;
-    const highClicks = clicks >= minClicksNegative && orders === 0;
-    if ((highSpend || highClicks) && !seen.has(key + "__neg")) {
+    // Negative candidate — three rules:
+    // 1. High spend + zero conversions
+    // 2. High clicks + zero conversions
+    // 3. Converts but ACOS is above the pain threshold (+ enough spend to be statistically real)
+    const highSpendNoOrders = spend >= minSpendNegative && orders === 0;
+    const highClicksNoOrders = clicks >= minClicksNegative && orders === 0;
+    const highAcos = orders > 0 && acos !== null && acos > maxAcosNegative && spend >= minSpendNegative;
+
+    if ((highSpendNoOrders || highClicksNoOrders || highAcos) && !seen.has(key + "__neg")) {
       seen.add(key + "__neg");
+      let whyFlag, negType;
+      if (highAcos) {
+        whyFlag = `${orders} order${orders !== 1 ? "s" : ""} but ACoS is ${acos.toFixed(1)}% — above the ${maxAcosNegative}% pain threshold ($${spend.toFixed(2)} spend, $${sales.toFixed(2)} sales). Converting but losing money on this term.`;
+        negType = "Phrase"; // high-ACOS terms often partially match; phrase neg is safer
+      } else if (highSpendNoOrders) {
+        whyFlag = `$${spend.toFixed(2)} spend with 0 orders (threshold: $${minSpendNegative})`;
+        negType = "Exact";
+      } else {
+        whyFlag = `${clicks} clicks with 0 orders (threshold: ${minClicksNegative} clicks)`;
+        negType = "Exact";
+      }
       negatives.push({
         term, matchType, spend, clicks, orders, impressions,
         acos: acos ?? null, campaign,
-        whyFlag: highSpend
-          ? `$${spend.toFixed(2)} spend with 0 orders (threshold: $${minSpendNegative})`
-          : `${clicks} clicks with 0 orders (threshold: ${minClicksNegative} clicks)`,
-        recommendedNegType: "Exact",
+        whyFlag,
+        recommendedNegType: negType,
       });
     }
 
