@@ -40,6 +40,21 @@ const C = {
 const CARD = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "20px 22px", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" };
 const LABEL = { fontSize: 11, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase", color: C.muted, marginBottom: 4, display: "block" };
 
+function sortRows(items, col, dir) {
+  if (!col) return items;
+  return [...items].sort((a, b) => {
+    const av = a[col], bv = b[col];
+    const an = parseFloat(av), bn = parseFloat(bv);
+    const cmp = isFinite(an) && isFinite(bn) ? an - bn : String(av ?? "").localeCompare(String(bv ?? ""));
+    return dir === "asc" ? cmp : -cmp;
+  });
+}
+
+function SortIcon({ active, dir }) {
+  if (!active) return <span style={{ color: C.border, fontSize: 10, marginLeft: 2 }}>⇅</span>;
+  return <span style={{ color: C.indigo, fontSize: 10, marginLeft: 2 }}>{dir === "asc" ? "↑" : "↓"}</span>;
+}
+
 export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp }) {
   const [activeSub, setActiveSub] = useState("str");
   const [hoveredSub, setHoveredSub] = useState(null);
@@ -170,6 +185,10 @@ function SummaryCard({ label, value, color }) {
 
 function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefix, columns, onExport, exportLabel, emptyMessage }) {
   const [hoveredExport, setHoveredExport] = useState(false);
+  const [sort, setSort] = useState({ col: null, dir: "desc" });
+  const sortedItems = sortRows(items, sort.col, sort.dir);
+  const toggleSort = (col) => setSort(s => s.col === col ? { col, dir: s.dir === "asc" ? "desc" : "asc" } : { col, dir: "desc" });
+
   return (
     <div style={{ border: `1px solid ${color}22`, borderRadius: 12, overflow: "hidden" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", background: `${color}08`, borderBottom: `1px solid ${color}20` }}>
@@ -196,7 +215,12 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
                   {columns.map(col => (
                     <th key={col.key} style={{ padding: "8px 12px", textAlign: "left", color: C.muted, fontWeight: 600, fontSize: 11, whiteSpace: "nowrap" }}>
                       <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                        {col.label} <Tooltip text={col.tip} dir={col.tipDir || "right"} />
+                        {!col.noSort ? (
+                          <button onClick={() => toggleSort(col.key)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 11, fontWeight: 600, color: sort.col === col.key ? C.indigo : C.muted, display: "inline-flex", alignItems: "center", gap: 2 }}>
+                            {col.label}<SortIcon active={sort.col === col.key} dir={sort.dir} />
+                          </button>
+                        ) : col.label}
+                        <Tooltip text={col.tip} dir={col.tipDir || "right"} />
                       </span>
                     </th>
                   ))}
@@ -204,7 +228,7 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
                 </tr>
               </thead>
               <tbody>
-                {items.map((item, i) => {
+                {sortedItems.map((item, i) => {
                   const id = `${idPrefix}-${i}`;
                   const isOpen = expandedWhy === id;
                   return (
@@ -346,6 +370,26 @@ function StrTab({ data, setData }) {
   const filteredNegatives = brandLower ? negatives.filter(n => !n.term.toLowerCase().includes(brandLower)) : negatives;
   const filteredHarvest = brandLower ? harvest.filter(h => !h.term.toLowerCase().includes(brandLower)) : harvest;
 
+  const [negSort, setNegSort] = useState({ col: null, dir: "desc" });
+  const [harvestSort, setHarvestSort] = useState({ col: null, dir: "desc" });
+  const sortedNegatives = sortRows(filteredNegatives, negSort.col, negSort.dir);
+  const sortedHarvest = sortRows(filteredHarvest, harvestSort.col, harvestSort.dir);
+  const toggleNegSort = col => setNegSort(s => s.col === col ? { col, dir: s.dir === "asc" ? "desc" : "asc" } : { col, dir: "desc" });
+  const toggleHarvestSort = col => setHarvestSort(s => s.col === col ? { col, dir: s.dir === "asc" ? "desc" : "asc" } : { col, dir: "desc" });
+
+  const SortTh = ({ label, col, sort, onToggle, tip, tipDir, noSort }) => (
+    <th style={{ padding: "8px 12px", textAlign: "left", color: sort.col === col ? C.indigo : C.muted, fontWeight: 600, fontSize: 11, whiteSpace: "nowrap" }}>
+      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+        {!noSort ? (
+          <button onClick={() => onToggle(col)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 11, fontWeight: 600, color: sort.col === col ? C.indigo : C.muted, display: "inline-flex", alignItems: "center", gap: 2 }}>
+            {label}<SortIcon active={sort.col === col} dir={sort.dir} />
+          </button>
+        ) : label}
+        {tip && <Tooltip text={tip} dir={tipDir || "right"} />}
+      </span>
+    </th>
+  );
+
   // Full-size labeled input — 44px height, numeric keyboard on mobile
   const ThresholdInput = ({ fieldKey, label, prefix, suffix, tip, desc }) => (
     <div>
@@ -472,23 +516,17 @@ function StrTab({ data, setData }) {
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>
                     <tr style={{ background: C.surface }}>
-                      {[
-                        { key: "term", label: "Search term", tip: "The exact customer search query" },
-                        { key: "spend", label: "Spend ($)", tip: "Total ad spend on this term" },
-                        { key: "clicks", label: "Clicks", tip: "Total clicks" },
-                        { key: "orders", label: "Orders", tip: "Total orders attributed" },
-                        { key: "campaign", label: "Campaign", tip: "Campaign name" },
-                        { key: "recommendedNegType", label: "Neg. type", tip: "Recommended negative match type to add", tipDir: "left" },
-                      ].map(col => (
-                        <th key={col.key} style={{ padding: "8px 12px", textAlign: "left", color: C.muted, fontWeight: 600, fontSize: 11, whiteSpace: "nowrap" }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>{col.label} <Tooltip text={col.tip} dir={col.tipDir || "right"} /></span>
-                        </th>
-                      ))}
+                      <SortTh label="Search term" col="term" sort={negSort} onToggle={toggleNegSort} tip="The exact customer search query" />
+                      <SortTh label="Spend ($)" col="spend" sort={negSort} onToggle={toggleNegSort} tip="Total ad spend on this term" />
+                      <SortTh label="Clicks" col="clicks" sort={negSort} onToggle={toggleNegSort} tip="Total clicks" />
+                      <SortTh label="Orders" col="orders" sort={negSort} onToggle={toggleNegSort} tip="Total orders attributed" />
+                      <SortTh label="Campaign" col="campaign" sort={negSort} onToggle={toggleNegSort} tip="Campaign name" />
+                      <SortTh label="Neg. type" col="recommendedNegType" sort={negSort} onToggle={toggleNegSort} tip="Recommended negative match type" tipDir="left" />
                       <th style={{ padding: "8px 12px", color: C.muted, fontWeight: 600, fontSize: 11 }}>Why?</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredNegatives.map((item, i) => {
+                    {sortedNegatives.map((item, i) => {
                       const id = `neg-${i}`;
                       const isOpen = expandedWhy === id;
                       return (
@@ -580,30 +618,25 @@ function StrTab({ data, setData }) {
                 <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
                   <thead>
                     <tr style={{ background: C.surface }}>
-                      {[
-                        { key: "term", label: "Search term", tip: "The converting search query" },
-                        { key: "orders", label: "Orders", tip: "Number of orders from this term" },
-                        { key: "cvr", label: "CVR %", tip: "Conversion rate: orders / clicks" },
-                        { key: "acos", label: "ACoS %", tip: "Advertising Cost of Sales: spend / revenue" },
-                        { key: "matchType", label: "Current match", tip: "Current keyword match type in your campaign" },
-                        { key: "recommendedAction", label: "Action", tip: "What to do with this term", tipDir: "left" },
-                      ].map(col => (
-                        <th key={col.key} style={{ padding: "8px 12px", textAlign: "left", color: C.muted, fontWeight: 600, fontSize: 11, whiteSpace: "nowrap" }}>
-                          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>{col.label} <Tooltip text={col.tip} dir={col.tipDir || "right"} /></span>
-                        </th>
-                      ))}
+                      <SortTh label="Search term" col="term" sort={harvestSort} onToggle={toggleHarvestSort} tip="The converting search query" />
+                      <SortTh label="Orders" col="orders" sort={harvestSort} onToggle={toggleHarvestSort} tip="Number of orders from this term" />
+                      <SortTh label="Clicks" col="clicks" sort={harvestSort} onToggle={toggleHarvestSort} tip="Total clicks on this term" />
+                      <SortTh label="CVR %" col="cvr" sort={harvestSort} onToggle={toggleHarvestSort} tip="Conversion rate: orders / clicks" />
+                      <SortTh label="ACoS %" col="acos" sort={harvestSort} onToggle={toggleHarvestSort} tip="Advertising Cost of Sales: spend / revenue" />
+                      <SortTh label="Match" col="matchType" sort={harvestSort} onToggle={toggleHarvestSort} tip="Current keyword match type in your campaign" />
+                      <SortTh label="Action" col="recommendedAction" sort={harvestSort} onToggle={toggleHarvestSort} tip="What to do with this term" tipDir="left" noSort />
                       <th style={{ padding: "8px 12px", color: C.muted, fontWeight: 600, fontSize: 11 }}>Why?</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredHarvest.map((item, i) => {
+                    {sortedHarvest.map((item, i) => {
                       const id = `harv-${i}`;
                       const isOpen = expandedWhy === id;
                       return (
                         <React.Fragment key={id}>
                           <tr style={{ borderTop: `1px solid ${C.divider}`, background: isOpen ? C.surface : "transparent" }}>
                             {[
-                              { key: "term" }, { key: "orders" }, { key: "cvr" },
+                              { key: "term" }, { key: "orders" }, { key: "clicks" }, { key: "cvr" },
                               { key: "acos" }, { key: "matchType" }, { key: "recommendedAction" },
                             ].map(col => (
                               <td key={col.key} style={{ padding: "8px 12px", color: C.body, fontSize: 12, whiteSpace: col.key === "term" || col.key === "recommendedAction" ? "normal" : "nowrap" }}>
@@ -619,7 +652,7 @@ function StrTab({ data, setData }) {
                           </tr>
                           {isOpen && (
                             <tr key={id + "-why"}>
-                              <td colSpan={7} style={{ padding: "8px 12px 10px 24px", fontSize: 11, color: C.body, lineHeight: 1.6, background: C.greenDim }}>
+                              <td colSpan={9} style={{ padding: "8px 12px 10px 24px", fontSize: 11, color: C.body, lineHeight: 1.6, background: C.greenDim }}>
                                 <strong style={{ color: C.green }}>Flagged because:</strong> {item.whyFlag}
                               </td>
                             </tr>
