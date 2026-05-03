@@ -253,6 +253,8 @@ function StrTab({ data, setData }) {
   const [thresholds, setThresholds] = useState({ ...STR_THRESHOLD_DEFAULTS });
   const [negEnabled, setNegEnabled] = useState(true);
   const [harvestEnabled, setHarvestEnabled] = useState(true);
+  const [negSettingsOpen, setNegSettingsOpen] = useState(false);
+  const [harvestSettingsOpen, setHarvestSettingsOpen] = useState(false);
   const [error, setError] = useState(null);
   const [expandedWhy, setExpandedWhy] = useState(null);
   const [brandFilter, setBrandFilter] = useState("");
@@ -344,29 +346,36 @@ function StrTab({ data, setData }) {
   const filteredNegatives = brandLower ? negatives.filter(n => !n.term.toLowerCase().includes(brandLower)) : negatives;
   const filteredHarvest = brandLower ? harvest.filter(h => !h.term.toLowerCase().includes(brandLower)) : harvest;
 
-  const ThresholdInput = ({ fieldKey, label, prefix, suffix, tip }) => (
-    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-      <span style={{ fontSize: 11, color: C.muted, whiteSpace: "nowrap" }}>{label}</span>
-      <Tooltip text={tip} />
-      <div style={{ position: "relative", width: 70 }}>
-        {prefix && <span style={{ position: "absolute", left: 7, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: C.muted, pointerEvents: "none" }}>{prefix}</span>}
-        <input type="number" className="ppc-num" value={thresholds[fieldKey]}
+  // Full-size labeled input — 44px height, numeric keyboard on mobile
+  const ThresholdInput = ({ fieldKey, label, prefix, suffix, tip, desc }) => (
+    <div>
+      <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
+        <span style={{ fontSize: 12, fontWeight: 600, color: C.body }}>{label}</span>
+        <Tooltip text={tip} />
+      </div>
+      {desc && <p style={{ fontSize: 11, color: C.muted, margin: "0 0 6px", lineHeight: 1.4 }}>{desc}</p>}
+      <div style={{ position: "relative" }}>
+        {prefix && <span style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: C.muted, pointerEvents: "none", zIndex: 1 }}>{prefix}</span>}
+        <input
+          type="number" inputMode="decimal" className="ppc-num"
+          value={thresholds[fieldKey]}
           onChange={e => setThresholds(t => ({ ...t, [fieldKey]: parseFloat(e.target.value) || 0 }))}
-          style={{ width: "100%", background: C.card, border: `1px solid ${C.bdMed}`, borderRadius: 7, padding: `5px ${suffix ? 20 : 8}px 5px ${prefix ? 18 : 8}px`, fontSize: 12, color: C.ink, outline: "none", boxSizing: "border-box", transition: "border-color 0.15s, box-shadow 0.15s" }} />
-        {suffix && <span style={{ position: "absolute", right: 7, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: C.muted, pointerEvents: "none" }}>{suffix}</span>}
+          style={{ width: "100%", height: 44, background: C.card, border: `1px solid ${C.bdMed}`, borderRadius: 8, padding: `0 ${suffix ? 36 : 12}px 0 ${prefix ? 28 : 12}px`, fontSize: 15, color: C.ink, outline: "none", boxSizing: "border-box", transition: "border-color 0.15s, box-shadow 0.15s" }}
+        />
+        {suffix && <span style={{ position: "absolute", right: 11, top: "50%", transform: "translateY(-50%)", fontSize: 14, color: C.muted, pointerEvents: "none" }}>{suffix}</span>}
       </div>
     </div>
   );
 
   const SectionToggle = ({ enabled, onToggle, accent }) => (
     <button onClick={onToggle} style={{
-      display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600,
-      padding: "4px 10px", borderRadius: 6, border: `1px solid ${enabled ? accent + "44" : C.bdMed}`,
-      background: enabled ? C.indigoDim : C.inset,
-      color: enabled ? accent : C.subtle, cursor: "pointer", transition: "all 0.15s", outline: "none",
+      display: "flex", alignItems: "center", gap: 5, fontSize: 12, fontWeight: 600,
+      height: 36, padding: "0 12px", borderRadius: 8, border: `1px solid ${enabled ? accent + "50" : C.bdMed}`,
+      background: enabled ? accent + "12" : C.inset,
+      color: enabled ? accent : C.subtle, cursor: "pointer", transition: "all 0.15s", outline: "none", flexShrink: 0,
     }}>
       <span style={{ width: 8, height: 8, borderRadius: "50%", background: enabled ? accent : C.subtle, flexShrink: 0 }} />
-      {enabled ? "on" : "off"}
+      {enabled ? "On" : "Off"}
     </button>
   );
 
@@ -413,27 +422,43 @@ function StrTab({ data, setData }) {
 
       {/* Negatives section */}
       <div style={{ border: `1px solid #FCA5A5`, borderRadius: 12, overflow: "hidden" }}>
-        {/* Section header with inline controls */}
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, padding: "10px 14px", background: C.redDim, borderBottom: negEnabled ? `1px solid #FCA5A5` : "none" }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: C.rose }}>Negative Keyword Candidates</span>
-          <span style={{ fontSize: 11, color: C.muted }}>({negEnabled ? filteredNegatives.length : "off"})</span>
-          <SectionToggle enabled={negEnabled} onToggle={() => setNegEnabled(e => !e)} accent={C.rose} />
+        {/* Section header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 14px", background: C.redDim, borderBottom: negEnabled ? `1px solid #FCA5A5` : "none", flexWrap: "wrap" }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: C.rose }}>Negative Keywords</span>
           {negEnabled && (
-            <div style={{ marginLeft: "auto", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
-              <ThresholdInput fieldKey="minSpendNegative" label="Min spend" prefix="$" tip="Flag terms spending above this with 0 orders (also used as data floor for high-ACOS check)" />
-              <ThresholdInput fieldKey="minClicksNegative" label="Min clicks" tip="Flag terms with this many clicks and 0 orders" />
-              <ThresholdInput fieldKey="maxAcosNegative" label="Max ACoS" suffix="%" tip="Flag terms that DO convert but at ACoS above this — spending more on ads than returned in profit" />
-              <button onClick={() => setThresholds(t => ({ ...t, minSpendNegative: STR_THRESHOLD_DEFAULTS.minSpendNegative, minClicksNegative: STR_THRESHOLD_DEFAULTS.minClicksNegative, maxAcosNegative: STR_THRESHOLD_DEFAULTS.maxAcosNegative }))}
-                style={{ fontSize: 10, color: C.subtle, background: "none", border: "none", cursor: "pointer", padding: "2px 4px" }}>reset</button>
-              {filteredNegatives.length > 0 && (
-                <button onClick={() => downloadCsv(exportNegativesCsv(filteredNegatives), "negatives.csv")}
-                  style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.muted, background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "5px 10px", cursor: "pointer", outline: "none" }}>
-                  <Download size={11} />Export negatives.csv
-                </button>
-              )}
-            </div>
+            <span style={{ fontSize: 11, color: C.rose, background: C.card, borderRadius: 99, padding: "1px 8px", border: `1px solid #FCA5A5`, fontWeight: 600 }}>{filteredNegatives.length}</span>
           )}
+          <div style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+            {negEnabled && filteredNegatives.length > 0 && (
+              <button onClick={() => downloadCsv(exportNegativesCsv(filteredNegatives), "negatives.csv")}
+                style={{ display: "flex", alignItems: "center", gap: 5, height: 36, padding: "0 12px", fontSize: 12, fontWeight: 600, color: C.muted, background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, cursor: "pointer", outline: "none" }}>
+                <Download size={12} />Export CSV
+              </button>
+            )}
+            {negEnabled && (
+              <button onClick={() => setNegSettingsOpen(o => !o)}
+                style={{ height: 36, padding: "0 12px", fontSize: 12, fontWeight: 600, background: negSettingsOpen ? C.indigoDim : C.card, border: `1px solid ${negSettingsOpen ? C.indigo + "50" : C.border}`, color: negSettingsOpen ? C.indigo : C.muted, borderRadius: 8, cursor: "pointer", outline: "none" }}>
+                ⚙ Settings
+              </button>
+            )}
+            <SectionToggle enabled={negEnabled} onToggle={() => { setNegEnabled(e => !e); setNegSettingsOpen(false); }} accent={C.rose} />
+          </div>
         </div>
+        {/* Settings panel */}
+        {negEnabled && negSettingsOpen && (
+          <div style={{ padding: "16px 14px", background: C.surface, borderBottom: `1px solid #FCA5A5` }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14 }}>
+              <ThresholdInput fieldKey="minSpendNegative" label="Min spend" prefix="$" tip="Minimum cumulative spend on a term with 0 orders before flagging it. Also used as the data floor for the high-ACoS check." desc="Flag if spend ≥ this with 0 orders" />
+              <ThresholdInput fieldKey="minClicksNegative" label="Min clicks" tip="Minimum clicks on a term with 0 orders before flagging it. Ensures you have enough data before negating." desc="Flag if clicks ≥ this with 0 orders" />
+              <ThresholdInput fieldKey="maxAcosNegative" label="Max ACoS" suffix="%" tip="Flag terms that DO convert but at an ACoS above this ceiling — they're making sales but losing money." desc="Flag poor performers above this ACoS" />
+            </div>
+            <button
+              onClick={() => setThresholds(t => ({ ...t, minSpendNegative: STR_THRESHOLD_DEFAULTS.minSpendNegative, minClicksNegative: STR_THRESHOLD_DEFAULTS.minClicksNegative, maxAcosNegative: STR_THRESHOLD_DEFAULTS.maxAcosNegative }))}
+              style={{ marginTop: 14, fontSize: 12, color: C.muted, background: "none", border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", cursor: "pointer", display: "block" }}>
+              Reset to defaults ($10 · 15 clicks · 100% ACoS)
+            </button>
+          </div>
+        )}
         {negEnabled && (
           filteredNegatives.length === 0 ? (
             <div style={{ padding: "16px 14px", fontSize: 12, color: C.subtle, fontStyle: "italic" }}>
@@ -505,26 +530,42 @@ function StrTab({ data, setData }) {
 
       {/* Harvest section */}
       <div style={{ border: `1px solid #86EFAC`, borderRadius: 12, overflow: "hidden" }}>
-        {/* Section header with inline controls */}
-        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, padding: "10px 14px", background: C.greenDim, borderBottom: harvestEnabled ? `1px solid #86EFAC` : "none" }}>
-          <span style={{ fontSize: 12, fontWeight: 700, color: C.green }}>Harvest Opportunities</span>
-          <span style={{ fontSize: 11, color: C.muted }}>({harvestEnabled ? filteredHarvest.length : "off"})</span>
-          <SectionToggle enabled={harvestEnabled} onToggle={() => setHarvestEnabled(e => !e)} accent={C.green} />
+        {/* Section header */}
+        <div style={{ display: "flex", alignItems: "center", gap: 8, padding: "12px 14px", background: C.greenDim, borderBottom: harvestEnabled ? `1px solid #86EFAC` : "none", flexWrap: "wrap" }}>
+          <span style={{ fontSize: 13, fontWeight: 700, color: C.green }}>Harvest Opportunities</span>
           {harvestEnabled && (
-            <div style={{ marginLeft: "auto", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
-              <ThresholdInput fieldKey="minOrdersHarvest" label="Min orders" tip="Terms need at least this many orders to qualify" />
-              <ThresholdInput fieldKey="maxAcosHarvest" label="Max ACoS" suffix="%" tip="Only harvest terms with ACoS at or below this" />
-              <button onClick={() => setThresholds(t => ({ ...t, minOrdersHarvest: STR_THRESHOLD_DEFAULTS.minOrdersHarvest, maxAcosHarvest: STR_THRESHOLD_DEFAULTS.maxAcosHarvest }))}
-                style={{ fontSize: 10, color: C.subtle, background: "none", border: "none", cursor: "pointer", padding: "2px 4px" }}>reset</button>
-              {filteredHarvest.length > 0 && (
-                <button onClick={() => downloadCsv(exportHarvestCsv(filteredHarvest), "harvest.csv")}
-                  style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.muted, background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "5px 10px", cursor: "pointer", outline: "none" }}>
-                  <Download size={11} />Export harvest.csv
-                </button>
-              )}
-            </div>
+            <span style={{ fontSize: 11, color: C.green, background: C.card, borderRadius: 99, padding: "1px 8px", border: `1px solid #86EFAC`, fontWeight: 600 }}>{filteredHarvest.length}</span>
           )}
+          <div style={{ marginLeft: "auto", display: "flex", gap: 6, alignItems: "center", flexWrap: "wrap" }}>
+            {harvestEnabled && filteredHarvest.length > 0 && (
+              <button onClick={() => downloadCsv(exportHarvestCsv(filteredHarvest), "harvest.csv")}
+                style={{ display: "flex", alignItems: "center", gap: 5, height: 36, padding: "0 12px", fontSize: 12, fontWeight: 600, color: C.muted, background: C.card, border: `1px solid ${C.border}`, borderRadius: 8, cursor: "pointer", outline: "none" }}>
+                <Download size={12} />Export CSV
+              </button>
+            )}
+            {harvestEnabled && (
+              <button onClick={() => setHarvestSettingsOpen(o => !o)}
+                style={{ height: 36, padding: "0 12px", fontSize: 12, fontWeight: 600, background: harvestSettingsOpen ? C.indigoDim : C.card, border: `1px solid ${harvestSettingsOpen ? C.indigo + "50" : C.border}`, color: harvestSettingsOpen ? C.indigo : C.muted, borderRadius: 8, cursor: "pointer", outline: "none" }}>
+                ⚙ Settings
+              </button>
+            )}
+            <SectionToggle enabled={harvestEnabled} onToggle={() => { setHarvestEnabled(e => !e); setHarvestSettingsOpen(false); }} accent={C.green} />
+          </div>
         </div>
+        {/* Settings panel */}
+        {harvestEnabled && harvestSettingsOpen && (
+          <div style={{ padding: "16px 14px", background: C.surface, borderBottom: `1px solid #86EFAC` }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14 }}>
+              <ThresholdInput fieldKey="minOrdersHarvest" label="Min orders" tip="A term needs at least this many orders to be promoted to Exact Match. 2 orders confirms intent beyond a single-sale fluke." desc="Minimum orders to qualify" />
+              <ThresholdInput fieldKey="maxAcosHarvest" label="Max ACoS" suffix="%" tip="Only harvest terms profitable enough to be worth promoting. 40% is the standard ceiling for Exact match campaigns." desc="Only harvest below this ACoS" />
+            </div>
+            <button
+              onClick={() => setThresholds(t => ({ ...t, minOrdersHarvest: STR_THRESHOLD_DEFAULTS.minOrdersHarvest, maxAcosHarvest: STR_THRESHOLD_DEFAULTS.maxAcosHarvest }))}
+              style={{ marginTop: 14, fontSize: 12, color: C.muted, background: "none", border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", cursor: "pointer", display: "block" }}>
+              Reset to defaults (2 orders · 40% ACoS)
+            </button>
+          </div>
+        )}
         {harvestEnabled && (
           filteredHarvest.length === 0 ? (
             <div style={{ padding: "16px 14px", fontSize: 12, color: C.subtle, fontStyle: "italic" }}>
