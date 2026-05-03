@@ -181,6 +181,52 @@ function InsightCard({ type, title, desc, icon: Icon }) {
   );
 }
 
+function TopBar({ activeTool, onSwitch }) {
+  const [hoveredBtn, setHoveredBtn] = useState(null);
+
+  const pillBtn = (tool, accent) => ({
+    padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer",
+    fontSize: 12, fontWeight: 600, transition: "all 0.15s", outline: "none",
+    background: activeTool === tool ? accent : hoveredBtn === tool ? C.s7 : "transparent",
+    color: activeTool === tool ? "#fff" : hoveredBtn === tool ? C.light : C.s5,
+  });
+
+  return (
+    <div style={{
+      background: C.s9, borderBottom: `1px solid ${C.s8}`,
+      padding: "8px 16px", display: "flex", alignItems: "center",
+      gap: 12, position: "sticky", top: 0, zIndex: 40,
+    }}>
+      <span style={{
+        fontSize: 15, fontWeight: 800, letterSpacing: "-0.02em",
+        background: "linear-gradient(90deg, #10b981, #06b6d4)",
+        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
+        cursor: "pointer",
+      }}
+        onClick={() => onSwitch("home")}
+        title="Back to home"
+      >
+        Danuly
+      </span>
+
+      <div style={{ marginLeft: "auto", display: "flex", gap: 4, background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 10, padding: 3 }}>
+        <button
+          style={pillBtn("ppc", C.violet)}
+          onClick={() => onSwitch("ppc")}
+          onMouseEnter={() => setHoveredBtn("ppc")}
+          onMouseLeave={() => setHoveredBtn(null)}
+        >PPC Lab</button>
+        <button
+          style={pillBtn("calculator", C.emerald)}
+          onClick={() => onSwitch("calculator")}
+          onMouseEnter={() => setHoveredBtn("calculator")}
+          onMouseLeave={() => setHoveredBtn(null)}
+        >Profit Calc</button>
+      </div>
+    </div>
+  );
+}
+
 function HomeScreen({ onSelect }) {
   const [hoveredCard, setHoveredCard] = useState(null);
 
