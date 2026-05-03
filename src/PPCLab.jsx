@@ -226,7 +226,8 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
 
 function StrTab({ data, setData }) {
   const [thresholds, setThresholds] = useState({ ...STR_THRESHOLD_DEFAULTS });
-  const [thresholdsOpen, setThresholdsOpen] = useState(false);
+  const [negEnabled, setNegEnabled] = useState(true);
+  const [harvestEnabled, setHarvestEnabled] = useState(true);
   const [error, setError] = useState(null);
   const [expandedWhy, setExpandedWhy] = useState(null);
   const [brandFilter, setBrandFilter] = useState("");
@@ -314,6 +315,32 @@ function StrTab({ data, setData }) {
   const filteredNegatives = brandLower ? negatives.filter(n => !n.term.toLowerCase().includes(brandLower)) : negatives;
   const filteredHarvest = brandLower ? harvest.filter(h => !h.term.toLowerCase().includes(brandLower)) : harvest;
 
+  const ThresholdInput = ({ fieldKey, label, prefix, suffix, tip }) => (
+    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+      <span style={{ fontSize: 11, color: C.s5, whiteSpace: "nowrap" }}>{label}</span>
+      <Tooltip text={tip} />
+      <div style={{ position: "relative", width: 70 }}>
+        {prefix && <span style={{ position: "absolute", left: 7, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: C.s5, pointerEvents: "none" }}>{prefix}</span>}
+        <input type="number" className="ppc-num" value={thresholds[fieldKey]}
+          onChange={e => setThresholds(t => ({ ...t, [fieldKey]: parseFloat(e.target.value) || 0 }))}
+          style={{ width: "100%", background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 7, padding: `5px ${suffix ? 20 : 8}px 5px ${prefix ? 18 : 8}px`, fontSize: 12, color: C.light, outline: "none", boxSizing: "border-box", transition: "border-color 0.15s, box-shadow 0.15s" }} />
+        {suffix && <span style={{ position: "absolute", right: 7, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: C.s5, pointerEvents: "none" }}>{suffix}</span>}
+      </div>
+    </div>
+  );
+
+  const SectionToggle = ({ enabled, onToggle, accent }) => (
+    <button onClick={onToggle} style={{
+      display: "flex", alignItems: "center", gap: 5, fontSize: 11, fontWeight: 600,
+      padding: "4px 10px", borderRadius: 6, border: `1px solid ${enabled ? accent + "44" : C.s7}`,
+      background: enabled ? accent + "15" : "transparent",
+      color: enabled ? accent : C.s6, cursor: "pointer", transition: "all 0.15s", outline: "none",
+    }}>
+      <span style={{ width: 8, height: 8, borderRadius: "50%", background: enabled ? accent : C.s6, flexShrink: 0 }} />
+      {enabled ? "on" : "off"}
+    </button>
+  );
+
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
       {/* File info + re-upload */}
@@ -348,108 +375,194 @@ function StrTab({ data, setData }) {
         <span style={{ fontSize: 10, color: C.s6, paddingLeft: 4 }}>Hides any result whose search term contains this substring</span>
       </div>
 
-      {/* Thresholds panel */}
-      <div style={{ border: `1px solid ${C.s8}`, borderRadius: 10, overflow: "hidden" }}>
-        <button onClick={() => setThresholdsOpen(o => !o)}
-          style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: C.s95, border: "none", cursor: "pointer", color: C.s4, fontSize: 12 }}>
-          {thresholdsOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
-          <span>Thresholds</span>
-          <span style={{ marginLeft: "auto", fontSize: 11, color: C.s6 }}>
-            {JSON.stringify(thresholds) === JSON.stringify(STR_THRESHOLD_DEFAULTS) ? "using defaults" : "customized"}
-          </span>
-        </button>
-        {thresholdsOpen && (
-          <div style={{ padding: "12px 14px", display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12 }}>
-            {[
-              { key: "minSpendNegative", label: "Min Spend (Negative)", prefix: "$", tip: "Terms spending above this with 0 orders are flagged as negative candidates" },
-              { key: "minClicksNegative", label: "Min Clicks (Negative)", tip: "Terms with this many clicks and 0 orders are flagged as negative candidates" },
-              { key: "minOrdersHarvest", label: "Min Orders (Harvest)", tip: "Terms with at least this many orders are considered for harvesting" },
-              { key: "maxAcosHarvest", label: "Max ACoS (Harvest)", suffix: "%", tip: "Only harvest terms with ACoS at or below this threshold" },
-            ].map(({ key, label, prefix, suffix, tip }) => (
-              <div key={key}>
-                <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 4 }}>
-                  <span style={LABEL}>{label}</span>
-                  <Tooltip text={tip} />
-                  <button onClick={() => setThresholds(t => ({ ...t, [key]: STR_THRESHOLD_DEFAULTS[key] }))}
-                    style={{ marginLeft: "auto", fontSize: 10, color: C.s6, background: "none", border: "none", cursor: "pointer", padding: "4px 6px" }}>reset</button>
-                </div>
-                <div style={{ position: "relative" }}>
-                  {prefix && <span style={{ position: "absolute", left: 8, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: C.s5, pointerEvents: "none" }}>{prefix}</span>}
-                  <input type="number" className="ppc-num" value={thresholds[key]}
-                    onChange={e => setThresholds(t => ({ ...t, [key]: parseFloat(e.target.value) || 0 }))}
-                    style={{ width: "100%", background: C.s95, border: `1px solid ${C.s8}`, borderRadius: 8, padding: `7px ${suffix ? 28 : 10}px 7px ${prefix ? 22 : 10}px`, fontSize: 12, color: C.light, outline: "none", boxSizing: "border-box", transition: "border-color 0.15s, box-shadow 0.15s" }} />
-                  {suffix && <span style={{ position: "absolute", right: 8, top: "50%", transform: "translateY(-50%)", fontSize: 11, color: C.s5, pointerEvents: "none" }}>{suffix}</span>}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
       {/* Summary cards */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
-        <SummaryCard label="Negative Candidates" value={filteredNegatives.length} color={C.rose} />
-        <SummaryCard label="Harvest Opportunities" value={filteredHarvest.length} color={C.emerald} />
+        <SummaryCard label="Negative Candidates" value={negEnabled ? filteredNegatives.length : "—"} color={negEnabled ? C.rose : C.s6} />
+        <SummaryCard label="Harvest Opportunities" value={harvestEnabled ? filteredHarvest.length : "—"} color={harvestEnabled ? C.emerald : C.s6} />
         <SummaryCard label="Terms Analyzed" value={totalTerms.toLocaleString()} color={C.s4} />
       </div>
 
-      {/* Negatives list */}
-      {filteredNegatives.length > 0 && (
-        <RecoSection
-          title="Negative Keyword Candidates"
-          color={C.rose}
-          items={filteredNegatives}
-          expandedWhy={expandedWhy}
-          setExpandedWhy={setExpandedWhy}
-          idPrefix="neg"
-          columns={[
-            { key: "term", label: "Search term", tip: "The exact customer search query" },
-            { key: "spend", label: "Spend ($)", tip: "Total ad spend on this term" },
-            { key: "clicks", label: "Clicks", tip: "Total clicks" },
-            { key: "orders", label: "Orders", tip: "Total orders attributed" },
-            { key: "campaign", label: "Campaign", tip: "Campaign name" },
-            { key: "recommendedNegType", label: "Neg. type", tip: "Recommended negative match type to add", tipDir: "left" },
-          ]}
-          onExport={() => downloadCsv(exportNegativesCsv(filteredNegatives), "negatives.csv")}
-          exportLabel="Export negatives.csv"
-        />
-      )}
-
-      {/* Harvest list */}
-      {filteredHarvest.length > 0 && (
-        <RecoSection
-          title="Harvest Opportunities"
-          color={C.emerald}
-          items={filteredHarvest}
-          expandedWhy={expandedWhy}
-          setExpandedWhy={setExpandedWhy}
-          idPrefix="harv"
-          columns={[
-            { key: "term", label: "Search term", tip: "The converting search query" },
-            { key: "orders", label: "Orders", tip: "Number of orders from this term" },
-            { key: "cvr", label: "CVR %", tip: "Conversion rate: orders / clicks" },
-            { key: "acos", label: "ACoS %", tip: "Advertising Cost of Sales: spend / revenue" },
-            { key: "matchType", label: "Current match", tip: "Current keyword match type in your campaign" },
-            { key: "recommendedAction", label: "Action", tip: "What to do with this term", tipDir: "left" },
-          ]}
-          onExport={() => downloadCsv(exportHarvestCsv(filteredHarvest), "harvest.csv")}
-          exportLabel="Export harvest.csv"
-        />
-      )}
-
-      {filteredNegatives.length === 0 && filteredHarvest.length === 0 && (
-        <div style={{ textAlign: "center", padding: "24px", color: C.s5, fontSize: 13 }}>
-          {brandLower ? (
-            <>All results filtered by brand &ldquo;{brandFilter}&rdquo;.{" "}
-              <button onClick={() => setBrandFilter("")} style={{ fontSize: 13, color: C.violet, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>Clear filter</button>
-            </>
-          ) : (
-            <>No candidates found with current thresholds.{" "}
-              <button onClick={() => { setThresholds({ ...STR_THRESHOLD_DEFAULTS }); setThresholdsOpen(true); }} style={{ fontSize: 13, color: C.violet, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>Reset to defaults</button>
-            </>
+      {/* Negatives section */}
+      <div style={{ border: `1px solid ${C.rose}22`, borderRadius: 12, overflow: "hidden" }}>
+        {/* Section header with inline controls */}
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, padding: "10px 14px", background: `${C.rose}08`, borderBottom: negEnabled ? `1px solid ${C.rose}20` : "none" }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: C.rose }}>Negative Keyword Candidates</span>
+          <span style={{ fontSize: 11, color: C.s5 }}>({negEnabled ? filteredNegatives.length : "off"})</span>
+          <SectionToggle enabled={negEnabled} onToggle={() => setNegEnabled(e => !e)} accent={C.rose} />
+          {negEnabled && (
+            <div style={{ marginLeft: "auto", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
+              <ThresholdInput fieldKey="minSpendNegative" label="Min spend" prefix="$" tip="Flag terms spending above this with 0 orders" />
+              <ThresholdInput fieldKey="minClicksNegative" label="Min clicks" tip="Flag terms with this many clicks and 0 orders" />
+              <button onClick={() => setThresholds(t => ({ ...t, minSpendNegative: STR_THRESHOLD_DEFAULTS.minSpendNegative, minClicksNegative: STR_THRESHOLD_DEFAULTS.minClicksNegative }))}
+                style={{ fontSize: 10, color: C.s6, background: "none", border: "none", cursor: "pointer", padding: "2px 4px" }}>reset</button>
+              {filteredNegatives.length > 0 && (
+                <button onClick={() => downloadCsv(exportNegativesCsv(filteredNegatives), "negatives.csv")}
+                  style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.s4, background: C.s8, border: "none", borderRadius: 6, padding: "5px 10px", cursor: "pointer", outline: "none" }}>
+                  <Download size={11} />Export negatives.csv
+                </button>
+              )}
+            </div>
           )}
         </div>
-      )}
+        {negEnabled && (
+          filteredNegatives.length === 0 ? (
+            <div style={{ padding: "16px 14px", fontSize: 12, color: C.s6, fontStyle: "italic" }}>
+              {brandLower
+                ? <>All filtered by brand &ldquo;{brandFilter}&rdquo;. <button onClick={() => setBrandFilter("")} style={{ fontSize: 12, color: C.violet, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>Clear</button></>
+                : `No terms found. Try lowering Min spend (currently $${thresholds.minSpendNegative}) or Min clicks (currently ${thresholds.minClicksNegative}).`}
+            </div>
+          ) : (
+            <div style={{ position: "relative" }}>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                  <thead>
+                    <tr style={{ background: C.s95 }}>
+                      {[
+                        { key: "term", label: "Search term", tip: "The exact customer search query" },
+                        { key: "spend", label: "Spend ($)", tip: "Total ad spend on this term" },
+                        { key: "clicks", label: "Clicks", tip: "Total clicks" },
+                        { key: "orders", label: "Orders", tip: "Total orders attributed" },
+                        { key: "campaign", label: "Campaign", tip: "Campaign name" },
+                        { key: "recommendedNegType", label: "Neg. type", tip: "Recommended negative match type to add", tipDir: "left" },
+                      ].map(col => (
+                        <th key={col.key} style={{ padding: "8px 12px", textAlign: "left", color: C.s5, fontWeight: 600, fontSize: 11, whiteSpace: "nowrap" }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>{col.label} <Tooltip text={col.tip} dir={col.tipDir || "right"} /></span>
+                        </th>
+                      ))}
+                      <th style={{ padding: "8px 12px", color: C.s5, fontWeight: 600, fontSize: 11 }}>Why?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredNegatives.map((item, i) => {
+                      const id = `neg-${i}`;
+                      const isOpen = expandedWhy === id;
+                      return (
+                        <React.Fragment key={id}>
+                          <tr style={{ borderTop: `1px solid ${C.s8}`, background: isOpen ? C.s95 : "transparent" }}>
+                            {[
+                              { key: "term" }, { key: "spend", render: v => `$${Number(v).toFixed(2)}` },
+                              { key: "clicks" }, { key: "orders" }, { key: "campaign" }, { key: "recommendedNegType" },
+                            ].map(col => (
+                              <td key={col.key} style={{ padding: "8px 12px", color: C.light, fontSize: 12, whiteSpace: col.key === "term" ? "normal" : "nowrap" }}>
+                                {col.render ? col.render(item[col.key]) : item[col.key]}
+                              </td>
+                            ))}
+                            <td style={{ padding: "8px 12px" }}>
+                              <button className="why-btn" onClick={() => setExpandedWhy(isOpen ? null : id)}
+                                style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer", transition: "background 0.15s, color 0.15s" }}>
+                                {isOpen ? "hide" : "why?"}
+                              </button>
+                            </td>
+                          </tr>
+                          {isOpen && (
+                            <tr key={id + "-why"}>
+                              <td colSpan={7} style={{ padding: "8px 12px 10px 24px", fontSize: 11, color: C.s4, lineHeight: 1.6, background: `${C.rose}06` }}>
+                                <strong style={{ color: C.rose }}>Flagged because:</strong> {item.whyFlag}
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{ position: "absolute", top: 0, right: 0, height: "100%", width: 40, background: `linear-gradient(to right, transparent, ${C.s9})`, pointerEvents: "none" }} />
+            </div>
+          )
+        )}
+      </div>
+
+      {/* Harvest section */}
+      <div style={{ border: `1px solid ${C.emerald}22`, borderRadius: 12, overflow: "hidden" }}>
+        {/* Section header with inline controls */}
+        <div style={{ display: "flex", flexWrap: "wrap", alignItems: "center", gap: 10, padding: "10px 14px", background: `${C.emerald}08`, borderBottom: harvestEnabled ? `1px solid ${C.emerald}20` : "none" }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: C.emerald }}>Harvest Opportunities</span>
+          <span style={{ fontSize: 11, color: C.s5 }}>({harvestEnabled ? filteredHarvest.length : "off"})</span>
+          <SectionToggle enabled={harvestEnabled} onToggle={() => setHarvestEnabled(e => !e)} accent={C.emerald} />
+          {harvestEnabled && (
+            <div style={{ marginLeft: "auto", display: "flex", flexWrap: "wrap", alignItems: "center", gap: 12 }}>
+              <ThresholdInput fieldKey="minOrdersHarvest" label="Min orders" tip="Terms need at least this many orders to qualify" />
+              <ThresholdInput fieldKey="maxAcosHarvest" label="Max ACoS" suffix="%" tip="Only harvest terms with ACoS at or below this" />
+              <button onClick={() => setThresholds(t => ({ ...t, minOrdersHarvest: STR_THRESHOLD_DEFAULTS.minOrdersHarvest, maxAcosHarvest: STR_THRESHOLD_DEFAULTS.maxAcosHarvest }))}
+                style={{ fontSize: 10, color: C.s6, background: "none", border: "none", cursor: "pointer", padding: "2px 4px" }}>reset</button>
+              {filteredHarvest.length > 0 && (
+                <button onClick={() => downloadCsv(exportHarvestCsv(filteredHarvest), "harvest.csv")}
+                  style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 11, color: C.s4, background: C.s8, border: "none", borderRadius: 6, padding: "5px 10px", cursor: "pointer", outline: "none" }}>
+                  <Download size={11} />Export harvest.csv
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+        {harvestEnabled && (
+          filteredHarvest.length === 0 ? (
+            <div style={{ padding: "16px 14px", fontSize: 12, color: C.s6, fontStyle: "italic" }}>
+              {brandLower
+                ? <>All filtered by brand &ldquo;{brandFilter}&rdquo;. <button onClick={() => setBrandFilter("")} style={{ fontSize: 12, color: C.violet, background: "none", border: "none", cursor: "pointer", padding: 0, textDecoration: "underline" }}>Clear</button></>
+                : `No terms found. Try lowering Min orders (currently ${thresholds.minOrdersHarvest}) or raising Max ACoS (currently ${thresholds.maxAcosHarvest}%).`}
+            </div>
+          ) : (
+            <div style={{ position: "relative" }}>
+              <div style={{ overflowX: "auto" }}>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                  <thead>
+                    <tr style={{ background: C.s95 }}>
+                      {[
+                        { key: "term", label: "Search term", tip: "The converting search query" },
+                        { key: "orders", label: "Orders", tip: "Number of orders from this term" },
+                        { key: "cvr", label: "CVR %", tip: "Conversion rate: orders / clicks" },
+                        { key: "acos", label: "ACoS %", tip: "Advertising Cost of Sales: spend / revenue" },
+                        { key: "matchType", label: "Current match", tip: "Current keyword match type in your campaign" },
+                        { key: "recommendedAction", label: "Action", tip: "What to do with this term", tipDir: "left" },
+                      ].map(col => (
+                        <th key={col.key} style={{ padding: "8px 12px", textAlign: "left", color: C.s5, fontWeight: 600, fontSize: 11, whiteSpace: "nowrap" }}>
+                          <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>{col.label} <Tooltip text={col.tip} dir={col.tipDir || "right"} /></span>
+                        </th>
+                      ))}
+                      <th style={{ padding: "8px 12px", color: C.s5, fontWeight: 600, fontSize: 11 }}>Why?</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredHarvest.map((item, i) => {
+                      const id = `harv-${i}`;
+                      const isOpen = expandedWhy === id;
+                      return (
+                        <React.Fragment key={id}>
+                          <tr style={{ borderTop: `1px solid ${C.s8}`, background: isOpen ? C.s95 : "transparent" }}>
+                            {[
+                              { key: "term" }, { key: "orders" }, { key: "cvr" },
+                              { key: "acos" }, { key: "matchType" }, { key: "recommendedAction" },
+                            ].map(col => (
+                              <td key={col.key} style={{ padding: "8px 12px", color: C.light, fontSize: 12, whiteSpace: col.key === "term" || col.key === "recommendedAction" ? "normal" : "nowrap" }}>
+                                {item[col.key]}
+                              </td>
+                            ))}
+                            <td style={{ padding: "8px 12px" }}>
+                              <button className="why-btn" onClick={() => setExpandedWhy(isOpen ? null : id)}
+                                style={{ fontSize: 11, color: C.s5, background: "none", border: `1px solid ${C.s7}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer", transition: "background 0.15s, color 0.15s" }}>
+                                {isOpen ? "hide" : "why?"}
+                              </button>
+                            </td>
+                          </tr>
+                          {isOpen && (
+                            <tr key={id + "-why"}>
+                              <td colSpan={7} style={{ padding: "8px 12px 10px 24px", fontSize: 11, color: C.s4, lineHeight: 1.6, background: `${C.emerald}06` }}>
+                                <strong style={{ color: C.emerald }}>Flagged because:</strong> {item.whyFlag}
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+              <div style={{ position: "absolute", top: 0, right: 0, height: "100%", width: 40, background: `linear-gradient(to right, transparent, ${C.s9})`, pointerEvents: "none" }} />
+            </div>
+          )
+        )}
+      </div>
     </div>
   );
 }
