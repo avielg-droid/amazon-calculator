@@ -557,12 +557,13 @@ function StrTab({ data, setData }) {
           <div style={{ padding: "16px 14px", background: C.surface, borderBottom: `1px solid #86EFAC` }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14 }}>
               <ThresholdInput fieldKey="minOrdersHarvest" label="Min orders" tip="A term needs at least this many orders to be promoted to Exact Match. 2 orders confirms intent beyond a single-sale fluke." desc="Minimum orders to qualify" />
+              <ThresholdInput fieldKey="minClicksHarvest" label="Min clicks" tip="Minimum clicks before promoting a term. Filters out low-traffic flukes with high conversion on tiny sample sizes." desc="Minimum clicks to qualify" />
               <ThresholdInput fieldKey="maxAcosHarvest" label="Max ACoS" suffix="%" tip="Only harvest terms profitable enough to be worth promoting. 40% is the standard ceiling for Exact match campaigns." desc="Only harvest below this ACoS" />
             </div>
             <button
-              onClick={() => setThresholds(t => ({ ...t, minOrdersHarvest: STR_THRESHOLD_DEFAULTS.minOrdersHarvest, maxAcosHarvest: STR_THRESHOLD_DEFAULTS.maxAcosHarvest }))}
+              onClick={() => setThresholds(t => ({ ...t, minOrdersHarvest: STR_THRESHOLD_DEFAULTS.minOrdersHarvest, minClicksHarvest: STR_THRESHOLD_DEFAULTS.minClicksHarvest, maxAcosHarvest: STR_THRESHOLD_DEFAULTS.maxAcosHarvest }))}
               style={{ marginTop: 14, fontSize: 12, color: C.muted, background: "none", border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", cursor: "pointer", display: "block" }}>
-              Reset to defaults (2 orders · 40% ACoS)
+              Reset to defaults (2 orders · 10 clicks · 40% ACoS)
             </button>
           </div>
         )}

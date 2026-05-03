@@ -16,6 +16,7 @@ export const STR_THRESHOLD_DEFAULTS = {
   minClicksNegative: 15,   // clicks with 0 orders → negative candidate (OR condition)
   maxAcosNegative: 100,    // ACOS% above this (with orders) → "poor performer" negative
   minOrdersHarvest: 2,     // minimum orders to qualify for harvest
+  minClicksHarvest: 10,    // minimum clicks to qualify for harvest
   maxAcosHarvest: 40,      // maximum ACoS% to qualify for harvest
 };
 
@@ -24,7 +25,7 @@ export const STR_THRESHOLD_DEFAULTS = {
 // thresholds: object matching STR_THRESHOLD_DEFAULTS shape
 // Returns: { negatives, harvest, totalTerms }
 export function analyzeStr(rows, thresholds = STR_THRESHOLD_DEFAULTS) {
-  const { minSpendNegative, minClicksNegative, maxAcosNegative, minOrdersHarvest, maxAcosHarvest } = thresholds;
+  const { minSpendNegative, minClicksNegative, maxAcosNegative, minOrdersHarvest, minClicksHarvest, maxAcosHarvest } = thresholds;
   const negatives = [];
   const harvest = [];
   const seen = new Set();
@@ -85,13 +86,14 @@ export function analyzeStr(rows, thresholds = STR_THRESHOLD_DEFAULTS) {
     // Harvest candidate — term must not already be targeted as Exact anywhere in the report
     const alreadyExact = exactTargeted.has(term.toLowerCase());
     const goodOrders = orders >= minOrdersHarvest;
+    const goodClicks = clicks >= minClicksHarvest;
     const goodAcos = acos !== null && acos <= maxAcosHarvest;
-    if (!alreadyExact && goodOrders && goodAcos && !seen.has(key + "__harvest")) {
+    if (!alreadyExact && goodOrders && goodClicks && goodAcos && !seen.has(key + "__harvest")) {
       seen.add(key + "__harvest");
       harvest.push({
         term, matchType, orders, spend, sales, cvr: cvr.toFixed(1),
         acos: acos.toFixed(1), campaign,
-        whyFlag: `${orders} order${orders !== 1 ? "s" : ""} at ${acos.toFixed(1)}% ACoS (below ${maxAcosHarvest}% ceiling). Running under ${matchType || "unknown"} match — not yet targeted as Exact in any campaign.`,
+        whyFlag: `${orders} order${orders !== 1 ? "s" : ""}, ${clicks} clicks, ${acos.toFixed(1)}% ACoS (below ${maxAcosHarvest}% ceiling). Running under ${matchType || "unknown"} match — not yet targeted as Exact in any campaign.`,
         recommendedAction: `Add as Exact to "${campaign}"`,
       });
     }
