@@ -448,9 +448,9 @@ function StrTab({ data, setData }) {
         {negEnabled && negSettingsOpen && (
           <div style={{ padding: "16px 14px", background: C.surface, borderBottom: `1px solid #FCA5A5` }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14 }}>
-              <ThresholdInput fieldKey="minSpendNegative" label="Min spend" prefix="$" tip="Minimum cumulative spend on a term with 0 orders before flagging it. Also used as the data floor for the high-ACoS check." desc="Flag if spend ≥ this with 0 orders" />
-              <ThresholdInput fieldKey="minClicksNegative" label="Min clicks" tip="Minimum clicks on a term with 0 orders before flagging it. Ensures you have enough data before negating." desc="Flag if clicks ≥ this with 0 orders" />
-              <ThresholdInput fieldKey="maxAcosNegative" label="Max ACoS" suffix="%" tip="Flag terms that DO convert but at an ACoS above this ceiling — they're making sales but losing money." desc="Flag poor performers above this ACoS" />
+              <ThresholdInput fieldKey="minClicksNegative" label="Min clicks" tip="Both click AND spend thresholds must be crossed (with 0 orders) to flag a term. Neither alone is enough signal." desc="Rule 1: clicks AND spend, 0 orders" />
+              <ThresholdInput fieldKey="minSpendNegative" label="Min spend" prefix="$" tip="Both click AND spend thresholds must be crossed (with 0 orders) to flag a term. Also used as the data floor for the ACoS poor-performer check." desc="Rule 1: clicks AND spend, 0 orders" />
+              <ThresholdInput fieldKey="maxAcosNegative" label="Max ACoS" suffix="%" tip="Rule 2: flag terms that DO convert but above this ACoS — losing money on each sale. Requires both click + spend floors to filter out low-data noise." desc="Rule 2: poor performer (with orders)" />
             </div>
             <button
               onClick={() => setThresholds(t => ({ ...t, minSpendNegative: STR_THRESHOLD_DEFAULTS.minSpendNegative, minClicksNegative: STR_THRESHOLD_DEFAULTS.minClicksNegative, maxAcosNegative: STR_THRESHOLD_DEFAULTS.maxAcosNegative }))}

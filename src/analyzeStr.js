@@ -54,25 +54,22 @@ export function analyzeStr(rows, thresholds = STR_THRESHOLD_DEFAULTS) {
     const campaign = row["Campaign Name"] || "";
     const key = `${term}__${campaign}`;
 
-    // Negative candidate — three rules:
-    // 1. High spend + zero conversions
-    // 2. High clicks + zero conversions
-    // 3. Converts but ACOS is above the pain threshold (+ enough spend to be statistically real)
-    const highSpendNoOrders = spend >= minSpendNegative && orders === 0;
-    const highClicksNoOrders = clicks >= minClicksNegative && orders === 0;
-    const highAcos = orders > 0 && acos !== null && acos > maxAcosNegative && spend >= minSpendNegative;
+    // Negative candidate — two independent rules:
+    // Rule 1 (waste): clicks >= minClicksNegative AND spend >= minSpendNegative AND orders === 0
+    //   Both thresholds must be crossed — neither alone is enough statistical signal.
+    // Rule 2 (poor performer): orders > 0 AND acos > maxAcosNegative AND clicks >= minClicksNegative AND spend >= minSpendNegative
+    //   Converting but losing money; clicks+spend floors prevent flagging on tiny samples.
+    const wastedBudget = orders === 0 && clicks >= minClicksNegative && spend >= minSpendNegative;
+    const poorPerformer = orders > 0 && acos !== null && acos > maxAcosNegative && clicks >= minClicksNegative && spend >= minSpendNegative;
 
-    if ((highSpendNoOrders || highClicksNoOrders || highAcos) && !seen.has(key + "__neg")) {
+    if ((wastedBudget || poorPerformer) && !seen.has(key + "__neg")) {
       seen.add(key + "__neg");
       let whyFlag, negType;
-      if (highAcos) {
-        whyFlag = `${orders} order${orders !== 1 ? "s" : ""} but ACoS is ${acos.toFixed(1)}% — above the ${maxAcosNegative}% pain threshold ($${spend.toFixed(2)} spend, $${sales.toFixed(2)} sales). Converting but losing money on this term.`;
-        negType = "Phrase"; // high-ACOS terms often partially match; phrase neg is safer
-      } else if (highSpendNoOrders) {
-        whyFlag = `$${spend.toFixed(2)} spend with 0 orders (threshold: $${minSpendNegative})`;
-        negType = "Exact";
+      if (poorPerformer) {
+        whyFlag = `${orders} order${orders !== 1 ? "s" : ""} but ACoS is ${acos.toFixed(1)}% — above ${maxAcosNegative}% threshold ($${spend.toFixed(2)} spend, $${sales.toFixed(2)} sales). Converting but losing money.`;
+        negType = "Phrase";
       } else {
-        whyFlag = `${clicks} clicks with 0 orders (threshold: ${minClicksNegative} clicks)`;
+        whyFlag = `${clicks} clicks + $${spend.toFixed(2)} spend with 0 orders (thresholds: ${minClicksNegative} clicks · $${minSpendNegative} spend).`;
         negType = "Exact";
       }
       negatives.push({
