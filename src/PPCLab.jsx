@@ -4,7 +4,7 @@ import { Upload, ChevronDown, ChevronRight, Download, AlertCircle, AlertTriangle
 import { parseCsv, parseXlsx, validateColumns } from "./parseCsv.js";
 import { analyzeStr, exportNegativesCsv, exportHarvestCsv, STR_REQUIRED_COLUMNS, STR_THRESHOLD_DEFAULTS } from "./analyzeStr.js";
 import { analyzeSqp, exportSqpCsv, SQP_REQUIRED_COLUMNS, SQP_THRESHOLD_DEFAULTS } from "./analyzeSqp.js";
-import { C, CARD, LABEL } from "./tokens.js";
+import { C, CARD, LABEL, SHADOW, BANNERS, BANNER_BASE, ICON } from "./tokens.js";
 
 export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp }) {
   const [activeSub, setActiveSub] = useState("str");
@@ -116,7 +116,7 @@ function Tooltip({ text, dir = "right" }) {
           position: "absolute", ...pos, top: -4, zIndex: 50,
           background: C.s8, border: `1px solid ${C.s7}`, borderRadius: 8,
           padding: "8px 10px", width: 220, fontSize: 11, color: C.s4,
-          lineHeight: 1.5, boxShadow: "0 4px 16px #00000060", pointerEvents: "none",
+          lineHeight: 1.5, boxShadow: SHADOW.tooltip, pointerEvents: "none",
         }}>
           {text}
         </div>
@@ -283,11 +283,11 @@ function StrTab({ data, setData }) {
             </div>
           </div>
         </div>
-        <div style={{ marginTop: 10, marginBottom: 12, display: "flex", alignItems: "flex-start", gap: 8, fontSize: 11, color: C.amber, background: `${C.amber}08`, border: `1px solid ${C.amber}20`, borderRadius: 8, padding: "8px 12px" }}>
-          <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 1 }} />
+        <div style={{ ...BANNER_BASE, ...BANNERS.warning, marginTop: 10, marginBottom: 12, alignItems: "flex-start" }}>
+          <AlertTriangle size={ICON.xs} style={{ flexShrink: 0, marginTop: 1 }} />
           <span>Recommended: Use a 30–60 day report for best results. A 1-day report may show 0 recommendations due to low spend data.</span>
         </div>
-        {error && <div style={{ background: `${C.rose}10`, border: `1px solid ${C.rose}30`, borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: C.rose, display: "flex", gap: 8, alignItems: "flex-start" }}><AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
+        {error && <div style={{ ...BANNER_BASE, ...BANNERS.danger, fontSize: 12, marginBottom: 12, alignItems: "flex-start" }}><AlertCircle size={ICON.sm} style={{ flexShrink: 0, marginTop: 1 }} />{error}</div>}
         {parsing ? (
           <div style={{ padding: "40px 24px", textAlign: "center", color: C.s4, fontSize: 13 }}>
             <div style={{ display: "inline-block", width: 20, height: 20, border: `2px solid ${C.s7}`, borderTopColor: C.violet, borderRadius: "50%", animation: "spin 0.8s linear infinite", marginBottom: 12 }} />

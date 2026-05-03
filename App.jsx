@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import PPCLab from "./src/PPCLab.jsx";
-import { C, CARD, LABEL, MONO, ROW } from "./src/tokens.js";
+import { C, CARD, LABEL, MONO, ROW, GRADIENT_TEXT, SHADOW, BANNERS, BANNER_BASE, CHART_TOOLTIP_STYLE, LEGEND_DOT, PIE_CONFIG, ICON } from "./src/tokens.js";
 import { fmt, fmtK } from "./src/utils.js";
 import { Analytics } from "@vercel/analytics/react";
 import { PieChart, Pie, Cell, Tooltip as ReTooltip, ResponsiveContainer } from "recharts";
@@ -97,19 +97,19 @@ function CostChart({ s }) {
       <p style={{ ...LABEL, marginBottom: 12 }}>Cost Breakdown</p>
       <ResponsiveContainer width="100%" height={180}>
         <PieChart>
-          <Pie data={data} cx="50%" cy="50%" innerRadius={50} outerRadius={80} paddingAngle={3} dataKey="value">
+          <Pie data={data} cx="50%" cy="50%" {...PIE_CONFIG} dataKey="value">
             {data.map((entry, i) => <Cell key={i} fill={entry.color} />)}
           </Pie>
           <ReTooltip
             formatter={(value, name) => [`$${value.toFixed(2)}`, name]}
-            contentStyle={{ background: C.s8, border: `1px solid ${C.s7}`, borderRadius: 8, fontSize: 12 }}
+            contentStyle={CHART_TOOLTIP_STYLE}
           />
         </PieChart>
       </ResponsiveContainer>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "6px 14px", marginTop: 8 }}>
         {data.map((d, i) => (
           <div key={i} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: C.s4 }}>
-            <div style={{ width: 10, height: 10, borderRadius: 3, background: d.color, flexShrink: 0 }} />
+            <div style={{ ...LEGEND_DOT, background: d.color }} />
             {d.name}
           </div>
         ))}
@@ -151,14 +151,14 @@ function WaterfallBar({ label, value, total, color, isTotal, note }) {
 
 function InsightCard({ type, title, desc, icon: Icon }) {
   const cfg = {
-    danger: { bg: "#f43f5e10", border: "#f43f5e30", text: C.rose },
-    warning: { bg: "#f9731610", border: "#f9731630", text: C.orange },
-    success: { bg: "#10b98110", border: "#10b98130", text: C.emerald },
-    info: { bg: "#06b6d410", border: "#06b6d430", text: C.cyan },
+    danger:  { bg: C.roseDim,    border: `${C.rose}30`,    text: C.rose },
+    warning: { bg: C.orangeDim,  border: `${C.orange}30`,  text: C.orange },
+    success: { bg: C.emeraldDim, border: `${C.emerald}30`, text: C.emerald },
+    info:    { bg: C.cyanDim,    border: `${C.cyan}30`,    text: C.cyan },
   }[type];
   return (
     <div style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 12, padding: "14px 16px", display: "flex", gap: 12, alignItems: "flex-start" }}>
-      <div style={{ color: cfg.text, flexShrink: 0, marginTop: 1 }}>{Icon ? <Icon size={16} /> : <AlertTriangle size={16} />}</div>
+      <div style={{ color: cfg.text, flexShrink: 0, marginTop: 1 }}>{Icon ? <Icon size={ICON.md} /> : <AlertTriangle size={ICON.md} />}</div>
       <div>
         <p style={{ fontSize: 12, fontWeight: 700, color: cfg.text, margin: "0 0 3px" }}>{title}</p>
         <p style={{ fontSize: 11, color: C.s4, margin: 0, lineHeight: 1.5 }}>{desc}</p>
@@ -185,9 +185,7 @@ function TopBar({ activeTool, onSwitch }) {
     }}>
       <span style={{
         fontSize: 15, fontWeight: 800, letterSpacing: "-0.02em",
-        background: "linear-gradient(90deg, #10b981, #06b6d4)",
-        WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-        cursor: "pointer",
+        ...GRADIENT_TEXT, cursor: "pointer",
       }}
         onClick={() => onSwitch("home")}
         title="Back to home"
@@ -248,11 +246,7 @@ function HomeScreen({ onSelect }) {
       fontFamily: "ui-sans-serif, system-ui, sans-serif",
     }}>
       <div style={{ textAlign: "center", marginBottom: 48 }}>
-        <h1 style={{
-          fontSize: 36, fontWeight: 800, margin: "0 0 8px",
-          background: "linear-gradient(90deg, #10b981, #06b6d4)",
-          WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent",
-        }}>Danuly</h1>
+        <h1 style={{ fontSize: 36, fontWeight: 800, margin: "0 0 8px", ...GRADIENT_TEXT }}>Danuly</h1>
         <p style={{ fontSize: 14, color: C.s5, margin: 0 }}>Amazon seller tools</p>
       </div>
 
@@ -498,10 +492,10 @@ export default function App() {
         <div style={{ display: "flex", flexWrap: "wrap", alignItems: "flex-start", justifyContent: "space-between", gap: 14, rowGap: 12 }}>
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-              <div style={{ width: 32, height: 32, background: "#10b98120", borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <BarChart3 size={16} color={C.emerald} />
+              <div style={{ width: 32, height: 32, background: C.emeraldDim, borderRadius: 8, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <BarChart3 size={ICON.md} color={C.emerald} />
               </div>
-              <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, background: "linear-gradient(90deg, #10b981, #06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              <h1 style={{ fontSize: 22, fontWeight: 700, margin: 0, ...GRADIENT_TEXT }}>
                 {channelMode === "amazon" ? "Amazon FBA Profit Calculator" : "DTC / Shopify Profit Calculator"}
               </h1>
             </div>
@@ -554,12 +548,12 @@ export default function App() {
 
         {/* Market mode banner */}
         {isUS ? (
-          <div style={{ marginTop: 12, padding: "9px 14px", background: "#3b82f610", border: "1px solid #3b82f630", borderRadius: 10, fontSize: 11, color: "#93c5fd", display: "flex", gap: 8, alignItems: "center" }}>
-            <Flag size={12} /><strong>US mode:</strong>&nbsp;VAT is set to 0. Sales tax is collected at checkout by the marketplace and is not part of unit-level P&amp;L.
+          <div style={{ ...BANNER_BASE, ...BANNERS.info, marginTop: 12 }}>
+            <Flag size={ICON.xs} /><strong>US mode:</strong>&nbsp;VAT is set to 0. Sales tax is collected at checkout by the marketplace and is not part of unit-level P&amp;L.
           </div>
         ) : (
-          <div style={{ marginTop: 12, padding: "9px 14px", background: "#8b5cf610", border: "1px solid #8b5cf630", borderRadius: 10, fontSize: 11, color: "#c4b5fd", display: "flex", gap: 8, alignItems: "center" }}>
-            <Globe size={12} /><strong>International mode:</strong>&nbsp;{channelMode === "amazon" ? "Amazon referral fee is charged on the gross (VAT-inclusive) price — net revenue is calculated after VAT extraction. This mirrors EU marketplace accounting." : "VAT is extracted from gross price before calculating net revenue and profitability."}
+          <div style={{ ...BANNER_BASE, ...BANNERS.intl, marginTop: 12 }}>
+            <Globe size={ICON.xs} /><strong>International mode:</strong>&nbsp;{channelMode === "amazon" ? "Amazon referral fee is charged on the gross (VAT-inclusive) price — net revenue is calculated after VAT extraction. This mirrors EU marketplace accounting." : "VAT is extracted from gross price before calculating net revenue and profitability."}
           </div>
         )}
       </div>
@@ -570,8 +564,8 @@ export default function App() {
         {/* ── SIDEBAR ── */}
         <div style={{ flex: "1 1 260px", maxWidth: 320, minWidth: 260, display: "flex", flexDirection: "column", gap: 16 }}>
 
-          <div style={{ padding: "10px 14px", background: "#10b98112", border: "1px solid #10b98130", borderRadius: 10, fontSize: 11, color: "#6ee7b7", lineHeight: 1.5, display: "flex", gap: 8 }}>
-            <span style={{ fontSize: 14 }}>👋</span>
+          <div style={{ ...BANNER_BASE, ...BANNERS.success, lineHeight: 1.5, alignItems: "flex-start" }}>
+            <span style={{ fontSize: 14, flexShrink: 0 }}>👋</span>
             <span>These are <strong>example values</strong>. Replace them with your product's numbers to see your real profit.</span>
           </div>
 
@@ -653,12 +647,7 @@ export default function App() {
           <div style={{ display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-start" }}>
             <div style={{ flex: 2, minWidth: 280 }}>
               {(Number(inputs.sellingPrice) === 0 || Number(inputs.unitCost) === 0) && (
-                <div style={{
-                  display: "flex", alignItems: "flex-start", gap: 8,
-                  background: "#f59e0b08", border: "1px solid #f59e0b30",
-                  borderRadius: 10, padding: "10px 14px", fontSize: 12, color: "#f59e0b",
-                  marginBottom: 4,
-                }}>
+                <div style={{ ...BANNER_BASE, ...BANNERS.warning, alignItems: "flex-start", fontSize: 12, marginBottom: 4 }}>
                   <span style={{ flexShrink: 0 }}>⚠</span>
                   <span>
                     {Number(inputs.sellingPrice) === 0
