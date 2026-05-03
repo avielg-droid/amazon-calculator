@@ -204,6 +204,13 @@ export default function App() {
     } catch {}
     return DEFAULTS;
   });
+  const [activeTool, setActiveTool] = useState(() => {
+    try {
+      const saved = localStorage.getItem("danuly-last-tool");
+      if (saved === "calculator" || saved === "ppc") return saved;
+    } catch {}
+    return "home";
+  });
   const [activeTab, setActiveTab] = useState("breakdown");
   const [hoveredTab, setHoveredTab] = useState(null);
   const [hoveredChannel, setHoveredChannel] = useState(null);
@@ -216,6 +223,11 @@ export default function App() {
   const [orderQty, setOrderQty] = useState(500);
   const [targetMargin, setTargetMargin] = useState(20);
   const [solveFor, setSolveFor] = useState("price"); // "price" | "cogs"
+
+  const switchTool = useCallback((tool) => {
+    setActiveTool(tool);
+    try { localStorage.setItem("danuly-last-tool", tool); } catch {}
+  }, []);
 
   const handleShare = useCallback(() => {
     try {
