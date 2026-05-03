@@ -353,6 +353,16 @@ export default function App() {
     try { localStorage.setItem("danuly-last-tool", tool); } catch {}
   }, []);
 
+  const [fading, setFading] = useState(false);
+
+  const switchToolWithFade = useCallback((tool) => {
+    setFading(true);
+    setTimeout(() => {
+      switchTool(tool);
+      setFading(false);
+    }, 150);
+  }, [switchTool]);
+
   const handleShare = useCallback(() => {
     try {
       const encoded = btoa(JSON.stringify(inputs));
@@ -483,8 +493,19 @@ export default function App() {
 
   return (
     <>
-    <div style={{ background: C.s95, minHeight: "100vh", padding: "16px 12px", fontFamily: "ui-sans-serif, system-ui, sans-serif", color: C.light }}>
-      <h2 className="sr-only">Omni-Channel Profit Engine — global unit economics calculator</h2>
+    <div style={{ opacity: fading ? 0 : 1, transition: "opacity 0.15s" }}>
+
+      {activeTool === "home" && (
+        <HomeScreen onSelect={switchToolWithFade} />
+      )}
+
+      {activeTool !== "home" && (
+        <>
+          <TopBar activeTool={activeTool} onSwitch={switchToolWithFade} />
+
+          {activeTool === "calculator" && (
+    <div style={{ background: C.s95, minHeight: "calc(100vh - 49px)", padding: "16px 12px", fontFamily: "ui-sans-serif, system-ui, sans-serif", color: C.light }}>
+      <h2 className="sr-only">Danuly Profit Calculator — unit economics & margin simulator</h2>
 
       {/* Header */}
       <div style={{ maxWidth: 1100, margin: "0 auto 20px" }}>
@@ -678,7 +699,6 @@ export default function App() {
               ["cashflow", "Cash Flow"],
               ["pricing", "Pricing Tools"],
               ["insights", "Insights"],
-              ["ppc", "PPC Lab"],
             ].map(([t, label]) => (
               <button key={t} style={tabBtn(t)} onClick={() => setActiveTab(t)}
                 onMouseEnter={() => setHoveredTab(t)}
@@ -1075,15 +1095,21 @@ export default function App() {
             </div>
           )}
 
-          {/* ── TAB: PPC LAB ── */}
-          {activeTab === "ppc" && (
-            <PPCLab
-              ppcStr={ppcStr} setPpcStr={setPpcStr}
-              ppcSqp={ppcSqp} setPpcSqp={setPpcSqp}
-            />
-          )}
         </div>
       </div>
+    </div>
+          )}
+
+          {activeTool === "ppc" && (
+            <div style={{ background: C.s95, minHeight: "calc(100vh - 49px)", padding: "16px 12px", fontFamily: "ui-sans-serif, system-ui, sans-serif" }}>
+              <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+                <PPCLab ppcStr={ppcStr} setPpcStr={setPpcStr} ppcSqp={ppcSqp} setPpcSqp={setPpcSqp} />
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
     </div>
     {toast && (
       <div style={{
