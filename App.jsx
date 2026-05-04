@@ -9,8 +9,18 @@ import {
 } from "lucide-react";
 
 const C = {
-  indigo:    "#6366F1",
-  indigoDim: "#EEF2FF",
+  // Danuly brand
+  teal:      "#14B8A6",
+  tealEnd:   "#0EA5E9",
+  navy:      "#0B1F3A",
+  yellow:    "#FBBF24",
+  yellowDim: "#FFFBEB",
+
+  // Primary accent → teal
+  indigo:    "#0EA5E9",
+  indigoDim: "#E0F2FE",
+
+  // Semantic
   green:     "#16A34A",
   greenDim:  "#F0FDF4",
   red:       "#DC2626",
@@ -27,7 +37,9 @@ const C = {
   orangeDim: "#FFF7ED",
   rose:      "#E11D48",
   roseDim:   "#FFF1F2",
-  ink:     "#0F172A",
+
+  // Neutrals
+  ink:     "#0B1F3A",
   body:    "#334155",
   muted:   "#64748B",
   subtle:  "#94A3B8",
@@ -39,6 +51,9 @@ const C = {
   hover:   "#F8FAFC",
   divider: "#F1F5F9",
 };
+
+// Brand gradient (reusable)
+const BRAND_GRADIENT = "linear-gradient(135deg, #14B8A6, #0EA5E9)";
 
 const fmt = (n, d = 2) => { const v = Number(n); return isFinite(v) ? v.toFixed(d) : "—"; };
 const fmtK = n => { const v = Number(n); return isFinite(v) ? (Math.abs(v) >= 1000 ? `${(v/1000).toFixed(1)}k` : Math.round(v).toString()) : "—"; };
@@ -179,11 +194,8 @@ function TopBar({ activeTool, onSwitch }) {
   const [hovered, setHovered] = useState(null);
   return (
     <div style={{ background: "#FFFFFF", borderBottom: `1px solid ${C.border}`, padding: "0 20px", height: 52, display: "flex", alignItems: "center", gap: 16, position: "sticky", top: 0, zIndex: 40 }}>
-      <button onClick={() => onSwitch("home")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center", gap: 8 }}>
-        <div style={{ width: 28, height: 28, borderRadius: 7, background: "linear-gradient(135deg,#6366F1,#7C3AED)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-          <BarChart3 size={14} color="#fff" strokeWidth={2.5} />
-        </div>
-        <span style={{ fontSize: 14, fontWeight: 700, letterSpacing: "-0.02em", color: C.ink }}>Danuly</span>
+      <button onClick={() => onSwitch("home")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}>
+        <img src="/danuly-logo.png" alt="Danuly" style={{ height: 36, width: "auto", objectFit: "contain" }} />
       </button>
       <div style={{ width: 1, height: 20, background: C.border }} />
       <span style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>{activeTool === "calculator" ? "Profit Calculator" : "PPC Lab"}</span>
@@ -206,22 +218,19 @@ function HomeScreen({ onSelect }) {
   ];
   return (
     <div style={{ minHeight: "100vh", background: C.surface, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px", ...SANS }}>
-      <div style={{ textAlign: "center", marginBottom: 56 }}>
-        <div style={{ width: 52, height: 52, borderRadius: 14, background: "linear-gradient(135deg,#6366F1,#7C3AED)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", boxShadow: "0 0 0 1px #6366F130, 0 8px 32px #6366F120" }}>
-          <BarChart3 size={24} color="#fff" strokeWidth={2} />
-        </div>
-        <h1 style={{ fontSize: 36, fontWeight: 800, letterSpacing: "-0.03em", margin: "0 0 8px", color: C.ink }}>Danuly</h1>
-        <p style={{ fontSize: 14, color: C.muted, margin: 0 }}>Amazon seller tools · free & browser-based</p>
+      <div style={{ textAlign: "center", marginBottom: 52 }}>
+        <img src="/danuly-logo.png" alt="Danuly — Everything Amazon Sellers Need to Grow" style={{ height: 160, width: "auto", objectFit: "contain", marginBottom: 8 }} />
+        <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Free browser-based tools · your data never leaves your browser</p>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center", maxWidth: 820, width: "100%" }}>
         {tools.map(({ id, icon: Icon, title, desc, badge }) => {
           const isHov = hovered === id;
           return (
             <div key={id} onClick={() => onSelect(id)} onMouseEnter={() => setHovered(id)} onMouseLeave={() => setHovered(null)}
-              style={{ flex: "1 1 300px", maxWidth: 380, background: C.card, border: `1px solid ${isHov ? C.indigo : C.border}`, borderRadius: 16, padding: "28px 26px", cursor: "pointer", transition: "all 0.2s", boxShadow: isHov ? `0 12px 40px ${C.indigo}18, 0 0 0 1px ${C.indigo}` : "0 2px 12px rgba(0,0,0,0.06)", transform: isHov ? "translateY(-3px)" : "none", display: "flex", flexDirection: "column", gap: 18 }}
+              style={{ flex: "1 1 300px", maxWidth: 380, background: C.card, border: `1px solid ${isHov ? C.teal : C.border}`, borderRadius: 16, padding: "28px 26px", cursor: "pointer", transition: "all 0.2s", boxShadow: isHov ? `0 12px 40px rgba(20,184,166,0.15), 0 0 0 1px ${C.teal}` : "0 2px 12px rgba(0,0,0,0.06)", transform: isHov ? "translateY(-3px)" : "none", display: "flex", flexDirection: "column", gap: 18 }}
             >
-              <div style={{ width: 44, height: 44, background: C.indigoDim, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${C.indigo}25` }}>
-                <Icon size={20} color={C.indigo} strokeWidth={2} />
+              <div style={{ width: 44, height: 44, background: C.indigoDim, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", border: `1px solid ${C.teal}25` }}>
+                <Icon size={20} color={C.teal} strokeWidth={2} />
               </div>
               <div style={{ flex: 1 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 10 }}>
@@ -230,7 +239,7 @@ function HomeScreen({ onSelect }) {
                 </div>
                 <p style={{ fontSize: 13, color: C.muted, margin: 0, lineHeight: 1.65 }}>{desc}</p>
               </div>
-              <button style={{ padding: "10px 18px", borderRadius: 9, border: "none", background: isHov ? C.indigo : C.indigoDim, color: isHov ? "#fff" : C.indigo, fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 7, width: "fit-content" }} tabIndex={-1}>
+              <button style={{ padding: "10px 18px", borderRadius: 9, border: "none", background: isHov ? BRAND_GRADIENT : C.indigoDim, color: isHov ? "#fff" : C.teal, fontSize: 13, fontWeight: 700, cursor: "pointer", transition: "all 0.2s", display: "flex", alignItems: "center", gap: 7, width: "fit-content" }} tabIndex={-1}>
                 Open {title} →
               </button>
             </div>
@@ -725,7 +734,7 @@ export default function App() {
       </div>
 
       {toast && (
-        <div style={{ position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)", background: C.indigo, color: "#fff", padding: "10px 22px", borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 100, boxShadow: "0 4px 24px #6366F150" }}>{toast}</div>
+        <div style={{ position: "fixed", bottom: 28, left: "50%", transform: "translateX(-50%)", background: BRAND_GRADIENT, color: "#fff", padding: "10px 22px", borderRadius: 10, fontSize: 13, fontWeight: 600, zIndex: 100, boxShadow: "0 4px 24px rgba(14,165,233,0.4)" }}>{toast}</div>
       )}
 
       <style>{`
@@ -733,7 +742,7 @@ export default function App() {
         body { margin: 0; background: #F8FAFC; font-family: Inter, ui-sans-serif, system-ui, sans-serif; }
         input[type=number]::-webkit-inner-spin-button, input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         input[type=number] { -moz-appearance: textfield; }
-        button:focus-visible { outline: 2px solid #6366F166; outline-offset: 2px; }
+        button:focus-visible { outline: 2px solid #14B8A666; outline-offset: 2px; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #F1F5F9; }
         ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }

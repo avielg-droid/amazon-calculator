@@ -6,25 +6,19 @@ import { analyzeStr, exportNegativesCsv, exportHarvestCsv, STR_REQUIRED_COLUMNS,
 import { analyzeSqp, exportSqpCsv, SQP_REQUIRED_COLUMNS, SQP_THRESHOLD_DEFAULTS } from "./analyzeSqp.js";
 
 const C = {
-  indigo:    "#6366F1",
-  indigoDim: "#EEF2FF",
-  green:     "#16A34A",
-  greenDim:  "#F0FDF4",
-  red:       "#DC2626",
-  redDim:    "#FEF2F2",
-  amber:     "#D97706",
-  amberDim:  "#FFFBEB",
-  blue:      "#2563EB",
-  blueDim:   "#EFF6FF",
-  cyan:      "#0891B2",
-  cyanDim:   "#ECFEFF",
-  violet:    "#7C3AED",
-  violetDim: "#F5F3FF",
-  orange:    "#EA580C",
-  orangeDim: "#FFF7ED",
-  rose:      "#E11D48",
-  roseDim:   "#FFF1F2",
-  ink:     "#0F172A",
+  teal:      "#14B8A6", tealEnd:   "#0EA5E9",
+  navy:      "#0B1F3A",
+  yellow:    "#FBBF24", yellowDim: "#FFFBEB",
+  indigo:    "#0EA5E9", indigoDim: "#E0F2FE",
+  green:     "#16A34A", greenDim:  "#F0FDF4",
+  red:       "#DC2626", redDim:    "#FEF2F2",
+  amber:     "#D97706", amberDim:  "#FFFBEB",
+  blue:      "#2563EB", blueDim:   "#EFF6FF",
+  cyan:      "#0891B2", cyanDim:   "#ECFEFF",
+  violet:    "#7C3AED", violetDim: "#F5F3FF",
+  orange:    "#EA580C", orangeDim: "#FFF7ED",
+  rose:      "#E11D48", roseDim:   "#FFF1F2",
+  ink:     "#0B1F3A",
   body:    "#334155",
   muted:   "#64748B",
   subtle:  "#94A3B8",
@@ -36,6 +30,7 @@ const C = {
   hover:   "#F8FAFC",
   divider: "#F1F5F9",
 };
+const BRAND_GRADIENT = "linear-gradient(135deg, #14B8A6, #0EA5E9)";
 
 const CARD = { background: C.card, border: `1px solid ${C.border}`, borderRadius: 12, padding: "20px 22px", boxShadow: "0 1px 3px rgba(0,0,0,0.08)" };
 const LABEL = { fontSize: 11, fontWeight: 600, letterSpacing: "0.07em", textTransform: "uppercase", color: C.muted, marginBottom: 4, display: "block" };
@@ -73,8 +68,8 @@ export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp }) {
         @keyframes spin { to { transform: rotate(360deg); } }
         .ppc-num::-webkit-inner-spin-button, .ppc-num::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
         .ppc-num { -moz-appearance: textfield; }
-        .ppc-num:focus { border-color: #6366F1 !important; box-shadow: 0 0 0 3px #6366F115 !important; }
-        .ppc-text:focus { border-color: #6366F1 !important; outline: none !important; }
+        .ppc-num:focus { border-color: #14B8A6 !important; box-shadow: 0 0 0 3px #14B8A615 !important; }
+        .ppc-text:focus { border-color: #14B8A6 !important; outline: none !important; }
         .why-btn:hover { background: #F1F5F9 !important; color: #334155 !important; }
       `}</style>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
