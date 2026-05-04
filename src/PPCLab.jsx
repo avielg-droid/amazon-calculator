@@ -5,6 +5,7 @@ import { parseCsv, parseXlsx, validateColumns } from "./parseCsv.js";
 import { analyzeStr, exportNegativesCsv, exportHarvestCsv, STR_REQUIRED_COLUMNS, STR_THRESHOLD_DEFAULTS } from "./analyzeStr.js";
 import { analyzeSqp, exportSqpCsv, SQP_REQUIRED_COLUMNS, SQP_THRESHOLD_DEFAULTS } from "./analyzeSqp.js";
 import { analyzeKeyword, exportKeywordCsv, KEYWORD_REQUIRED_COLUMNS } from "./analyzeKeyword.js";
+import { analyzePlacement, exportPlacementCsv, PLACEMENT_REQUIRED_COLUMNS } from "./analyzePlacement.js";
 
 const C = {
   teal:      "#14B8A6", tealEnd:   "#0EA5E9",
@@ -937,6 +938,176 @@ function KeywordTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab }) {
         onExport={() => {}}
         exportLabel=""
         emptyMessage="No zero-impression keywords found."
+      />
+    </div>
+  );
+}
+
+// ── PlacementTab ──
+
+function PlacementTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab }) {
+  const [error, setError] = useState(null);
+  const [parsing, setParsing] = useState(false);
+  const [expandedWhy, setExpandedWhy] = useState(null);
+  const [confirmClear, setConfirmClear] = useState(false);
+
+  const analysis = useMemo(() => {
+    if (!data.rows.length) return null;
+    return analyzePlacement(data.rows, targetAcos);
+  }, [data.rows, targetAcos]);
+
+  const handleFile = (file, fileError, fileData, fileType) => {
+    if (fileError) { setError(fileError); return; }
+    setParsing(true);
+    setTimeout(() => {
+      try {
+        const parsed = fileType === "xlsx" ? parseXlsx(fileData) : parseCsv(fileData);
+        const colError = validateColumns(parsed.headers, PLACEMENT_REQUIRED_COLUMNS);
+        if (colError) { setError(colError); setParsing(false); return; }
+        setError(null);
+        setData({ rows: parsed.rows, file });
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setParsing(false);
+      }
+    }, 30);
+  };
+
+  const downloadCsv = (content, filename) => {
+    const blob = new Blob([content], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a"); a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // ── Empty state ──
+  if (!data.rows.length) {
+    return (
+      <div>
+        <GoalWizard onSelect={onSwitchTab} />
+        <div style={{ background: C.indigoDim, border: `1px solid ${C.indigo}30`, borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
+          <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.indigo, marginBottom: 10 }}>
+            How to get your Placement Report
+          </div>
+          {[
+            "Go to Seller Central → Advertising → Campaign Manager",
+            "Click Reports → Create report",
+            "Report type: Placement",
+            "Choose date range (last 30–60 days recommended)",
+            "Download and upload the CSV below",
+          ].map((step, i) => (
+            <div key={i} style={{ display: "flex", gap: 10, marginBottom: 6, alignItems: "flex-start" }}>
+              <span style={{ minWidth: 20, height: 20, borderRadius: "50%", background: C.indigoDim, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: C.indigo }}>{i + 1}</span>
+              <span style={{ fontSize: 12, color: C.body, lineHeight: 1.5 }}>{step}</span>
+            </div>
+          ))}
+        </div>
+        {error && (
+          <div style={{ background: C.redDim, border: `1px solid ${C.red}`, borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#991B1B", display: "flex", gap: 8, alignItems: "flex-start" }}>
+            <AlertCircle size={14} style={{ flexShrink: 0, marginTop: 1 }} />{error}
+          </div>
+        )}
+        {parsing ? (
+          <div style={{ padding: "40px 24px", textAlign: "center", color: C.muted, fontSize: 13 }}>
+            <div style={{ display: "inline-block", width: 20, height: 20, border: `2px solid ${C.border}`, borderTopColor: C.indigo, borderRadius: "50%", animation: "spin 0.8s linear infinite", marginBottom: 12 }} />
+            <div>Analyzing file…</div>
+          </div>
+        ) : (
+          <UploadZone onFile={handleFile} label="Drop your Placement Report here or click to browse (CSV or Excel)" />
+        )}
+      </div>
+    );
+  }
+
+  // ── Analysis view ──
+  const { opportunities, underperforming, healthy, totalCampaigns, totalRows } = analysis;
+
+  const PLACEMENT_COLS = [
+    { key: "campaign", label: "Campaign", tip: "Campaign name" },
+    { key: "placement", label: "Placement", tip: "Top of Search / Rest of Search / Product Pages" },
+    { key: "spend", label: "Spend ($)", tip: "Total spend on this placement", render: item => `$${Number(item.spend).toFixed(2)}` },
+    { key: "sales", label: "Sales ($)", tip: "Total sales from this placement", render: item => `$${Number(item.sales).toFixed(2)}` },
+    { key: "acos", label: "ACoS %", tip: "Placement ACoS" },
+    { key: "modifierStr", label: "Suggested Modifier", tip: "Recommended bid modifier adjustment", noSort: true },
+  ];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {/* File info */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.muted, background: C.greenDim, border: `1px solid #86EFAC`, borderRadius: 8, padding: "8px 12px" }}>
+        <CheckCircle size={13} color={C.green} />
+        <span style={{ color: C.body }}>{data.file?.name} · {totalCampaigns} campaigns · {totalRows.toLocaleString()} rows</span>
+        {confirmClear ? (
+          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 6 }}>
+            <span style={{ fontSize: 11, color: C.body }}>Discard data?</span>
+            <button onClick={() => { setData({ rows: [], file: null }); setError(null); setConfirmClear(false); }}
+              style={{ fontSize: 11, color: C.red, background: "none", border: `1px solid ${C.red}44`, borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Yes</button>
+            <button onClick={() => setConfirmClear(false)}
+              style={{ fontSize: 11, color: C.muted, background: "none", border: `1px solid ${C.bdMed}`, borderRadius: 6, padding: "4px 10px", cursor: "pointer" }}>Cancel</button>
+          </div>
+        ) : (
+          <button onClick={() => setConfirmClear(true)}
+            style={{ marginLeft: "auto", fontSize: 11, color: C.muted, background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 12px", cursor: "pointer" }}>
+            Upload new file
+          </button>
+        )}
+      </div>
+
+      {/* Target ACoS + formula */}
+      <div style={{ background: C.indigoDim, border: `1px solid ${C.indigo}30`, borderRadius: 10, padding: "12px 16px", display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" }}>
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.indigo, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>Target ACoS</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+            <input
+              type="number" inputMode="decimal" className="ppc-num"
+              value={targetAcos}
+              onChange={e => setTargetAcos(Math.max(1, Math.min(200, parseFloat(e.target.value) || 30)))}
+              style={{ width: 72, height: 36, background: C.card, border: `1px solid ${C.bdMed}`, borderRadius: 8, padding: "0 8px 0 10px", fontSize: 15, color: C.ink, outline: "none", boxSizing: "border-box" }}
+            />
+            <span style={{ fontSize: 14, color: C.muted }}>%</span>
+          </div>
+        </div>
+        <div style={{ fontSize: 11, color: C.indigo, lineHeight: 1.6 }}>
+          <strong>Formula:</strong> Suggested modifier = (Target ACoS ÷ Placement ACoS − 1) × 100<br />
+          <span style={{ color: C.muted }}>Expand any row to see the exact calculation. Modifiers capped at −99% to +900% (Amazon limits).</span>
+        </div>
+      </div>
+
+      {/* Summary */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(90px, 1fr))", gap: 10 }}>
+        <SummaryCard label="Opportunities" value={opportunities.length} color={C.green} />
+        <SummaryCard label="Underperforming" value={underperforming.length} color={C.red} />
+        <SummaryCard label="Healthy" value={healthy.length} color={C.muted} />
+        <SummaryCard label="Campaigns" value={totalCampaigns} color={C.muted} />
+      </div>
+
+      {/* Opportunities */}
+      <RecoSection
+        title="Opportunities — Increase Modifier"
+        color={C.green}
+        items={opportunities}
+        expandedWhy={expandedWhy}
+        setExpandedWhy={setExpandedWhy}
+        idPrefix="plc-opp"
+        columns={PLACEMENT_COLS}
+        onExport={() => downloadCsv(exportPlacementCsv(opportunities, []), "placement-opportunities.csv")}
+        exportLabel="Export CSV"
+        emptyMessage="No placement opportunities found at current target ACoS."
+      />
+
+      {/* Underperforming */}
+      <RecoSection
+        title="Underperforming — Reduce Modifier"
+        color={C.red}
+        items={underperforming}
+        expandedWhy={expandedWhy}
+        setExpandedWhy={setExpandedWhy}
+        idPrefix="plc-under"
+        columns={PLACEMENT_COLS}
+        onExport={() => downloadCsv(exportPlacementCsv([], underperforming), "placement-underperforming.csv")}
+        exportLabel="Export CSV"
+        emptyMessage="No underperforming placements found at current target ACoS."
       />
     </div>
   );
