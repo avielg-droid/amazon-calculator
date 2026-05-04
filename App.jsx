@@ -194,8 +194,8 @@ function TopBar({ activeTool, onSwitch }) {
   const [hovered, setHovered] = useState(null);
   return (
     <div style={{ background: "#FFFFFF", borderBottom: `1px solid ${C.border}`, padding: "0 20px", height: 52, display: "flex", alignItems: "center", gap: 16, position: "sticky", top: 0, zIndex: 40 }}>
-      <button onClick={() => onSwitch("home")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, display: "flex", alignItems: "center" }}>
-        <img src="/danuly-logo.png" alt="Danuly" style={{ height: 36, width: "auto", objectFit: "contain" }} />
+      <button onClick={() => onSwitch("home")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 18, fontWeight: 800, color: C.navy, letterSpacing: "-0.02em", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}>
+        Danuly
       </button>
       <div style={{ width: 1, height: 20, background: C.border }} />
       <span style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>{activeTool === "calculator" ? "Profit Calculator" : "PPC Lab"}</span>
@@ -219,7 +219,7 @@ function HomeScreen({ onSelect }) {
   return (
     <div style={{ minHeight: "100vh", background: C.surface, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px", ...SANS }}>
       <div style={{ textAlign: "center", marginBottom: 52 }}>
-        <img src="/danuly-logo.png" alt="Danuly — Everything Amazon Sellers Need to Grow" style={{ height: 160, width: "auto", objectFit: "contain", marginBottom: 8 }} />
+        <img src="/danuly-logo.png" alt="Danuly — Everything Amazon Sellers Need to Grow" style={{ height: 220, width: "auto", objectFit: "contain", marginBottom: 8 }} />
         <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Free browser-based tools · your data never leaves your browser</p>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center", maxWidth: 820, width: "100%" }}>
