@@ -278,6 +278,8 @@ function StrTab({ data, setData }) {
   const [negEnabled, setNegEnabled] = useState(true);
   const [harvestEnabled, setHarvestEnabled] = useState(true);
   const [negSettingsOpen, setNegSettingsOpen] = useState(false);
+  const [negSort, setNegSort] = useState({ col: null, dir: "desc" });
+  const [harvestSort, setHarvestSort] = useState({ col: null, dir: "desc" });
   const [harvestSettingsOpen, setHarvestSettingsOpen] = useState(false);
   const [error, setError] = useState(null);
   const [expandedWhy, setExpandedWhy] = useState(null);
@@ -370,8 +372,6 @@ function StrTab({ data, setData }) {
   const filteredNegatives = brandLower ? negatives.filter(n => !n.term.toLowerCase().includes(brandLower)) : negatives;
   const filteredHarvest = brandLower ? harvest.filter(h => !h.term.toLowerCase().includes(brandLower)) : harvest;
 
-  const [negSort, setNegSort] = useState({ col: null, dir: "desc" });
-  const [harvestSort, setHarvestSort] = useState({ col: null, dir: "desc" });
   const sortedNegatives = sortRows(filteredNegatives, negSort.col, negSort.dir);
   const sortedHarvest = sortRows(filteredHarvest, harvestSort.col, harvestSort.dir);
   const toggleNegSort = col => setNegSort(s => s.col === col ? { col, dir: s.dir === "asc" ? "desc" : "asc" } : { col, dir: "desc" });
