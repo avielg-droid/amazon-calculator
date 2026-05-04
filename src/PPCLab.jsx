@@ -128,9 +128,10 @@ function GoalWizard({ onSelect }) {
   );
 }
 
-export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp }) {
+export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp, ppcKeyword, setPpcKeyword, ppcPlacement, setPpcPlacement }) {
   const [activeSub, setActiveSub] = useState("str");
   const [hoveredSub, setHoveredSub] = useState(null);
+  const [targetAcos, setTargetAcos] = useState(30);
 
   const subTabBtn = (t) => ({
     padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600,
@@ -156,14 +157,18 @@ export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp }) {
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>PPC Lab</span>
         <span style={{ fontSize: 10, color: C.muted, background: C.inset, borderRadius: 6, padding: "3px 8px", border: `1px solid ${C.border}` }}>Beta</span>
-        <div style={{ marginLeft: "auto", display: "flex", gap: 4, background: C.inset, border: `1px solid ${C.border}`, borderRadius: 10, padding: 3 }}>
+        <div style={{ marginLeft: "auto", display: "flex", gap: 4, background: C.inset, border: `1px solid ${C.border}`, borderRadius: 10, padding: 3, flexWrap: "wrap" }}>
           <button className="ppc-subtab" style={subTabBtn("str")} onClick={() => setActiveSub("str")} onMouseEnter={() => setHoveredSub("str")} onMouseLeave={() => setHoveredSub(null)}>Search Terms</button>
           <button className="ppc-subtab" style={subTabBtn("sqp")} onClick={() => setActiveSub("sqp")} onMouseEnter={() => setHoveredSub("sqp")} onMouseLeave={() => setHoveredSub(null)}>Search Query</button>
+          <button className="ppc-subtab" style={subTabBtn("keyword")} onClick={() => setActiveSub("keyword")} onMouseEnter={() => setHoveredSub("keyword")} onMouseLeave={() => setHoveredSub(null)}>Keyword Bids</button>
+          <button className="ppc-subtab" style={subTabBtn("placement")} onClick={() => setActiveSub("placement")} onMouseEnter={() => setHoveredSub("placement")} onMouseLeave={() => setHoveredSub(null)}>Placement</button>
         </div>
       </div>
 
-      {activeSub === "str" && <StrTab data={ppcStr} setData={setPpcStr} />}
-      {activeSub === "sqp" && <SqpTab data={ppcSqp} setData={setPpcSqp} />}
+      {activeSub === "str" && <StrTab data={ppcStr} setData={setPpcStr} onSwitchTab={setActiveSub} />}
+      {activeSub === "sqp" && <SqpTab data={ppcSqp} setData={setPpcSqp} onSwitchTab={setActiveSub} />}
+      {activeSub === "keyword" && <KeywordTab data={ppcKeyword} setData={setPpcKeyword} targetAcos={targetAcos} setTargetAcos={setTargetAcos} onSwitchTab={setActiveSub} />}
+      {activeSub === "placement" && <PlacementTab data={ppcPlacement} setData={setPpcPlacement} targetAcos={targetAcos} setTargetAcos={setTargetAcos} onSwitchTab={setActiveSub} />}
     </div>
   );
 }
@@ -349,7 +354,7 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
 
 // ── StrTab ──
 
-function StrTab({ data, setData }) {
+function StrTab({ data, setData, onSwitchTab }) {
   const [thresholds, setThresholds] = useState({ ...STR_THRESHOLD_DEFAULTS });
   const [negEnabled, setNegEnabled] = useState(true);
   const [harvestEnabled, setHarvestEnabled] = useState(true);
@@ -397,6 +402,7 @@ function StrTab({ data, setData }) {
   if (!data.rows.length) {
     return (
       <div>
+        <GoalWizard onSelect={onSwitchTab} />
         <div style={{ background: C.indigoDim, border: `1px solid ${C.indigo}30`, borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.indigo, marginBottom: 10 }}>How to get your Search Term Report</div>
           {[
@@ -1113,7 +1119,7 @@ function PlacementTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab })
   );
 }
 
-function SqpTab({ data, setData }) {
+function SqpTab({ data, setData, onSwitchTab }) {
   const [thresholds, setThresholds] = useState({ ...SQP_THRESHOLD_DEFAULTS });
   const [thresholdsOpen, setThresholdsOpen] = useState(false);
   const [error, setError] = useState(null);
@@ -1156,6 +1162,7 @@ function SqpTab({ data, setData }) {
   if (!data.rows.length) {
     return (
       <div>
+        <GoalWizard onSelect={onSwitchTab} />
         <div style={{ background: C.cyanDim, border: `1px solid ${C.cyan}30`, borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.cyan, marginBottom: 10 }}>How to get your Search Query Performance Report</div>
           {[

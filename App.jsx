@@ -282,6 +282,8 @@ export default function App() {
   const [hoveredShare, setHoveredShare] = useState(false);
   const [ppcStr, setPpcStr] = useState({ rows: [], file: null });
   const [ppcSqp, setPpcSqp] = useState({ rows: [], file: null });
+  const [ppcKeyword, setPpcKeyword] = useState({ rows: [], file: null });
+  const [ppcPlacement, setPpcPlacement] = useState({ rows: [], file: null });
   const [inputErrors, setInputErrors] = useState({});
   const [toast, setToast] = useState(null);
   const [orderQty, setOrderQty] = useState(500);
@@ -729,7 +731,7 @@ export default function App() {
             {activeTool === "ppc" && (
               <div style={{ background: C.surface, minHeight: "calc(100vh - 52px)", padding: "20px 16px", ...SANS }}>
                 <div style={{ maxWidth: 1140, margin: "0 auto" }}>
-                  <PPCLab ppcStr={ppcStr} setPpcStr={setPpcStr} ppcSqp={ppcSqp} setPpcSqp={setPpcSqp} />
+                  <PPCLab ppcStr={ppcStr} setPpcStr={setPpcStr} ppcSqp={ppcSqp} setPpcSqp={setPpcSqp} ppcKeyword={ppcKeyword} setPpcKeyword={setPpcKeyword} ppcPlacement={ppcPlacement} setPpcPlacement={setPpcPlacement} />
                 </div>
               </div>
             )}
