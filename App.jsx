@@ -221,9 +221,7 @@ function HomeScreen({ onSelect }) {
   return (
     <div style={{ minHeight: "100vh", background: C.surface, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px", ...SANS }}>
       <div style={{ textAlign: "center", marginBottom: 52 }}>
-        <div style={{ height: 190, overflow: "hidden", marginBottom: 8, display: "flex", justifyContent: "center", alignItems: "flex-start" }}>
-          <img src="/danuly-logo.png" alt="Danuly" style={{ height: 260, width: "auto", flexShrink: 0 }} />
-        </div>
+        <img src="/danuly-logo.png" alt="Danuly" style={{ height: 200, width: "auto", display: "block", margin: "0 auto 8px" }} />
         <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Free browser-based tools · your data never leaves your browser</p>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center", maxWidth: 820, width: "100%" }}>
