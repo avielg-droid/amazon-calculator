@@ -194,8 +194,10 @@ function TopBar({ activeTool, onSwitch }) {
   const [hovered, setHovered] = useState(null);
   return (
     <div style={{ background: "#FFFFFF", borderBottom: `1px solid ${C.border}`, padding: "0 20px", height: 52, display: "flex", alignItems: "center", gap: 16, position: "sticky", top: 0, zIndex: 40 }}>
-      <button onClick={() => onSwitch("home")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 18, fontWeight: 800, color: C.navy, letterSpacing: "-0.02em", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}>
-        Danuly
+      <button onClick={() => onSwitch("home")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, lineHeight: 1 }}>
+        <span style={{ fontSize: 20, fontWeight: 800, color: C.navy, letterSpacing: "-0.02em", fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif" }}>
+          Danul<span style={{ position: "relative", display: "inline-block" }}>y<span style={{ position: "absolute", top: 0, right: -5, width: 6, height: 6, borderRadius: "50%", background: C.yellow, display: "block" }} /></span>
+        </span>
       </button>
       <div style={{ width: 1, height: 20, background: C.border }} />
       <span style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>{activeTool === "calculator" ? "Profit Calculator" : "PPC Lab"}</span>
