@@ -50,6 +50,82 @@ function SortIcon({ active, dir }) {
   return <span style={{ color: C.indigo, fontSize: 10, marginLeft: 2 }}>{dir === "asc" ? "↑" : "↓"}</span>;
 }
 
+// ── Goal Wizard ──
+
+const GOALS = [
+  {
+    tab: "str",
+    emoji: "🔥",
+    title: "Cut wasted ad spend",
+    desc: "Find keywords burning money with 0 conversions",
+  },
+  {
+    tab: "str",
+    emoji: "🎯",
+    title: "Find new keywords to target",
+    desc: "Discover converting search terms not yet in your campaigns",
+  },
+  {
+    tab: "sqp",
+    emoji: "📊",
+    title: "Understand my market share",
+    desc: "See how you rank vs competitors on high-volume queries",
+  },
+  {
+    tab: "keyword",
+    emoji: "💰",
+    title: "Optimize keyword bids",
+    desc: "Get data-driven bid suggestions based on your target ACoS",
+  },
+  {
+    tab: "placement",
+    emoji: "📍",
+    title: "Analyze placement performance",
+    desc: "See which placements (Top of Search, etc.) are profitable",
+  },
+];
+
+function GoalWizard({ onSelect }) {
+  const [hovered, setHovered] = useState(null);
+  return (
+    <div style={{ marginBottom: 8 }}>
+      <div style={{ textAlign: "center", marginBottom: 18 }}>
+        <p style={{ fontSize: 15, fontWeight: 700, color: C.ink, margin: "0 0 5px", letterSpacing: "-0.01em" }}>
+          What do you want to achieve today?
+        </p>
+        <p style={{ fontSize: 12, color: C.muted, margin: 0 }}>
+          Pick a goal — we'll guide you to the right report
+        </p>
+      </div>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 10 }}>
+        {GOALS.map((goal, i) => {
+          const isHov = hovered === i;
+          return (
+            <div key={i}
+              onClick={() => onSelect(goal.tab)}
+              onMouseEnter={() => setHovered(i)}
+              onMouseLeave={() => setHovered(null)}
+              style={{
+                background: isHov ? C.indigoDim : C.card,
+                border: `1px solid ${isHov ? C.indigo : C.border}`,
+                borderRadius: 12, padding: "14px 16px", cursor: "pointer",
+                transition: "all 0.15s", display: "flex", gap: 12, alignItems: "flex-start",
+                boxShadow: isHov ? `0 4px 16px rgba(14,165,233,0.12)` : "0 1px 3px rgba(0,0,0,0.05)",
+              }}
+            >
+              <span style={{ fontSize: 24, flexShrink: 0, lineHeight: 1 }}>{goal.emoji}</span>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.ink, marginBottom: 4 }}>{goal.title}</div>
+                <div style={{ fontSize: 11, color: C.muted, lineHeight: 1.5 }}>{goal.desc}</div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp }) {
   const [activeSub, setActiveSub] = useState("str");
   const [hoveredSub, setHoveredSub] = useState(null);
