@@ -71,13 +71,16 @@ export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp }) {
         .ppc-num:focus { border-color: #14B8A6 !important; box-shadow: 0 0 0 3px #14B8A615 !important; }
         .ppc-text:focus { border-color: #14B8A6 !important; outline: none !important; }
         .why-btn:hover { background: #F1F5F9 !important; color: #334155 !important; }
+        @media (max-width: 480px) {
+          .ppc-subtab { padding: 6px 8px !important; font-size: 11px !important; }
+        }
       `}</style>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16, flexWrap: "wrap" }}>
         <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>PPC Lab</span>
         <span style={{ fontSize: 10, color: C.muted, background: C.inset, borderRadius: 6, padding: "3px 8px", border: `1px solid ${C.border}` }}>Beta</span>
         <div style={{ marginLeft: "auto", display: "flex", gap: 4, background: C.inset, border: `1px solid ${C.border}`, borderRadius: 10, padding: 3 }}>
-          <button style={subTabBtn("str")} onClick={() => setActiveSub("str")} onMouseEnter={() => setHoveredSub("str")} onMouseLeave={() => setHoveredSub(null)}>Search Terms</button>
-          <button style={subTabBtn("sqp")} onClick={() => setActiveSub("sqp")} onMouseEnter={() => setHoveredSub("sqp")} onMouseLeave={() => setHoveredSub(null)}>Search Query Perf</button>
+          <button className="ppc-subtab" style={subTabBtn("str")} onClick={() => setActiveSub("str")} onMouseEnter={() => setHoveredSub("str")} onMouseLeave={() => setHoveredSub(null)}>Search Terms</button>
+          <button className="ppc-subtab" style={subTabBtn("sqp")} onClick={() => setActiveSub("sqp")} onMouseEnter={() => setHoveredSub("sqp")} onMouseLeave={() => setHoveredSub(null)}>Search Query</button>
         </div>
       </div>
 
@@ -453,7 +456,7 @@ function StrTab({ data, setData }) {
       </div>
 
       {/* Summary cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(90px, 1fr))", gap: 10 }}>
         <SummaryCard label="Negative Candidates" value={negEnabled ? filteredNegatives.length : "—"} color={negEnabled ? C.red : C.muted} />
         <SummaryCard label="Harvest Opportunities" value={harvestEnabled ? filteredHarvest.length : "—"} color={harvestEnabled ? C.green : C.muted} />
         <SummaryCard label="Terms Analyzed" value={totalTerms.toLocaleString()} color={C.muted} />

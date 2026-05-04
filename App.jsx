@@ -167,7 +167,7 @@ function WaterfallBar({ label, value, total, color, isTotal, note }) {
           {isFinite(pctOfPrice) ? `${pctOfPrice >= 0 ? "+" : ""}${fmt(pctOfPrice, 1)}%` : "—"}
         </span>
       </div>
-      {note && <p style={{ fontSize: 10, color: C.cyan, margin: "1px 0 4px 140px", fontStyle: "italic" }}>{note}</p>}
+      {note && <p style={{ fontSize: 10, color: C.cyan, margin: "1px 0 4px", paddingLeft: "clamp(0px, 30%, 140px)", fontStyle: "italic" }}>{note}</p>}
     </div>
   );
 }
@@ -199,11 +199,12 @@ function TopBar({ activeTool, onSwitch }) {
           Danul<span style={{ position: "relative", display: "inline-block" }}>y<span style={{ position: "absolute", top: 0, right: -5, width: 6, height: 6, borderRadius: "50%", background: C.yellow, display: "block" }} /></span>
         </span>
       </button>
-      <div style={{ width: 1, height: 20, background: C.border }} />
-      <span style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>{activeTool === "calculator" ? "Profit Calculator" : "PPC Lab"}</span>
+      <div className="topbar-divider" style={{ width: 1, height: 20, background: C.border }} />
+      <span className="topbar-tool-name" style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>{activeTool === "calculator" ? "Profit Calculator" : "PPC Lab"}</span>
       <div style={{ marginLeft: "auto", display: "flex", gap: 3, background: C.inset, border: `1px solid ${C.border}`, borderRadius: 9, padding: "3px" }}>
         {[{ id: "ppc", label: "PPC Lab" }, { id: "calculator", label: "Profit Calc" }].map(({ id, label }) => (
           <button key={id} onClick={() => onSwitch(id)} onMouseEnter={() => setHovered(id)} onMouseLeave={() => setHovered(null)}
+            className="topbar-tab-btn"
             style={{ padding: "6px 14px", borderRadius: 7, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, transition: "all 0.15s", outline: "none", background: activeTool === id ? C.indigo : hovered === id ? C.border : "transparent", color: activeTool === id ? "#fff" : hovered === id ? C.ink : C.muted }}
           >{label}</button>
         ))}
@@ -221,7 +222,7 @@ function HomeScreen({ onSelect }) {
   return (
     <div style={{ minHeight: "100vh", background: C.surface, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px", ...SANS }}>
       <div style={{ textAlign: "center", marginBottom: 52 }}>
-        <img src="/danuly-v2.png" alt="Danuly" style={{ height: 200, width: "auto", display: "block", margin: "0 auto 4px" }} />
+        <img src="/danuly-v2.png" alt="Danuly" style={{ width: "min(90vw, 400px)", height: "auto", display: "block", margin: "0 auto 4px" }} />
         <p style={{ fontSize: 16, fontWeight: 600, color: C.navy, margin: "0 0 6px", letterSpacing: "-0.01em" }}>Built for the Sellers</p>
         <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Free browser-based tools · your data never leaves your browser</p>
       </div>
@@ -751,6 +752,11 @@ export default function App() {
         ::-webkit-scrollbar-thumb { background: #CBD5E1; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #94A3B8; }
         .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border-width: 0; }
+        @media (max-width: 480px) {
+          .topbar-tool-name { display: none !important; }
+          .topbar-divider { display: none !important; }
+          .topbar-tab-btn { padding: 6px 10px !important; font-size: 11px !important; }
+        }
       `}</style>
       <Analytics />
     </>
