@@ -51,6 +51,17 @@ const COLUMN_ALIASES = {
   "purchase share": "Purchase Share",
   "purchase share (%)": "Purchase Share",
   "purchases": "Purchases",
+  // Targeting (Keyword Performance) report
+  "keyword": "Targeting",
+  "keyword text": "Targeting",
+  "cost per click (cpc)": "CPC",
+  "click-thru rate (ctr)": "CTR",
+  "7 day total sales (#)": "Sales",
+  "7 day total units (#)": "Units",
+  "total return on advertising spend (roas)": "RoAS",
+  // Placement report
+  "placement": "Placement",
+  "bid adjustment": "Bid Adjustment",
 };
 
 function normalizeHeader(h) {
