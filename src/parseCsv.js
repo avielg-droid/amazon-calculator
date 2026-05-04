@@ -10,7 +10,6 @@ const COLUMN_ALIASES = {
   "customer search term": "Customer Search Term",
   "search term": "Customer Search Term",
   "match type": "Match Type",
-  "targeting": "Match Type",
   "targeting type": "Match Type",
   "impressions": "Impressions",
   "clicks": "Clicks",
