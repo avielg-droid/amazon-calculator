@@ -134,12 +134,15 @@ export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp, ppcKeywor
   const [activeSub, setActiveSub] = useState("str");
   const [hoveredSub, setHoveredSub] = useState(null);
   const [targetAcos, setTargetAcos] = useState(30);
-  const [strGoalSection, setStrGoalSection] = useState(null);
+  const [activeGoal, setActiveGoal] = useState(null);
 
   const switchTab = (tab, section) => {
     setActiveSub(tab);
-    if (tab === "str" && section) setStrGoalSection(section);
+    const goal = GOALS.find(g => g.tab === tab && (section ? g.section === section : true));
+    setActiveGoal(goal || null);
   };
+
+  const directTab = (tab) => { setActiveSub(tab); setActiveGoal(null); };
 
   const subTabBtn = (t) => ({
     padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600,
@@ -166,17 +169,17 @@ export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp, ppcKeywor
         <span style={{ fontSize: 13, fontWeight: 700, color: C.ink }}>PPC Lab</span>
         <span style={{ fontSize: 10, color: C.muted, background: C.inset, borderRadius: 6, padding: "3px 8px", border: `1px solid ${C.border}` }}>Beta</span>
         <div style={{ marginLeft: "auto", display: "flex", gap: 4, background: C.inset, border: `1px solid ${C.border}`, borderRadius: 10, padding: 3, flexWrap: "wrap" }}>
-          <button className="ppc-subtab" style={subTabBtn("str")} onClick={() => setActiveSub("str")} onMouseEnter={() => setHoveredSub("str")} onMouseLeave={() => setHoveredSub(null)}>Search Terms</button>
-          <button className="ppc-subtab" style={subTabBtn("sqp")} onClick={() => setActiveSub("sqp")} onMouseEnter={() => setHoveredSub("sqp")} onMouseLeave={() => setHoveredSub(null)}>Search Query</button>
-          <button className="ppc-subtab" style={subTabBtn("keyword")} onClick={() => setActiveSub("keyword")} onMouseEnter={() => setHoveredSub("keyword")} onMouseLeave={() => setHoveredSub(null)}>Keyword Bids</button>
-          <button className="ppc-subtab" style={subTabBtn("placement")} onClick={() => setActiveSub("placement")} onMouseEnter={() => setHoveredSub("placement")} onMouseLeave={() => setHoveredSub(null)}>Placement</button>
+          <button className="ppc-subtab" style={subTabBtn("str")} onClick={() => directTab("str")} onMouseEnter={() => setHoveredSub("str")} onMouseLeave={() => setHoveredSub(null)}>Search Terms</button>
+          <button className="ppc-subtab" style={subTabBtn("sqp")} onClick={() => directTab("sqp")} onMouseEnter={() => setHoveredSub("sqp")} onMouseLeave={() => setHoveredSub(null)}>Search Query</button>
+          <button className="ppc-subtab" style={subTabBtn("keyword")} onClick={() => directTab("keyword")} onMouseEnter={() => setHoveredSub("keyword")} onMouseLeave={() => setHoveredSub(null)}>Keyword Bids</button>
+          <button className="ppc-subtab" style={subTabBtn("placement")} onClick={() => directTab("placement")} onMouseEnter={() => setHoveredSub("placement")} onMouseLeave={() => setHoveredSub(null)}>Placement</button>
         </div>
       </div>
 
-      {activeSub === "str" && <StrTab data={ppcStr} setData={setPpcStr} onSwitchTab={switchTab} goalSection={strGoalSection} />}
-      {activeSub === "sqp" && <SqpTab data={ppcSqp} setData={setPpcSqp} onSwitchTab={switchTab} />}
-      {activeSub === "keyword" && <KeywordTab data={ppcKeyword} setData={setPpcKeyword} targetAcos={targetAcos} setTargetAcos={setTargetAcos} onSwitchTab={switchTab} />}
-      {activeSub === "placement" && <PlacementTab data={ppcPlacement} setData={setPpcPlacement} targetAcos={targetAcos} setTargetAcos={setTargetAcos} onSwitchTab={switchTab} />}
+      {activeSub === "str" && <StrTab data={ppcStr} setData={setPpcStr} onSwitchTab={switchTab} goalContext={activeGoal} />}
+      {activeSub === "sqp" && <SqpTab data={ppcSqp} setData={setPpcSqp} onSwitchTab={switchTab} goalContext={activeGoal} />}
+      {activeSub === "keyword" && <KeywordTab data={ppcKeyword} setData={setPpcKeyword} targetAcos={targetAcos} setTargetAcos={setTargetAcos} onSwitchTab={switchTab} goalContext={activeGoal} />}
+      {activeSub === "placement" && <PlacementTab data={ppcPlacement} setData={setPpcPlacement} targetAcos={targetAcos} setTargetAcos={setTargetAcos} onSwitchTab={switchTab} goalContext={activeGoal} />}
     </div>
   );
 }
@@ -362,7 +365,7 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
 
 // ── StrTab ──
 
-function StrTab({ data, setData, onSwitchTab, goalSection }) {
+function StrTab({ data, setData, onSwitchTab, goalContext }) {
   const [thresholds, setThresholds] = useState({ ...STR_THRESHOLD_DEFAULTS });
   const [negEnabled, setNegEnabled] = useState(true);
   const [harvestEnabled, setHarvestEnabled] = useState(true);
@@ -411,15 +414,15 @@ function StrTab({ data, setData, onSwitchTab, goalSection }) {
     return (
       <div>
         <GoalWizard onSelect={onSwitchTab} />
-        {goalSection && (
-          <div style={{ background: goalSection === "negatives" ? "#FEF2F2" : "#F0FDF4", border: `1px solid ${goalSection === "negatives" ? C.red + "44" : C.green + "44"}`, borderRadius: 10, padding: "10px 14px", marginBottom: 14, display: "flex", gap: 10, alignItems: "center" }}>
-            <span style={{ fontSize: 18 }}>{goalSection === "negatives" ? "🔥" : "🎯"}</span>
+        {goalContext && (
+          <div style={{ background: goalContext.section === "negatives" ? "#FEF2F2" : "#F0FDF4", border: `1px solid ${goalContext.section === "negatives" ? C.red + "44" : C.green + "44"}`, borderRadius: 10, padding: "10px 14px", marginBottom: 14, display: "flex", gap: 10, alignItems: "center" }}>
+            <span style={{ fontSize: 18 }}>{goalContext.emoji}</span>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: goalSection === "negatives" ? C.red : C.green, marginBottom: 2 }}>
-                {goalSection === "negatives" ? "Goal: Cut wasted ad spend" : "Goal: Find new keywords to target"}
+              <div style={{ fontSize: 12, fontWeight: 700, color: goalContext.section === "negatives" ? C.red : C.green, marginBottom: 2 }}>
+                Goal: {goalContext.title}
               </div>
               <div style={{ fontSize: 11, color: C.muted }}>
-                {goalSection === "negatives"
+                {goalContext.section === "negatives"
                   ? "After uploading, scroll to the Negatives section — keywords spending money with 0 orders."
                   : "After uploading, scroll to the Harvest section — converting search terms not yet in your campaigns."}
               </div>
@@ -474,14 +477,14 @@ function StrTab({ data, setData, onSwitchTab, goalSection }) {
   // ── Analysis view ──
   const { negatives, harvest, totalTerms } = analysis;
 
-  const GoalBanner = goalSection ? (
-    <div style={{ background: goalSection === "negatives" ? "#FEF2F2" : "#F0FDF4", border: `1px solid ${goalSection === "negatives" ? C.red + "44" : C.green + "44"}`, borderRadius: 10, padding: "10px 14px", marginBottom: 4, display: "flex", gap: 10, alignItems: "center" }}>
-      <span style={{ fontSize: 16 }}>{goalSection === "negatives" ? "🔥" : "🎯"}</span>
+  const GoalBanner = goalContext ? (
+    <div style={{ background: goalContext.section === "negatives" ? "#FEF2F2" : "#F0FDF4", border: `1px solid ${goalContext.section === "negatives" ? C.red + "44" : C.green + "44"}`, borderRadius: 10, padding: "10px 14px", marginBottom: 4, display: "flex", gap: 10, alignItems: "center" }}>
+      <span style={{ fontSize: 16 }}>{goalContext.emoji}</span>
       <div style={{ fontSize: 12, color: C.muted }}>
-        <span style={{ fontWeight: 700, color: goalSection === "negatives" ? C.red : C.green }}>
-          {goalSection === "negatives" ? "Goal: Cut wasted ad spend — " : "Goal: Find new keywords — "}
+        <span style={{ fontWeight: 700, color: goalContext.section === "negatives" ? C.red : C.green }}>
+          Goal: {goalContext.title} —{" "}
         </span>
-        {goalSection === "negatives"
+        {goalContext.section === "negatives"
           ? "Scroll to Negatives below to find keywords burning budget with 0 orders."
           : "Scroll to Harvest below to find converting search terms to add as Exact match."}
       </div>
@@ -794,7 +797,7 @@ function StrTab({ data, setData, onSwitchTab, goalSection }) {
 
 // ── KeywordTab ──
 
-function KeywordTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab }) {
+function KeywordTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab, goalContext }) {
   const [error, setError] = useState(null);
   const [parsing, setParsing] = useState(false);
   const [expandedWhy, setExpandedWhy] = useState(null);
@@ -837,6 +840,15 @@ function KeywordTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab }) {
     return (
       <div>
         <GoalWizard onSelect={onSwitchTab} />
+        {goalContext && (
+          <div style={{ background: "#F0FDF4", border: `1px solid ${C.green}44`, borderRadius: 10, padding: "10px 14px", marginBottom: 14, display: "flex", gap: 10, alignItems: "center" }}>
+            <span style={{ fontSize: 18 }}>{goalContext.emoji}</span>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.green, marginBottom: 2 }}>Goal: {goalContext.title}</div>
+              <div style={{ fontSize: 11, color: C.muted }}>Upload your Targeting Report below — we'll calculate suggested bids based on your target ACoS.</div>
+            </div>
+          </div>
+        )}
         <div style={{ background: C.indigoDim, border: `1px solid ${C.indigo}30`, borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.indigo, marginBottom: 10 }}>
             How to get your Targeting Report
@@ -907,6 +919,12 @@ function KeywordTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {goalContext && (
+        <div style={{ background: "#F0FDF4", border: `1px solid ${C.green}44`, borderRadius: 10, padding: "10px 14px", display: "flex", gap: 10, alignItems: "center" }}>
+          <span style={{ fontSize: 16 }}>{goalContext.emoji}</span>
+          <div style={{ fontSize: 12, color: C.muted }}><span style={{ fontWeight: 700, color: C.green }}>Goal: {goalContext.title} — </span>{goalContext.desc}</div>
+        </div>
+      )}
       {/* File info */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.muted, background: C.greenDim, border: `1px solid #86EFAC`, borderRadius: 8, padding: "8px 12px" }}>
         <CheckCircle size={13} color={C.green} />
@@ -1002,7 +1020,7 @@ function KeywordTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab }) {
 
 // ── PlacementTab ──
 
-function PlacementTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab }) {
+function PlacementTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab, goalContext }) {
   const [error, setError] = useState(null);
   const [parsing, setParsing] = useState(false);
   const [expandedWhy, setExpandedWhy] = useState(null);
@@ -1043,6 +1061,15 @@ function PlacementTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab })
     return (
       <div>
         <GoalWizard onSelect={onSwitchTab} />
+        {goalContext && (
+          <div style={{ background: "#F0FDF4", border: `1px solid ${C.green}44`, borderRadius: 10, padding: "10px 14px", marginBottom: 14, display: "flex", gap: 10, alignItems: "center" }}>
+            <span style={{ fontSize: 18 }}>{goalContext.emoji}</span>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: C.green, marginBottom: 2 }}>Goal: {goalContext.title}</div>
+              <div style={{ fontSize: 11, color: C.muted }}>Upload your Placement Report below — we'll suggest bid modifiers per placement based on your target ACoS.</div>
+            </div>
+          </div>
+        )}
         <div style={{ background: C.indigoDim, border: `1px solid ${C.indigo}30`, borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.indigo, marginBottom: 10 }}>
             How to get your Placement Report
@@ -1104,6 +1131,12 @@ function PlacementTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab })
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {goalContext && (
+        <div style={{ background: "#F0FDF4", border: `1px solid ${C.green}44`, borderRadius: 10, padding: "10px 14px", display: "flex", gap: 10, alignItems: "center" }}>
+          <span style={{ fontSize: 16 }}>{goalContext.emoji}</span>
+          <div style={{ fontSize: 12, color: C.muted }}><span style={{ fontWeight: 700, color: C.green }}>Goal: {goalContext.title} — </span>{goalContext.desc}</div>
+        </div>
+      )}
       {/* File info */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.muted, background: C.greenDim, border: `1px solid #86EFAC`, borderRadius: 8, padding: "8px 12px" }}>
         <CheckCircle size={13} color={C.green} />
@@ -1183,7 +1216,7 @@ function PlacementTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab })
   );
 }
 
-function SqpTab({ data, setData, onSwitchTab }) {
+function SqpTab({ data, setData, onSwitchTab, goalContext }) {
   const [thresholds, setThresholds] = useState({ ...SQP_THRESHOLD_DEFAULTS });
   const [thresholdsOpen, setThresholdsOpen] = useState(false);
   const [error, setError] = useState(null);
@@ -1227,6 +1260,15 @@ function SqpTab({ data, setData, onSwitchTab }) {
     return (
       <div>
         <GoalWizard onSelect={onSwitchTab} />
+        {goalContext && (
+          <div style={{ background: "#EFF6FF", border: `1px solid #93C5FD`, borderRadius: 10, padding: "10px 14px", marginBottom: 14, display: "flex", gap: 10, alignItems: "center" }}>
+            <span style={{ fontSize: 18 }}>{goalContext.emoji}</span>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: "#1D4ED8", marginBottom: 2 }}>Goal: {goalContext.title}</div>
+              <div style={{ fontSize: 11, color: C.muted }}>Upload your Search Query Performance report below — we'll show your market share and competitive position.</div>
+            </div>
+          </div>
+        )}
         <div style={{ background: C.cyanDim, border: `1px solid ${C.cyan}30`, borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.cyan, marginBottom: 10 }}>How to get your Search Query Performance Report</div>
           {[
@@ -1279,6 +1321,12 @@ function SqpTab({ data, setData, onSwitchTab }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {goalContext && (
+        <div style={{ background: "#EFF6FF", border: `1px solid #93C5FD`, borderRadius: 10, padding: "10px 14px", display: "flex", gap: 10, alignItems: "center" }}>
+          <span style={{ fontSize: 16 }}>{goalContext.emoji}</span>
+          <div style={{ fontSize: 12, color: C.muted }}><span style={{ fontWeight: 700, color: "#1D4ED8" }}>Goal: {goalContext.title} — </span>{goalContext.desc}</div>
+        </div>
+      )}
       {/* File info + re-upload */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.muted, background: C.greenDim, border: `1px solid #86EFAC`, borderRadius: 8, padding: "8px 12px" }}>
         <CheckCircle size={13} color={C.green} />
