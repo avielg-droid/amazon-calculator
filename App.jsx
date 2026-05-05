@@ -223,7 +223,7 @@ function HomeScreen({ onSelect }) {
     <div style={{ minHeight: "100vh", background: C.surface, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px", ...SANS }}>
       <div style={{ textAlign: "center", marginBottom: 52 }}>
         <img src="/danuly-v2.png" alt="Danuly" style={{ width: "min(90vw, 400px)", height: "auto", display: "block", margin: "0 auto 4px" }} />
-        <p style={{ fontSize: 16, fontWeight: 600, color: C.navy, margin: "0 0 6px", letterSpacing: "-0.01em" }}>Built for the Sellers</p>
+        <p style={{ fontSize: 16, fontWeight: 600, color: C.navy, margin: "0 0 6px", letterSpacing: "-0.01em" }}>Seller tools we wished existed.</p>
         <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Free browser-based tools · your data never leaves your browser</p>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center", maxWidth: 820, width: "100%" }}>
