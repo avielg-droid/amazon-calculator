@@ -339,10 +339,10 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
                               {col.render ? col.render(item) : col.key === "spend" ? `$${Number(item[col.key]).toFixed(2)}` : item[col.key]}
                             </td>
                           ))}
-                          <td style={{ padding: "8px 12px" }}>
+                          <td style={{ padding: "6px 12px" }}>
                             <button className="why-btn" onClick={() => setExpandedWhy(isOpen ? null : id)}
-                              style={{ fontSize: 11, color: C.muted, background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer", transition: "background 0.15s, color 0.15s" }}>
-                              {isOpen ? "hide" : "why?"}
+                              style={{ fontSize: 11, color: isOpen ? color : C.muted, background: isOpen ? `${color}10` : C.card, border: `1px solid ${isOpen ? color + "50" : C.border}`, borderRadius: 6, padding: "8px 12px", minHeight: 36, cursor: "pointer", transition: "background 0.15s, color 0.15s", whiteSpace: "nowrap" }}>
+                              {isOpen ? "▲ hide" : "▼ why?"}
                             </button>
                           </td>
                         </tr>
@@ -668,7 +668,7 @@ function StrTab({ data, setData, onSwitchTab, goalContext }) {
                       <SortTh label="Clicks" col="clicks" sort={negSort} onToggle={toggleNegSort} tip="Total clicks" />
                       <SortTh label="Orders" col="orders" sort={negSort} onToggle={toggleNegSort} tip="Total orders attributed" />
                       <SortTh label="Campaign" col="campaign" sort={negSort} onToggle={toggleNegSort} tip="Campaign name" />
-                      <SortTh label="Neg. type" col="recommendedNegType" sort={negSort} onToggle={toggleNegSort} tip="Recommended negative match type" tipDir="left" />
+                      <SortTh label="Neg. match type" col="recommendedNegType" sort={negSort} onToggle={toggleNegSort} tip="Recommended negative match type: Exact blocks exact searches; Phrase blocks any search containing this phrase" tipDir="left" />
                       <th style={{ padding: "8px 12px", color: C.muted, fontWeight: 600, fontSize: 11 }}>Why?</th>
                     </tr>
                   </thead>
@@ -908,7 +908,7 @@ function KeywordTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab, goa
     { key: "spend", label: "Spend ($)", tip: "Total spend", render: item => `$${Number(item.spend).toFixed(2)}` },
     { key: "sales", label: "Sales ($)", tip: "7-day total sales", render: item => `$${Number(item.sales).toFixed(2)}` },
     { key: "clicks", label: "Clicks", tip: "Total clicks" },
-    { key: "currentAcos", label: "ACoS %", tip: "Current ACoS" },
+    { key: "currentAcos", label: "ACoS %", tip: "Advertising Cost of Sales: ad spend ÷ sales × 100. Lower = more efficient. Compare with your target ACoS above." },
     { key: "suggestedBid", label: "Suggested Bid", tip: "Calculated from your target ACoS", render: item => `$${item.suggestedBid}` },
     { key: "campaign", label: "Campaign", tip: "Campaign name" },
   ];
@@ -1165,7 +1165,7 @@ function PlacementTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab, g
     { key: "placement", label: "Placement", tip: "Top of Search / Rest of Search / Product Pages" },
     { key: "spend", label: "Spend ($)", tip: "Total spend on this placement", render: item => `$${Number(item.spend).toFixed(2)}` },
     { key: "sales", label: "Sales ($)", tip: "Total sales from this placement", render: item => `$${Number(item.sales).toFixed(2)}` },
-    { key: "acos", label: "ACoS %", tip: "Placement ACoS" },
+    { key: "acos", label: "ACoS %", tip: "Advertising Cost of Sales for this placement: ad spend ÷ sales × 100. Compare with your target ACoS to see if this placement is over or under-performing." },
     { key: "modifierStr", label: "Suggested Modifier", tip: "Recommended bid modifier adjustment", noSort: true },
   ];
 
@@ -1236,7 +1236,7 @@ function PlacementTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab, g
         columns={PLACEMENT_COLS}
         onExport={() => downloadCsv(exportPlacementCsv(opportunities, []), "placement-opportunities.csv")}
         exportLabel="Export CSV"
-        emptyMessage="No placement opportunities found at current target ACoS."
+        emptyMessage={`No opportunities found — no placements are performing better than your ${targetAcos}% target ACoS. Try raising your target ACoS if you're in a growth phase.`}
       />
 
       {/* Underperforming */}
@@ -1250,7 +1250,7 @@ function PlacementTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab, g
         columns={PLACEMENT_COLS}
         onExport={() => downloadCsv(exportPlacementCsv([], underperforming), "placement-underperforming.csv")}
         exportLabel="Export CSV"
-        emptyMessage="No underperforming placements found at current target ACoS."
+        emptyMessage={`No underperforming placements found — all placements are within your ${targetAcos}% target. Try lowering your target ACoS to reveal placements that are costing more than they should.`}
       />
     </div>
   );
@@ -1477,7 +1477,7 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
               return (
                 <span key={t.id} style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 4 }}>
                   <button onClick={() => { setActiveSection(t.id); setExpandedWhy(null); }}
-                    style={{ fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 20, border: `1px solid ${active ? t.color : C.border}`, background: active ? `${t.color}15` : C.card, color: active ? t.color : C.muted, cursor: "pointer", transition: "all 0.15s" }}>
+                    style={{ fontSize: 11, fontWeight: 600, padding: "8px 14px", minHeight: 36, borderRadius: 20, border: `1px solid ${active ? t.color : C.border}`, background: active ? `${t.color}15` : C.card, color: active ? t.color : C.muted, cursor: "pointer", transition: "all 0.15s" }}>
                     {t.label}
                   </button>
                   {t.tip && <Tooltip text={t.tip} dir="down" />}
@@ -1501,10 +1501,17 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
           { key: "query", label: "Search query", tip: "The customer search query" },
           { key: "volume", label: "Volume", tip: "Monthly search query volume" },
           { key: "conversionRate", label: "Your CVR %", tip: "Your conversion rate: your purchases ÷ your clicks × 100" },
-          { key: "marketCvr", label: "Market CVR %", tip: "Market-wide conversion rate: total purchases ÷ total clicks across all sellers for this query. Compare with your CVR to see if you're above or below the market." },
+          { key: "marketCvr", label: "Market CVR %", tip: "Average conversion rate across all sellers for this query. Green ↑ = you convert better than the market. Red ↓ = room to improve your listing.",
+            render: item => {
+              const b = parseFloat(item.conversionRate), m = parseFloat(item.marketCvr);
+              if (isNaN(b) || isNaN(m)) return <span style={{ color: C.muted }}>{item.marketCvr}</span>;
+              const above = b >= m;
+              return <span style={{ fontWeight: 700, color: above ? C.green : C.rose }}>{item.marketCvr}% {above ? "↑" : "↓"}</span>;
+            }
+          },
           { key: "purchaseShare", label: "Purchase share %", tip: "Your share of all purchases made after searching this query across all sellers" },
           { key: "clickShare", label: "Click share %", tip: "Your share of clicks. Low = you're winning sales but missing most of the traffic. Raise bids to capture more.", tipDir: "left" },
-          { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions. Compared with click share, shows how much traffic you're leaving on the table.", tipDir: "left" },
+          { key: "impressionShare", label: "Impression share %", tip: "Your share of impressions. Compared with click share, shows how much traffic you're leaving on the table.", tipDir: "left" },
           { key: "insight", label: "Insight", tip: "Recommended action", tipDir: "left" },
         ]}
         onExport={() => downloadCsv(exportSqpCsv(filteredOpportunities, [], []), "sqp-opportunities.csv")}
@@ -1524,10 +1531,17 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
           { key: "query", label: "Search query", tip: "The customer search query" },
           { key: "volume", label: "Volume", tip: "Monthly search query volume" },
           { key: "conversionRate", label: "Your CVR %", tip: "Your conversion rate: your purchases ÷ your clicks × 100" },
-          { key: "marketCvr", label: "Market CVR %", tip: "Market-wide conversion rate across all sellers. Compare with your CVR to benchmark your listing.", tipDir: "left" },
+          { key: "marketCvr", label: "Market CVR %", tip: "Average conversion rate across all sellers for this query. Green ↑ = you convert better than the market.", tipDir: "left",
+            render: item => {
+              const b = parseFloat(item.conversionRate), m = parseFloat(item.marketCvr);
+              if (isNaN(b) || isNaN(m)) return <span style={{ color: C.muted }}>{item.marketCvr}</span>;
+              const above = b >= m;
+              return <span style={{ fontWeight: 700, color: above ? C.green : C.rose }}>{item.marketCvr}% {above ? "↑" : "↓"}</span>;
+            }
+          },
           { key: "purchaseShare", label: "Purchase share %", tip: "Your dominant share of purchases for this query", tipDir: "left" },
           { key: "clickShare", label: "Click share %", tip: "Your share of clicks", tipDir: "left" },
-          { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions", tipDir: "left" },
+          { key: "impressionShare", label: "Impression share %", tip: "Your share of impressions", tipDir: "left" },
           { key: "insight", label: "Insight", tip: "Strategic recommendation", tipDir: "left" },
         ]}
         onExport={() => downloadCsv(exportSqpCsv([], [], filteredLeaders), "sqp-leaders.csv")}
@@ -1547,8 +1561,15 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
           { key: "query", label: "Search query", tip: "The customer search query" },
           { key: "volume", label: "Volume", tip: "Monthly search query volume" },
           { key: "conversionRate", label: "Your CVR %", tip: "Your conversion rate: your purchases ÷ your clicks × 100. Low CVR here confirms the listing isn't resonating with this query." },
-          { key: "marketCvr", label: "Market CVR %", tip: "Market-wide conversion rate across all sellers. If market CVR is also low, the issue may be the query itself — not your listing.", tipDir: "left" },
-          { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions — high visibility", tipDir: "left" },
+          { key: "marketCvr", label: "Market CVR %", tip: "Average conversion rate across all sellers. If market CVR is also low, the query itself may have low buying intent — not necessarily your listing's fault.", tipDir: "left",
+            render: item => {
+              const b = parseFloat(item.conversionRate), m = parseFloat(item.marketCvr);
+              if (isNaN(b) || isNaN(m)) return <span style={{ color: C.muted }}>{item.marketCvr}</span>;
+              const above = b >= m;
+              return <span style={{ fontWeight: 700, color: above ? C.green : C.rose }}>{item.marketCvr}% {above ? "↑" : "↓"}</span>;
+            }
+          },
+          { key: "impressionShare", label: "Impression share %", tip: "Your share of impressions — high visibility", tipDir: "left" },
           { key: "purchaseShare", label: "Purchase share %", tip: "Your share of purchases — low conversion", tipDir: "left" },
           { key: "clickShare", label: "Click share %", tip: "Your share of clicks", tipDir: "left" },
           { key: "insight", label: "Insight", tip: "Recommended action", tipDir: "left" },
