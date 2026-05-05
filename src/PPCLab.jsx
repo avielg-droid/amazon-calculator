@@ -299,33 +299,33 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
           {emptyMessage || "None found with current thresholds."}
         </div>
       ) : (
-        <div style={{ position: "relative" }}>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
-              <thead>
-                <tr style={{ background: C.surface }}>
-                  {columns.map(col => (
-                    <th key={col.key} style={{ padding: "8px 12px", textAlign: "left", color: C.muted, fontWeight: 600, fontSize: 11, whiteSpace: "nowrap" }}>
-                      <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
-                        {!col.noSort ? (
-                          <button onClick={() => toggleSort(col.key)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 11, fontWeight: 600, color: sort.col === col.key ? C.indigo : C.muted, display: "inline-flex", alignItems: "center", gap: 2 }}>
-                            {col.label}<SortIcon active={sort.col === col.key} dir={sort.dir} />
-                          </button>
-                        ) : col.label}
-                        <Tooltip text={col.tip} dir={col.tipDir || "right"} />
-                      </span>
-                    </th>
-                  ))}
-                  <th style={{ padding: "8px 12px", color: C.muted, fontWeight: 600, fontSize: 11 }}>Why?</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sortedItems.map((item, i) => {
-                  const id = `${idPrefix}-${i}`;
-                  const isOpen = expandedWhy === id;
-                  return (
-                    <React.Fragment key={id}>
-                      <tr style={{ borderTop: `1px solid ${C.divider}`, background: isOpen ? C.surface : "transparent" }}>
+        <div>
+          <div style={{ position: "relative" }}>
+            <div style={{ overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 12 }}>
+                <thead>
+                  <tr style={{ background: C.surface }}>
+                    {columns.map(col => (
+                      <th key={col.key} style={{ padding: "8px 12px", textAlign: "left", color: C.muted, fontWeight: 600, fontSize: 11, whiteSpace: "nowrap" }}>
+                        <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                          {!col.noSort ? (
+                            <button onClick={() => toggleSort(col.key)} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, fontSize: 11, fontWeight: 600, color: sort.col === col.key ? C.indigo : C.muted, display: "inline-flex", alignItems: "center", gap: 2 }}>
+                              {col.label}<SortIcon active={sort.col === col.key} dir={sort.dir} />
+                            </button>
+                          ) : col.label}
+                          <Tooltip text={col.tip} dir={col.tipDir || "right"} />
+                        </span>
+                      </th>
+                    ))}
+                    <th style={{ padding: "8px 12px", color: C.muted, fontWeight: 600, fontSize: 11 }}>Why?</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {sortedItems.map((item, i) => {
+                    const id = `${idPrefix}-${i}`;
+                    const isOpen = expandedWhy === id;
+                    return (
+                      <tr key={id} style={{ borderTop: `1px solid ${C.divider}`, background: isOpen ? C.surface : "transparent" }}>
                         {columns.map(col => (
                           <td key={col.key} style={{ padding: "8px 12px", color: C.body, fontSize: 12, whiteSpace: col.key === "term" || col.key === "query" || col.key === "recommendedAction" || col.key === "insight" ? "normal" : "nowrap" }}>
                             {col.render ? col.render(item) : col.key === "spend" ? `$${Number(item[col.key]).toFixed(2)}` : item[col.key]}
@@ -338,25 +338,28 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
                           </button>
                         </td>
                       </tr>
-                      {isOpen && (
-                        <tr key={id + "-why"}>
-                          <td colSpan={columns.length + 1} style={{ padding: "8px 12px 10px 24px", fontSize: 11, color: C.body, lineHeight: 1.6, background: `${color}06` }}>
-                            <strong style={{ color }}>Flagged because:</strong> {item.whyFlag}
-                          </td>
-                        </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {/* Right-edge fade hint for horizontal scroll */}
+            <div style={{
+              position: "absolute", top: 0, right: 0, height: "100%", width: 40,
+              background: `linear-gradient(to right, transparent, #FFFFFF)`,
+              pointerEvents: "none",
+            }} />
           </div>
-          {/* Right-edge fade hint for horizontal scroll */}
-          <div style={{
-            position: "absolute", top: 0, right: 0, height: "100%", width: 40,
-            background: `linear-gradient(to right, transparent, #FFFFFF)`,
-            pointerEvents: "none",
-          }} />
+          {/* Why panels — outside scroll container so text is never clipped */}
+          {sortedItems.map((item, i) => {
+            const id = `${idPrefix}-${i}`;
+            return expandedWhy === id ? (
+              <div key={id + "-why"} style={{ padding: "10px 16px 12px 20px", fontSize: 11, color: C.body, lineHeight: 1.7, background: `${color}08`, borderTop: `1px solid ${color}20` }}>
+                <strong style={{ color }}>Flagged because:</strong> {item.whyFlag}
+                {item.calc && <div style={{ marginTop: 6, fontFamily: "ui-monospace, monospace", fontSize: 11, color: C.muted, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 10px", display: "inline-block" }}>{item.calc}</div>}
+              </div>
+            ) : null;
+          })}
         </div>
       )}
     </div>
@@ -1224,6 +1227,7 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
   const [brandFilter, setBrandFilter] = useState("");
   const [parsing, setParsing] = useState(false);
   const [confirmClear, setConfirmClear] = useState(false);
+  const [activeSection, setActiveSection] = useState("all");
 
   const analysis = useMemo(() => {
     if (!data.rows.length) return null;
@@ -1406,8 +1410,31 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
         <SummaryCard label="Queries Analyzed" value={totalQueries.toLocaleString()} color={C.muted} />
       </div>
 
+      {/* Section filter tabs */}
+      {(() => {
+        const tabs = [
+          { id: "all", label: "All", color: C.muted },
+          { id: "opportunities", label: `Opportunities (${filteredOpportunities.length})`, color: C.green },
+          { id: "leaders", label: `Market Leaders (${filteredLeaders.length})`, color: C.cyan },
+          { id: "risks", label: `Risk Keywords (${filteredRisks.length})`, color: C.rose },
+        ];
+        return (
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {tabs.map(t => {
+              const active = activeSection === t.id;
+              return (
+                <button key={t.id} onClick={() => { setActiveSection(t.id); setExpandedWhy(null); }}
+                  style={{ fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 20, border: `1px solid ${active ? t.color : C.border}`, background: active ? `${t.color}15` : C.card, color: active ? t.color : C.muted, cursor: "pointer", transition: "all 0.15s" }}>
+                  {t.label}
+                </button>
+              );
+            })}
+          </div>
+        );
+      })()}
+
       {/* Opportunities */}
-      <RecoSection
+      {(activeSection === "all" || activeSection === "opportunities") && <RecoSection
         title="Opportunity Keywords"
         color={C.green}
         items={filteredOpportunities}
@@ -1445,10 +1472,10 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
         ]}
         onExport={() => downloadCsv(exportSqpCsv(filteredOpportunities, [], []), "sqp-opportunities.csv")}
         exportLabel="Export opportunities.csv"
-      />
+      />}
 
       {/* Market Leaders */}
-      <RecoSection
+      {(activeSection === "all" || activeSection === "leaders") && <RecoSection
         title="Market Leader Keywords"
         color={C.cyan}
         items={filteredLeaders}
@@ -1466,10 +1493,10 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
         ]}
         onExport={() => downloadCsv(exportSqpCsv([], [], filteredLeaders), "sqp-leaders.csv")}
         exportLabel="Export leaders.csv"
-      />
+      />}
 
       {/* Risks */}
-      <RecoSection
+      {(activeSection === "all" || activeSection === "risks") && <RecoSection
         title="Risk Keywords"
         color={C.rose}
         items={filteredRisks}
@@ -1487,7 +1514,7 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
         ]}
         onExport={() => downloadCsv(exportSqpCsv([], filteredRisks, []), "sqp-risks.csv")}
         exportLabel="Export risks.csv"
-      />
+      />}
     </div>
   );
 }
