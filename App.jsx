@@ -216,7 +216,7 @@ function TopBar({ activeTool, onSwitch }) {
 function HomeScreen({ onSelect }) {
   const [hovered, setHovered] = useState(null);
   const tools = [
-    { id: "ppc", icon: BarChart3, title: "PPC Lab", desc: "Upload your Search Term Report or Search Query Performance data. Find negative keyword candidates, harvest opportunities, and market insights — with export-ready CSVs.", badge: "Search Term & SQP" },
+    { id: "ppc", icon: BarChart3, title: "PPC Lab", desc: "Analyze your PPC reports: find negative keyword candidates, harvest opportunities, optimize keyword bids, and analyze placement performance — with export-ready CSVs.", badge: "STR · SQP · Targeting · Placement" },
     { id: "calculator", icon: DollarSign, title: "Profit Calculator", desc: "Full unit economics simulator for Amazon FBA and DTC channels. P&L waterfall, cash flow analysis, pricing tools, and AI-driven margin insights.", badge: "FBA + DTC · US & Intl" },
   ];
   return (
