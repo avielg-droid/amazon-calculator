@@ -4,7 +4,7 @@ import { Upload, ChevronDown, ChevronRight, Download, AlertCircle, AlertTriangle
 import { parseCsv, parseXlsx, validateColumns } from "./parseCsv.js";
 import { analyzeStr, exportNegativesCsv, exportHarvestCsv, STR_REQUIRED_COLUMNS, STR_THRESHOLD_DEFAULTS } from "./analyzeStr.js";
 import { analyzeSqp, exportSqpCsv, SQP_REQUIRED_COLUMNS, SQP_THRESHOLD_DEFAULTS } from "./analyzeSqp.js";
-import { analyzeKeyword, exportKeywordCsv, KEYWORD_REQUIRED_COLUMNS } from "./analyzeKeyword.js";
+import { analyzeKeyword, exportKeywordCsv, KEYWORD_REQUIRED_COLUMNS, KEYWORD_THRESHOLD_DEFAULTS } from "./analyzeKeyword.js";
 import { analyzePlacement, exportPlacementCsv, PLACEMENT_REQUIRED_COLUMNS } from "./analyzePlacement.js";
 
 const C = {
@@ -332,19 +332,29 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
                     const id = `${idPrefix}-${i}`;
                     const isOpen = expandedWhy === id;
                     return (
-                      <tr key={id} style={{ borderTop: `1px solid ${C.divider}`, background: isOpen ? C.surface : "transparent" }}>
-                        {columns.map(col => (
-                          <td key={col.key} style={{ padding: "8px 12px", color: C.body, fontSize: 12, whiteSpace: col.key === "term" || col.key === "query" || col.key === "recommendedAction" || col.key === "insight" ? "normal" : "nowrap" }}>
-                            {col.render ? col.render(item) : col.key === "spend" ? `$${Number(item[col.key]).toFixed(2)}` : item[col.key]}
+                      <React.Fragment key={id}>
+                        <tr style={{ borderTop: `1px solid ${C.divider}`, background: isOpen ? `${color}08` : "transparent" }}>
+                          {columns.map(col => (
+                            <td key={col.key} style={{ padding: "8px 12px", color: C.body, fontSize: 12, whiteSpace: col.key === "term" || col.key === "query" || col.key === "recommendedAction" || col.key === "insight" ? "normal" : "nowrap" }}>
+                              {col.render ? col.render(item) : col.key === "spend" ? `$${Number(item[col.key]).toFixed(2)}` : item[col.key]}
+                            </td>
+                          ))}
+                          <td style={{ padding: "8px 12px" }}>
+                            <button className="why-btn" onClick={() => setExpandedWhy(isOpen ? null : id)}
+                              style={{ fontSize: 11, color: C.muted, background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer", transition: "background 0.15s, color 0.15s" }}>
+                              {isOpen ? "hide" : "why?"}
+                            </button>
                           </td>
-                        ))}
-                        <td style={{ padding: "8px 12px" }}>
-                          <button className="why-btn" onClick={() => setExpandedWhy(isOpen ? null : id)}
-                            style={{ fontSize: 11, color: C.muted, background: C.card, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 10px", cursor: "pointer", transition: "background 0.15s, color 0.15s" }}>
-                            {isOpen ? "hide" : "why?"}
-                          </button>
-                        </td>
-                      </tr>
+                        </tr>
+                        {isOpen && (
+                          <tr>
+                            <td colSpan={columns.length + 1} style={{ padding: "10px 16px 12px 20px", fontSize: 11, color: C.body, lineHeight: 1.7, background: `${color}08`, borderBottom: `1px solid ${color}20` }}>
+                              <strong style={{ color }}>Flagged because:</strong> {item.whyFlag}
+                              {item.calc && <div style={{ marginTop: 6, fontFamily: "ui-monospace, monospace", fontSize: 11, color: C.muted, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 10px", display: "inline-block" }}>{item.calc}</div>}
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
                     );
                   })}
                 </tbody>
@@ -357,16 +367,6 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
               pointerEvents: "none",
             }} />
           </div>
-          {/* Why panels — outside scroll container so text is never clipped */}
-          {sortedItems.map((item, i) => {
-            const id = `${idPrefix}-${i}`;
-            return expandedWhy === id ? (
-              <div key={id + "-why"} style={{ padding: "10px 16px 12px 20px", fontSize: 11, color: C.body, lineHeight: 1.7, background: `${color}08`, borderTop: `1px solid ${color}20` }}>
-                <strong style={{ color }}>Flagged because:</strong> {item.whyFlag}
-                {item.calc && <div style={{ marginTop: 6, fontFamily: "ui-monospace, monospace", fontSize: 11, color: C.muted, background: C.surface, border: `1px solid ${C.border}`, borderRadius: 6, padding: "6px 10px", display: "inline-block" }}>{item.calc}</div>}
-              </div>
-            ) : null;
-          })}
         </div>
       )}
     </div>
@@ -379,10 +379,9 @@ function StrTab({ data, setData, onSwitchTab, goalContext }) {
   const [thresholds, setThresholds] = useState({ ...STR_THRESHOLD_DEFAULTS });
   const [negEnabled, setNegEnabled] = useState(true);
   const [harvestEnabled, setHarvestEnabled] = useState(true);
-  const [negSettingsOpen, setNegSettingsOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [negSort, setNegSort] = useState({ col: null, dir: "desc" });
   const [harvestSort, setHarvestSort] = useState({ col: null, dir: "desc" });
-  const [harvestSettingsOpen, setHarvestSettingsOpen] = useState(false);
   const [error, setError] = useState(null);
   const [expandedWhy, setExpandedWhy] = useState(null);
   const [brandFilter, setBrandFilter] = useState("");
@@ -597,6 +596,42 @@ function StrTab({ data, setData, onSwitchTab, goalContext }) {
         <SummaryCard label="Terms Analyzed" value={totalTerms.toLocaleString()} color={C.muted} />
       </div>
 
+      {/* Settings — unified collapsible */}
+      <div style={{ border: `1px solid ${C.border}`, borderRadius: 10, overflow: "hidden" }}>
+        <button onClick={() => setSettingsOpen(o => !o)}
+          style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: C.surface, border: "none", cursor: "pointer", color: C.muted, fontSize: 12 }}>
+          {settingsOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+          <span>Settings</span>
+          <span style={{ marginLeft: "auto", fontSize: 11, color: C.subtle }}>
+            {JSON.stringify(thresholds) === JSON.stringify(STR_THRESHOLD_DEFAULTS) ? "using defaults" : "customized"}
+          </span>
+        </button>
+        {settingsOpen && (
+          <div style={{ borderTop: `1px solid ${C.border}`, padding: "14px 14px 10px" }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.rose, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.07em" }}>Negative Keywords</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 10 }}>
+              <ThresholdInput fieldKey="minClicksNegative" label="Min clicks" tip="Both click AND spend thresholds must be crossed (with 0 orders) to flag a term. Neither alone is enough signal." desc="Rule 1: clicks AND spend, 0 orders" />
+              <ThresholdInput fieldKey="minSpendNegative" label="Min spend" prefix="$" tip="Both click AND spend thresholds must be crossed (with 0 orders) to flag a term. Also used as the data floor for the ACoS poor-performer check." desc="Rule 1: clicks AND spend, 0 orders" />
+              <ThresholdInput fieldKey="maxAcosNegative" label="Max ACoS" suffix="%" tip="Rule 2: flag terms that DO convert but above this ACoS — losing money on each sale. Requires both click + spend floors to filter out low-data noise." desc="Rule 2: poor performer (with orders)" />
+            </div>
+            <button onClick={() => setThresholds(t => ({ ...t, minSpendNegative: STR_THRESHOLD_DEFAULTS.minSpendNegative, minClicksNegative: STR_THRESHOLD_DEFAULTS.minClicksNegative, maxAcosNegative: STR_THRESHOLD_DEFAULTS.maxAcosNegative }))}
+              style={{ marginBottom: 16, fontSize: 12, color: C.muted, background: "none", border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", cursor: "pointer", display: "block" }}>
+              Reset negatives to defaults ($10 spend · 15 clicks · 100% ACoS)
+            </button>
+            <div style={{ fontSize: 11, fontWeight: 700, color: C.green, marginBottom: 8, textTransform: "uppercase", letterSpacing: "0.07em" }}>Harvest Opportunities</div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 10 }}>
+              <ThresholdInput fieldKey="minOrdersHarvest" label="Min orders" tip="A term needs at least this many orders to be promoted to Exact Match. 2 orders confirms intent beyond a single-sale fluke." desc="Minimum orders to qualify" />
+              <ThresholdInput fieldKey="minClicksHarvest" label="Min clicks" tip="Minimum clicks before promoting a term. Filters out low-traffic flukes with high conversion on tiny sample sizes." desc="Minimum clicks to qualify" />
+              <ThresholdInput fieldKey="maxAcosHarvest" label="Max ACoS" suffix="%" tip="Only harvest terms profitable enough to be worth promoting. 40% is the standard ceiling for Exact match campaigns." desc="Only harvest below this ACoS" />
+            </div>
+            <button onClick={() => setThresholds(t => ({ ...t, minOrdersHarvest: STR_THRESHOLD_DEFAULTS.minOrdersHarvest, minClicksHarvest: STR_THRESHOLD_DEFAULTS.minClicksHarvest, maxAcosHarvest: STR_THRESHOLD_DEFAULTS.maxAcosHarvest }))}
+              style={{ marginBottom: 4, fontSize: 12, color: C.muted, background: "none", border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", cursor: "pointer", display: "block" }}>
+              Reset harvest to defaults (2 orders · 10 clicks · 40% ACoS)
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Negatives section */}
       <div style={{ border: `1px solid #FCA5A5`, borderRadius: 12, overflow: "hidden" }}>
         {/* Section header */}
@@ -612,30 +647,9 @@ function StrTab({ data, setData, onSwitchTab, goalContext }) {
                 <Download size={12} />Export CSV
               </button>
             )}
-            {negEnabled && (
-              <button onClick={() => setNegSettingsOpen(o => !o)}
-                style={{ height: 36, padding: "0 12px", fontSize: 12, fontWeight: 600, background: negSettingsOpen ? C.indigoDim : C.card, border: `1px solid ${negSettingsOpen ? C.indigo + "50" : C.border}`, color: negSettingsOpen ? C.indigo : C.muted, borderRadius: 8, cursor: "pointer", outline: "none" }}>
-                ⚙ Settings
-              </button>
-            )}
-            <SectionToggle enabled={negEnabled} onToggle={() => { setNegEnabled(e => !e); setNegSettingsOpen(false); }} accent={C.rose} />
+            <SectionToggle enabled={negEnabled} onToggle={() => setNegEnabled(e => !e)} accent={C.rose} />
           </div>
         </div>
-        {/* Settings panel */}
-        {negEnabled && negSettingsOpen && (
-          <div style={{ padding: "16px 14px", background: C.surface, borderBottom: `1px solid #FCA5A5` }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14 }}>
-              <ThresholdInput fieldKey="minClicksNegative" label="Min clicks" tip="Both click AND spend thresholds must be crossed (with 0 orders) to flag a term. Neither alone is enough signal." desc="Rule 1: clicks AND spend, 0 orders" />
-              <ThresholdInput fieldKey="minSpendNegative" label="Min spend" prefix="$" tip="Both click AND spend thresholds must be crossed (with 0 orders) to flag a term. Also used as the data floor for the ACoS poor-performer check." desc="Rule 1: clicks AND spend, 0 orders" />
-              <ThresholdInput fieldKey="maxAcosNegative" label="Max ACoS" suffix="%" tip="Rule 2: flag terms that DO convert but above this ACoS — losing money on each sale. Requires both click + spend floors to filter out low-data noise." desc="Rule 2: poor performer (with orders)" />
-            </div>
-            <button
-              onClick={() => setThresholds(t => ({ ...t, minSpendNegative: STR_THRESHOLD_DEFAULTS.minSpendNegative, minClicksNegative: STR_THRESHOLD_DEFAULTS.minClicksNegative, maxAcosNegative: STR_THRESHOLD_DEFAULTS.maxAcosNegative }))}
-              style={{ marginTop: 14, fontSize: 12, color: C.muted, background: "none", border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", cursor: "pointer", display: "block" }}>
-              Reset to defaults ($10 · 15 clicks · 100% ACoS)
-            </button>
-          </div>
-        )}
         {negEnabled && (
           filteredNegatives.length === 0 ? (
             <div style={{ padding: "16px 14px", fontSize: 12, color: C.subtle, fontStyle: "italic" }}>
@@ -714,30 +728,9 @@ function StrTab({ data, setData, onSwitchTab, goalContext }) {
                 <Download size={12} />Export CSV
               </button>
             )}
-            {harvestEnabled && (
-              <button onClick={() => setHarvestSettingsOpen(o => !o)}
-                style={{ height: 36, padding: "0 12px", fontSize: 12, fontWeight: 600, background: harvestSettingsOpen ? C.indigoDim : C.card, border: `1px solid ${harvestSettingsOpen ? C.indigo + "50" : C.border}`, color: harvestSettingsOpen ? C.indigo : C.muted, borderRadius: 8, cursor: "pointer", outline: "none" }}>
-                ⚙ Settings
-              </button>
-            )}
-            <SectionToggle enabled={harvestEnabled} onToggle={() => { setHarvestEnabled(e => !e); setHarvestSettingsOpen(false); }} accent={C.green} />
+            <SectionToggle enabled={harvestEnabled} onToggle={() => setHarvestEnabled(e => !e)} accent={C.green} />
           </div>
         </div>
-        {/* Settings panel */}
-        {harvestEnabled && harvestSettingsOpen && (
-          <div style={{ padding: "16px 14px", background: C.surface, borderBottom: `1px solid #86EFAC` }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 14 }}>
-              <ThresholdInput fieldKey="minOrdersHarvest" label="Min orders" tip="A term needs at least this many orders to be promoted to Exact Match. 2 orders confirms intent beyond a single-sale fluke." desc="Minimum orders to qualify" />
-              <ThresholdInput fieldKey="minClicksHarvest" label="Min clicks" tip="Minimum clicks before promoting a term. Filters out low-traffic flukes with high conversion on tiny sample sizes." desc="Minimum clicks to qualify" />
-              <ThresholdInput fieldKey="maxAcosHarvest" label="Max ACoS" suffix="%" tip="Only harvest terms profitable enough to be worth promoting. 40% is the standard ceiling for Exact match campaigns." desc="Only harvest below this ACoS" />
-            </div>
-            <button
-              onClick={() => setThresholds(t => ({ ...t, minOrdersHarvest: STR_THRESHOLD_DEFAULTS.minOrdersHarvest, minClicksHarvest: STR_THRESHOLD_DEFAULTS.minClicksHarvest, maxAcosHarvest: STR_THRESHOLD_DEFAULTS.maxAcosHarvest }))}
-              style={{ marginTop: 14, fontSize: 12, color: C.muted, background: "none", border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", cursor: "pointer", display: "block" }}>
-              Reset to defaults (2 orders · 10 clicks · 40% ACoS)
-            </button>
-          </div>
-        )}
         {harvestEnabled && (
           filteredHarvest.length === 0 ? (
             <div style={{ padding: "16px 14px", fontSize: 12, color: C.subtle, fontStyle: "italic" }}>
@@ -812,13 +805,13 @@ function KeywordTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab, goa
   const [parsing, setParsing] = useState(false);
   const [expandedWhy, setExpandedWhy] = useState(null);
   const [confirmClear, setConfirmClear] = useState(false);
-  const [overbidSort, setOverbidSort] = useState({ col: null, dir: "desc" });
-  const [underbidSort, setUnderbidSort] = useState({ col: null, dir: "desc" });
+  const [thresholds, setThresholds] = useState({ ...KEYWORD_THRESHOLD_DEFAULTS });
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const analysis = useMemo(() => {
     if (!data.rows.length) return null;
-    return analyzeKeyword(data.rows, targetAcos);
-  }, [data.rows, targetAcos]);
+    return analyzeKeyword(data.rows, targetAcos, thresholds);
+  }, [data.rows, targetAcos, thresholds]);
 
   const handleFile = (file, fileError, fileData, fileType) => {
     if (fileError) { setError(fileError); return; }
@@ -975,6 +968,43 @@ function KeywordTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab, goa
         </div>
       </div>
 
+      {/* Settings */}
+      <div style={{ border: `1px solid ${C.border}`, borderRadius: 10, overflow: "hidden" }}>
+        <button onClick={() => setSettingsOpen(o => !o)}
+          style={{ width: "100%", display: "flex", alignItems: "center", gap: 8, padding: "10px 14px", background: C.surface, border: "none", cursor: "pointer", color: C.muted, fontSize: 12 }}>
+          {settingsOpen ? <ChevronDown size={13} /> : <ChevronRight size={13} />}
+          <span>Settings</span>
+          <span style={{ marginLeft: "auto", fontSize: 11, color: C.subtle }}>
+            {JSON.stringify(thresholds) === JSON.stringify(KEYWORD_THRESHOLD_DEFAULTS) ? "using defaults" : "customized"}
+          </span>
+        </button>
+        {settingsOpen && (
+          <div style={{ borderTop: `1px solid ${C.border}`, padding: "14px 14px 10px" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 12, marginBottom: 12 }}>
+              {[
+                { key: "minClicks", label: "Min clicks", tip: "Keywords with fewer clicks than this are excluded from bid recommendations — not enough signal to calculate a reliable bid." },
+                { key: "overbidBuffer", label: "Overbid buffer (×)", tip: "Flag as overbidding if ACoS > Target ACoS × this multiplier. Default 1.2 = 20% above target." },
+                { key: "underbidRatio", label: "Underbid ratio (×)", tip: "Flag as underbidding if ACoS < Target ACoS × this ratio. Default 0.5 = more than 50% below target." },
+              ].map(({ key, label, tip }) => (
+                <div key={key}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 5, marginBottom: 5 }}>
+                    <span style={{ fontSize: 12, fontWeight: 600, color: C.body }}>{label}</span>
+                    <Tooltip text={tip} />
+                  </div>
+                  <input type="number" inputMode="decimal" className="ppc-num" value={thresholds[key]}
+                    onChange={e => setThresholds(t => ({ ...t, [key]: parseFloat(e.target.value) || 0 }))}
+                    style={{ width: "100%", height: 44, background: C.card, border: `1px solid ${C.bdMed}`, borderRadius: 8, padding: "0 12px", fontSize: 15, color: C.ink, outline: "none", boxSizing: "border-box" }} />
+                </div>
+              ))}
+            </div>
+            <button onClick={() => setThresholds({ ...KEYWORD_THRESHOLD_DEFAULTS })}
+              style={{ fontSize: 12, color: C.muted, background: "none", border: `1px solid ${C.border}`, borderRadius: 8, padding: "8px 14px", cursor: "pointer", display: "block", marginBottom: 4 }}>
+              Reset to defaults (10 clicks · 1.2× overbid · 0.5× underbid)
+            </button>
+          </div>
+        )}
+      </div>
+
       {/* Summary */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(90px, 1fr))", gap: 10 }}>
         <SummaryCard label="Overbidding" value={overbid.length} color={C.red} />
@@ -987,7 +1017,7 @@ function KeywordTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab, goa
       <RecoSection
         title="Overbidding — Lower Bids"
         color={C.red}
-        items={sortRows(overbid, overbidSort.col, overbidSort.dir)}
+        items={overbid}
         expandedWhy={expandedWhy}
         setExpandedWhy={setExpandedWhy}
         idPrefix="ovb"
@@ -1001,7 +1031,7 @@ function KeywordTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab, goa
       <RecoSection
         title="Underbidding — Raise Bids"
         color={C.green}
-        items={sortRows(underbid, underbidSort.col, underbidSort.dir)}
+        items={underbid}
         expandedWhy={expandedWhy}
         setExpandedWhy={setExpandedWhy}
         idPrefix="unb"
@@ -1470,29 +1500,9 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
         columns={[
           { key: "query", label: "Search query", tip: "The customer search query" },
           { key: "volume", label: "Volume", tip: "Monthly search query volume" },
-          { key: "purchaseShare", label: "Purchase share %", tip: "Your share of purchases — you convert well here" },
-          {
-            key: "gap",
-            label: "Market gap",
-            tip: "Impression share vs click share. Green bar = your clicks, gray = untapped impressions. Wider gap = bigger opportunity.", tipDir: "left",
-            render: (item) => {
-              const imp = parseFloat(item.impressionShare);
-              const clk = parseFloat(item.clickShare);
-              const gap = Math.max(0, imp - clk);
-              const gapColor = gap >= 20 ? C.green : gap >= 10 ? C.amber : C.muted;
-              return (
-                <div style={{ display: "flex", alignItems: "center", gap: 8, minWidth: 160 }}>
-                  <span style={{ fontSize: 11, fontWeight: 700, color: gapColor, fontFamily: "ui-monospace, monospace", minWidth: 38 }}>+{gap.toFixed(1)}%</span>
-                  <div style={{ flex: 1, height: 6, background: C.border, borderRadius: 3, overflow: "hidden", minWidth: 70 }}>
-                    <div style={{ height: "100%", width: `${Math.min(imp, 100)}%`, background: C.bdMed, borderRadius: 3, position: "relative" }}>
-                      <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${imp > 0 ? (clk / imp) * 100 : 0}%`, background: gapColor, borderRadius: 3 }} />
-                    </div>
-                  </div>
-                  <span style={{ fontSize: 10, color: C.muted, whiteSpace: "nowrap" }}>{clk}% / {imp}%</span>
-                </div>
-              );
-            },
-          },
+          { key: "purchaseShare", label: "Purchase share %", tip: "Your share of purchases for this query — you convert well here" },
+          { key: "clickShare", label: "Click share %", tip: "Your share of clicks. Low = you're winning sales but missing most of the traffic. Raise bids to capture more.", tipDir: "left" },
+          { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions (how often your ad appears). Compared with click share, shows how much traffic you're leaving on the table.", tipDir: "left" },
           { key: "insight", label: "Insight", tip: "Recommended action", tipDir: "left" },
         ]}
         onExport={() => downloadCsv(exportSqpCsv(filteredOpportunities, [], []), "sqp-opportunities.csv")}
