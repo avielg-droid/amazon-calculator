@@ -1,0 +1,49 @@
+<svg width="520" height="180" viewBox="0 0 520 180" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+  <!-- Gradient -->
+  <defs>
+    <linearGradient id="tealGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#14B8A6"/>
+      <stop offset="100%" stop-color="#0EA5E9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Icon: D + Cart -->
+  <g transform="translate(10,10)">
+    <!-- D shape -->
+    <path d="M80 10 A70 70 0 1 1 80 150" stroke="url(#tealGradient)" stroke-width="16" fill="none" stroke-linecap="round"/>
+
+    <!-- Cart body -->
+    <path d="M40 80 H90 Q100 80 100 90 V100 Q100 110 90 110 H50" stroke="#0B1F3A" stroke-width="10" fill="none" stroke-linecap="round"/>
+
+    <!-- Wheels -->
+    <circle cx="60" cy="125" r="6" fill="url(#tealGradient)"/>
+    <circle cx="90" cy="125" r="6" fill="url(#tealGradient)"/>
+
+    <!-- Motion lines -->
+    <line x1="5" y1="70" x2="25" y2="70" stroke="url(#tealGradient)" stroke-width="6" stroke-linecap="round"/>
+    <line x1="0" y1="90" x2="20" y2="90" stroke="url(#tealGradient)" stroke-width="6" stroke-linecap="round"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="140" y="95" font-family="Inter, sans-serif" font-size="56" font-weight="600" fill="#0B1F3A">
+    Danu
+  </text>
+
+  <!-- ly -->
+  <text x="300" y="95" font-family="Inter, sans-serif" font-size="56" font-weight="600" fill="url(#tealGradient)">
+    ly
+  </text>
+
+  <!-- Yellow dot -->
+  <circle cx="380" cy="50" r="5" fill="#FBBF24"/>
+
+  <!-- Smile curve under y -->
+  <path d="M315 105 Q350 130 385 105" stroke="url(#tealGradient)" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+  <!-- Tagline -->
+  <text x="140" y="150" font-family="Inter, sans-serif" font-size="18" fill="#0B1F3A">
+    Everything <tspan fill="#0EA5E9">Amazon Sellers</tspan> Need to Grow.
+  </text>
+
+</svg>
