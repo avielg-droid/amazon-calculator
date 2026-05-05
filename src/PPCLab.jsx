@@ -57,12 +57,14 @@ function SortIcon({ active, dir }) {
 const GOALS = [
   {
     tab: "str",
+    section: "negatives",
     emoji: "🔥",
     title: "Cut wasted ad spend",
     desc: "Find keywords burning money with 0 conversions",
   },
   {
     tab: "str",
+    section: "harvest",
     emoji: "🎯",
     title: "Find new keywords to target",
     desc: "Discover converting search terms not yet in your campaigns",
@@ -104,7 +106,7 @@ function GoalWizard({ onSelect }) {
           const isHov = hovered === i;
           return (
             <div key={i}
-              onClick={() => onSelect(goal.tab)}
+              onClick={() => onSelect(goal.tab, goal.section)}
               onMouseEnter={() => setHovered(i)}
               onMouseLeave={() => setHovered(null)}
               style={{
@@ -132,6 +134,12 @@ export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp, ppcKeywor
   const [activeSub, setActiveSub] = useState("str");
   const [hoveredSub, setHoveredSub] = useState(null);
   const [targetAcos, setTargetAcos] = useState(30);
+  const [strGoalSection, setStrGoalSection] = useState(null);
+
+  const switchTab = (tab, section) => {
+    setActiveSub(tab);
+    if (tab === "str" && section) setStrGoalSection(section);
+  };
 
   const subTabBtn = (t) => ({
     padding: "6px 14px", borderRadius: 8, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600,
@@ -165,10 +173,10 @@ export default function PPCLab({ ppcStr, setPpcStr, ppcSqp, setPpcSqp, ppcKeywor
         </div>
       </div>
 
-      {activeSub === "str" && <StrTab data={ppcStr} setData={setPpcStr} onSwitchTab={setActiveSub} />}
-      {activeSub === "sqp" && <SqpTab data={ppcSqp} setData={setPpcSqp} onSwitchTab={setActiveSub} />}
-      {activeSub === "keyword" && <KeywordTab data={ppcKeyword} setData={setPpcKeyword} targetAcos={targetAcos} setTargetAcos={setTargetAcos} onSwitchTab={setActiveSub} />}
-      {activeSub === "placement" && <PlacementTab data={ppcPlacement} setData={setPpcPlacement} targetAcos={targetAcos} setTargetAcos={setTargetAcos} onSwitchTab={setActiveSub} />}
+      {activeSub === "str" && <StrTab data={ppcStr} setData={setPpcStr} onSwitchTab={switchTab} goalSection={strGoalSection} />}
+      {activeSub === "sqp" && <SqpTab data={ppcSqp} setData={setPpcSqp} onSwitchTab={switchTab} />}
+      {activeSub === "keyword" && <KeywordTab data={ppcKeyword} setData={setPpcKeyword} targetAcos={targetAcos} setTargetAcos={setTargetAcos} onSwitchTab={switchTab} />}
+      {activeSub === "placement" && <PlacementTab data={ppcPlacement} setData={setPpcPlacement} targetAcos={targetAcos} setTargetAcos={setTargetAcos} onSwitchTab={switchTab} />}
     </div>
   );
 }
@@ -354,7 +362,7 @@ function RecoSection({ title, color, items, expandedWhy, setExpandedWhy, idPrefi
 
 // ── StrTab ──
 
-function StrTab({ data, setData, onSwitchTab }) {
+function StrTab({ data, setData, onSwitchTab, goalSection }) {
   const [thresholds, setThresholds] = useState({ ...STR_THRESHOLD_DEFAULTS });
   const [negEnabled, setNegEnabled] = useState(true);
   const [harvestEnabled, setHarvestEnabled] = useState(true);
@@ -403,6 +411,21 @@ function StrTab({ data, setData, onSwitchTab }) {
     return (
       <div>
         <GoalWizard onSelect={onSwitchTab} />
+        {goalSection && (
+          <div style={{ background: goalSection === "negatives" ? "#FEF2F2" : "#F0FDF4", border: `1px solid ${goalSection === "negatives" ? C.red + "44" : C.green + "44"}`, borderRadius: 10, padding: "10px 14px", marginBottom: 14, display: "flex", gap: 10, alignItems: "center" }}>
+            <span style={{ fontSize: 18 }}>{goalSection === "negatives" ? "🔥" : "🎯"}</span>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 700, color: goalSection === "negatives" ? C.red : C.green, marginBottom: 2 }}>
+                {goalSection === "negatives" ? "Goal: Cut wasted ad spend" : "Goal: Find new keywords to target"}
+              </div>
+              <div style={{ fontSize: 11, color: C.muted }}>
+                {goalSection === "negatives"
+                  ? "After uploading, scroll to the Negatives section — keywords spending money with 0 orders."
+                  : "After uploading, scroll to the Harvest section — converting search terms not yet in your campaigns."}
+              </div>
+            </div>
+          </div>
+        )}
         <div style={{ background: C.indigoDim, border: `1px solid ${C.indigo}30`, borderRadius: 12, padding: "16px 18px", marginBottom: 16 }}>
           <div style={{ fontSize: 11, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: C.indigo, marginBottom: 10 }}>How to get your Search Term Report</div>
           {[
@@ -450,6 +473,20 @@ function StrTab({ data, setData, onSwitchTab }) {
 
   // ── Analysis view ──
   const { negatives, harvest, totalTerms } = analysis;
+
+  const GoalBanner = goalSection ? (
+    <div style={{ background: goalSection === "negatives" ? "#FEF2F2" : "#F0FDF4", border: `1px solid ${goalSection === "negatives" ? C.red + "44" : C.green + "44"}`, borderRadius: 10, padding: "10px 14px", marginBottom: 4, display: "flex", gap: 10, alignItems: "center" }}>
+      <span style={{ fontSize: 16 }}>{goalSection === "negatives" ? "🔥" : "🎯"}</span>
+      <div style={{ fontSize: 12, color: C.muted }}>
+        <span style={{ fontWeight: 700, color: goalSection === "negatives" ? C.red : C.green }}>
+          {goalSection === "negatives" ? "Goal: Cut wasted ad spend — " : "Goal: Find new keywords — "}
+        </span>
+        {goalSection === "negatives"
+          ? "Scroll to Negatives below to find keywords burning budget with 0 orders."
+          : "Scroll to Harvest below to find converting search terms to add as Exact match."}
+      </div>
+    </div>
+  ) : null;
   const brandLower = brandFilter.trim().toLowerCase();
   const filteredNegatives = brandLower ? negatives.filter(n => !n.term.toLowerCase().includes(brandLower)) : negatives;
   const filteredHarvest = brandLower ? harvest.filter(h => !h.term.toLowerCase().includes(brandLower)) : harvest;
@@ -507,6 +544,7 @@ function StrTab({ data, setData, onSwitchTab }) {
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+      {GoalBanner}
       {/* File info + re-upload */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, fontSize: 12, color: C.muted, background: C.greenDim, border: `1px solid #86EFAC`, borderRadius: 8, padding: "8px 12px" }}>
         <CheckCircle size={13} color={C.green} />
