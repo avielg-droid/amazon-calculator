@@ -815,6 +815,19 @@ function KeywordTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab }) {
               <span style={{ fontSize: 12, color: C.body, lineHeight: 1.5 }}>{step}</span>
             </div>
           ))}
+          <div style={{ marginTop: 12, padding: "10px 14px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: C.muted, marginBottom: 4 }}>What you'll get</div>
+            <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.6 }}>
+              • Keywords overbidding — losing money, suggested lower bid<br />
+              • Keywords underbidding — room to grow, suggested higher bid<br />
+              • Zero-impression keywords — may need higher bid or review<br />
+              • Export-ready CSV with suggested bids for Amazon Bulk Operations
+            </div>
+          </div>
+        </div>
+        <div style={{ marginTop: 10, marginBottom: 12, display: "flex", alignItems: "flex-start", gap: 8, fontSize: 11, color: "#92400E", background: C.amberDim, border: `1px solid ${C.amber}`, borderRadius: 8, padding: "8px 12px" }}>
+          <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 1 }} />
+          <span>Recommended: Use a 30–60 day report for best results. Shorter ranges may not have enough clicks per keyword for reliable bid math.</span>
         </div>
         {error && (
           <div style={{ background: C.redDim, border: `1px solid ${C.red}`, borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#991B1B", display: "flex", gap: 8, alignItems: "flex-start" }}>
@@ -1008,6 +1021,19 @@ function PlacementTab({ data, setData, targetAcos, setTargetAcos, onSwitchTab })
               <span style={{ fontSize: 12, color: C.body, lineHeight: 1.5 }}>{step}</span>
             </div>
           ))}
+          <div style={{ marginTop: 12, padding: "10px 14px", background: C.surface, border: `1px solid ${C.border}`, borderRadius: 8 }}>
+            <div style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", color: C.muted, marginBottom: 4 }}>What you'll get</div>
+            <div style={{ fontSize: 12, color: C.muted, lineHeight: 1.6 }}>
+              • Placements converting well — increase modifier to capture more volume<br />
+              • Underperforming placements — reduce modifier to cut wasted spend<br />
+              • Per-campaign breakdown with suggested modifier %<br />
+              • Export-ready CSV ready to paste into Amazon Bulk Operations
+            </div>
+          </div>
+        </div>
+        <div style={{ marginTop: 10, marginBottom: 12, display: "flex", alignItems: "flex-start", gap: 8, fontSize: 11, color: "#92400E", background: C.amberDim, border: `1px solid ${C.amber}`, borderRadius: 8, padding: "8px 12px" }}>
+          <AlertTriangle size={13} style={{ flexShrink: 0, marginTop: 1 }} />
+          <span>Recommended: Use a 30–60 day report for best results. Shorter ranges may not have enough data per placement for reliable recommendations.</span>
         </div>
         {error && (
           <div style={{ background: C.redDim, border: `1px solid ${C.red}`, borderRadius: 8, padding: "10px 14px", marginBottom: 12, fontSize: 12, color: "#991B1B", display: "flex", gap: 8, alignItems: "flex-start" }}>
