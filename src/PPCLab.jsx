@@ -1500,7 +1500,8 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
         columns={[
           { key: "query", label: "Search query", tip: "The customer search query" },
           { key: "volume", label: "Volume", tip: "Monthly search query volume" },
-          { key: "conversionRate", label: "CVR %", tip: "Your conversion rate: purchases ÷ clicks × 100. Shows how well your listing converts this query into a sale." },
+          { key: "conversionRate", label: "Your CVR %", tip: "Your conversion rate: your purchases ÷ your clicks × 100" },
+          { key: "marketCvr", label: "Market CVR %", tip: "Market-wide conversion rate: total purchases ÷ total clicks across all sellers for this query. Compare with your CVR to see if you're above or below the market." },
           { key: "purchaseShare", label: "Purchase share %", tip: "Your share of all purchases made after searching this query across all sellers" },
           { key: "clickShare", label: "Click share %", tip: "Your share of clicks. Low = you're winning sales but missing most of the traffic. Raise bids to capture more.", tipDir: "left" },
           { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions. Compared with click share, shows how much traffic you're leaving on the table.", tipDir: "left" },
@@ -1522,7 +1523,8 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
         columns={[
           { key: "query", label: "Search query", tip: "The customer search query" },
           { key: "volume", label: "Volume", tip: "Monthly search query volume" },
-          { key: "conversionRate", label: "CVR %", tip: "Your conversion rate: purchases ÷ clicks × 100" },
+          { key: "conversionRate", label: "Your CVR %", tip: "Your conversion rate: your purchases ÷ your clicks × 100" },
+          { key: "marketCvr", label: "Market CVR %", tip: "Market-wide conversion rate across all sellers. Compare with your CVR to benchmark your listing.", tipDir: "left" },
           { key: "purchaseShare", label: "Purchase share %", tip: "Your dominant share of purchases for this query", tipDir: "left" },
           { key: "clickShare", label: "Click share %", tip: "Your share of clicks", tipDir: "left" },
           { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions", tipDir: "left" },
@@ -1544,7 +1546,8 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
         columns={[
           { key: "query", label: "Search query", tip: "The customer search query" },
           { key: "volume", label: "Volume", tip: "Monthly search query volume" },
-          { key: "conversionRate", label: "CVR %", tip: "Your conversion rate: purchases ÷ clicks × 100. Low CVR here confirms the listing isn't resonating with this query." },
+          { key: "conversionRate", label: "Your CVR %", tip: "Your conversion rate: your purchases ÷ your clicks × 100. Low CVR here confirms the listing isn't resonating with this query." },
+          { key: "marketCvr", label: "Market CVR %", tip: "Market-wide conversion rate across all sellers. If market CVR is also low, the issue may be the query itself — not your listing.", tipDir: "left" },
           { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions — high visibility", tipDir: "left" },
           { key: "purchaseShare", label: "Purchase share %", tip: "Your share of purchases — low conversion", tipDir: "left" },
           { key: "clickShare", label: "Click share %", tip: "Your share of clicks", tipDir: "left" },

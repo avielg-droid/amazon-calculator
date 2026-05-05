@@ -61,7 +61,10 @@ export function analyzeSqp(rows, thresholds = SQP_THRESHOLD_DEFAULTS) {
     const impressions = parseFloat(row["Impressions"]) || 0;
     const clicks = parseFloat(row["Clicks"]) || 0;
     const purchases = parseFloat(row["Purchases"]) || 0;
+    const clicksTotal = parseFloat(row["Clicks Total"]) || 0;
+    const purchasesTotal = parseFloat(row["Purchases Total"]) || 0;
     const conversionRate = clicks > 0 ? ((purchases / clicks) * 100).toFixed(1) : "—";
+    const marketCvr = clicksTotal > 0 ? ((purchasesTotal / clicksTotal) * 100).toFixed(1) : "—";
 
     // Opportunity: converts well, low market share
     const isOpportunity =
@@ -72,7 +75,7 @@ export function analyzeSqp(rows, thresholds = SQP_THRESHOLD_DEFAULTS) {
       opportunities.push({
         query, volume, impressionShare: impressionShare.toFixed(1),
         clickShare: clickShare.toFixed(1), purchaseShare: purchaseShare.toFixed(1),
-        impressions, clicks, purchases, conversionRate,
+        impressions, clicks, purchases, conversionRate, marketCvr,
         insight: "Good conversion, low traffic share — increase bids or add as Exact match target",
         whyFlag: `Purchase share ${purchaseShare.toFixed(1)}% ≥ ${minPurchaseShareOpportunity}% threshold, click share ${clickShare.toFixed(1)}% ≤ ${maxClickShareOpportunity}% threshold`,
       });
@@ -87,7 +90,7 @@ export function analyzeSqp(rows, thresholds = SQP_THRESHOLD_DEFAULTS) {
       risks.push({
         query, volume, impressionShare: impressionShare.toFixed(1),
         clickShare: clickShare.toFixed(1), purchaseShare: purchaseShare.toFixed(1),
-        impressions, clicks, purchases, conversionRate,
+        impressions, clicks, purchases, conversionRate, marketCvr,
         insight: "High visibility but low conversion — review listing relevance or consider as negative",
         whyFlag: `Impression share ${impressionShare.toFixed(1)}% ≥ ${minImpressionShareRisk}% threshold, purchase share ${purchaseShare.toFixed(1)}% ≤ ${maxPurchaseShareRisk}% threshold`,
       });
@@ -98,7 +101,7 @@ export function analyzeSqp(rows, thresholds = SQP_THRESHOLD_DEFAULTS) {
       leaders.push({
         query, volume, impressionShare: impressionShare.toFixed(1),
         clickShare: clickShare.toFixed(1), purchaseShare: purchaseShare.toFixed(1),
-        impressions, clicks, purchases, conversionRate,
+        impressions, clicks, purchases, conversionRate, marketCvr,
         insight: "You dominate this query — protect your budget, don't let spend run out",
         whyFlag: `Purchase share ${purchaseShare.toFixed(1)}% ≥ ${minPurchaseShareLeader}% leader threshold`,
       });
