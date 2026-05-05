@@ -195,7 +195,7 @@ function TopBar({ activeTool, onSwitch }) {
   return (
     <div style={{ background: "#FFFFFF", borderBottom: `1px solid ${C.border}`, padding: "0 20px", height: 52, display: "flex", alignItems: "center", gap: 16, position: "sticky", top: 0, zIndex: 40 }}>
       <button onClick={() => onSwitch("home")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, lineHeight: 1 }}>
-        <img src="/danuly-logo.png" alt="Danuly" style={{ height: 36, width: "auto", display: "block", mixBlendMode: "multiply" }} />
+        <img src="/danuly-logo.png" alt="Danuly" style={{ height: 30, width: "auto", display: "block", mixBlendMode: "multiply" }} />
       </button>
       <div className="topbar-divider" style={{ width: 1, height: 20, background: C.border }} />
       <span className="topbar-tool-name" style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>{activeTool === "calculator" ? "Profit Calculator" : "PPC Lab"}</span>
