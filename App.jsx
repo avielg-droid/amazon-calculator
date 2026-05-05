@@ -195,7 +195,7 @@ function TopBar({ activeTool, onSwitch }) {
   return (
     <div style={{ background: "#FFFFFF", borderBottom: `1px solid ${C.border}`, padding: "0 20px", height: 52, display: "flex", alignItems: "center", gap: 16, position: "sticky", top: 0, zIndex: 40 }}>
       <button onClick={() => onSwitch("home")} style={{ background: "none", border: "none", cursor: "pointer", padding: 0, lineHeight: 1 }}>
-        <img src="/danuly-logo.png" alt="Danuly" style={{ height: 36, width: "auto", display: "block" }} />
+        <img src="/danuly-logo.png" alt="Danuly" style={{ height: 36, width: "auto", display: "block", mixBlendMode: "multiply" }} />
       </button>
       <div className="topbar-divider" style={{ width: 1, height: 20, background: C.border }} />
       <span className="topbar-tool-name" style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>{activeTool === "calculator" ? "Profit Calculator" : "PPC Lab"}</span>
@@ -220,7 +220,7 @@ function HomeScreen({ onSelect }) {
   return (
     <div style={{ minHeight: "100vh", background: C.surface, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "48px 20px", ...SANS }}>
       <div style={{ textAlign: "center", marginBottom: 52 }}>
-        <img src="/danuly-logo.png" alt="Danuly" style={{ width: "min(90vw, 360px)", height: "auto", display: "block", margin: "0 auto 12px" }} />
+        <img src="/danuly-logo.png" alt="Danuly" style={{ width: "min(90vw, 360px)", height: "auto", display: "block", margin: "0 auto 12px", mixBlendMode: "multiply" }} />
         <p style={{ fontSize: 13, color: C.muted, margin: 0 }}>Free browser-based tools · your data never leaves your browser</p>
       </div>
       <div style={{ display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "center", maxWidth: 820, width: "100%" }}>
