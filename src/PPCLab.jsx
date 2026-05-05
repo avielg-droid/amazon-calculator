@@ -1500,9 +1500,10 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
         columns={[
           { key: "query", label: "Search query", tip: "The customer search query" },
           { key: "volume", label: "Volume", tip: "Monthly search query volume" },
-          { key: "purchaseShare", label: "Purchase share %", tip: "Your share of purchases for this query — you convert well here" },
+          { key: "conversionRate", label: "CVR %", tip: "Your conversion rate: purchases ÷ clicks × 100. Shows how well your listing converts this query into a sale." },
+          { key: "purchaseShare", label: "Purchase share %", tip: "Your share of all purchases made after searching this query across all sellers" },
           { key: "clickShare", label: "Click share %", tip: "Your share of clicks. Low = you're winning sales but missing most of the traffic. Raise bids to capture more.", tipDir: "left" },
-          { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions (how often your ad appears). Compared with click share, shows how much traffic you're leaving on the table.", tipDir: "left" },
+          { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions. Compared with click share, shows how much traffic you're leaving on the table.", tipDir: "left" },
           { key: "insight", label: "Insight", tip: "Recommended action", tipDir: "left" },
         ]}
         onExport={() => downloadCsv(exportSqpCsv(filteredOpportunities, [], []), "sqp-opportunities.csv")}
@@ -1521,6 +1522,7 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
         columns={[
           { key: "query", label: "Search query", tip: "The customer search query" },
           { key: "volume", label: "Volume", tip: "Monthly search query volume" },
+          { key: "conversionRate", label: "CVR %", tip: "Your conversion rate: purchases ÷ clicks × 100" },
           { key: "purchaseShare", label: "Purchase share %", tip: "Your dominant share of purchases for this query", tipDir: "left" },
           { key: "clickShare", label: "Click share %", tip: "Your share of clicks", tipDir: "left" },
           { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions", tipDir: "left" },
@@ -1542,6 +1544,7 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
         columns={[
           { key: "query", label: "Search query", tip: "The customer search query" },
           { key: "volume", label: "Volume", tip: "Monthly search query volume" },
+          { key: "conversionRate", label: "CVR %", tip: "Your conversion rate: purchases ÷ clicks × 100. Low CVR here confirms the listing isn't resonating with this query." },
           { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions — high visibility", tipDir: "left" },
           { key: "purchaseShare", label: "Purchase share %", tip: "Your share of purchases — low conversion", tipDir: "left" },
           { key: "clickShare", label: "Click share %", tip: "Your share of clicks", tipDir: "left" },
