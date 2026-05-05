@@ -1,0 +1,25 @@
+<svg width="520" height="140" viewBox="0 0 520 140" fill="none" xmlns="http://www.w3.org/2000/svg">
+
+  <defs>
+    <linearGradient id="tealGradient" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#14B8A6"/>
+      <stop offset="100%" stop-color="#0EA5E9"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Icon -->
+  <g transform="translate(10,0)">
+    <path d="M80 10 A70 70 0 1 1 80 130" stroke="url(#tealGradient)" stroke-width="16" fill="none" stroke-linecap="round"/>
+    <path d="M40 70 H90 Q100 70 100 80 V90 Q100 100 90 100 H50" stroke="#0B1F3A" stroke-width="10" fill="none" stroke-linecap="round"/>
+    <circle cx="60" cy="115" r="6" fill="url(#tealGradient)"/>
+    <circle cx="90" cy="115" r="6" fill="url(#tealGradient)"/>
+  </g>
+
+  <!-- Text -->
+  <text x="140" y="85" font-family="Inter, sans-serif" font-size="56" font-weight="600" fill="#0B1F3A">Danu</text>
+  <text x="300" y="85" font-family="Inter, sans-serif" font-size="56" font-weight="600" fill="url(#tealGradient)">ly</text>
+
+  <circle cx="380" cy="45" r="5" fill="#FBBF24"/>
+  <path d="M315 95 Q350 120 385 95" stroke="url(#tealGradient)" stroke-width="6" fill="none" stroke-linecap="round"/>
+
+</svg>
