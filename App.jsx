@@ -269,7 +269,6 @@ export default function App() {
     return DEFAULTS;
   });
   const [activeTool, setActiveTool] = useState(() => {
-    try { const s = localStorage.getItem("danuly-last-tool"); if (s === "calculator" || s === "ppc") return s; } catch {}
     return "home";
   });
   const [activeTab, setActiveTab] = useState("breakdown");
