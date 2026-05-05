@@ -247,17 +247,24 @@ function UploadZone({ onFile, label = "Drop file here or click to browse" }) {
 
 function Tooltip({ text, dir = "right" }) {
   const [v, setV] = useState(false);
-  const pos = dir === "left" ? { right: 16, left: "auto" } : { left: 16, right: "auto" };
+  const POSITIONS = {
+    right: { left: 16, right: "auto", top: -4, bottom: "auto", transform: "none" },
+    left:  { right: "calc(100% + 4px)", left: "auto", top: -4, bottom: "auto", transform: "none" },
+    up:    { bottom: "calc(100% + 6px)", top: "auto", left: "50%", right: "auto", transform: "translateX(-50%)" },
+    down:  { top: "calc(100% + 6px)", bottom: "auto", left: "50%", right: "auto", transform: "translateX(-50%)" },
+  };
+  const pos = POSITIONS[dir] || POSITIONS.right;
   return (
     <span style={{ position: "relative", display: "inline-flex", alignItems: "center", cursor: "help" }}
       onMouseEnter={() => setV(true)} onMouseLeave={() => setV(false)}>
       <Info size={11} color={C.muted} />
       {v && (
         <div style={{
-          position: "absolute", ...pos, top: -4, zIndex: 50,
+          position: "absolute", ...pos, zIndex: 100,
           background: C.card, border: `1px solid ${C.border}`, borderRadius: 8,
-          padding: "8px 10px", width: 220, fontSize: 11, color: C.body,
-          lineHeight: 1.5, boxShadow: "0 8px 24px rgba(0,0,0,0.12)", pointerEvents: "none",
+          padding: "8px 10px", width: 240, fontSize: 11, color: C.body,
+          lineHeight: 1.6, boxShadow: "0 8px 24px rgba(0,0,0,0.14)", pointerEvents: "none",
+          whiteSpace: "normal",
         }}>
           {text}
         </div>
@@ -1413,20 +1420,38 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
       {/* Section filter tabs */}
       {(() => {
         const tabs = [
-          { id: "all", label: "All", color: C.muted },
-          { id: "opportunities", label: `Opportunities (${filteredOpportunities.length})`, color: C.green },
-          { id: "leaders", label: `Market Leaders (${filteredLeaders.length})`, color: C.cyan },
-          { id: "risks", label: `Risk Keywords (${filteredRisks.length})`, color: C.rose },
+          { id: "all", label: "All", color: C.muted, tip: null },
+          {
+            id: "opportunities",
+            label: `Opportunities (${filteredOpportunities.length})`,
+            color: C.green,
+            tip: "Queries where you convert well (good purchase share) but your click share is still low — you're winning the sale but missing impressions. Raise bids here to capture more volume.\n\nGood starting thresholds: Min Purchase Share ≥ 5%, Max Click Share ≤ 20%.",
+          },
+          {
+            id: "leaders",
+            label: `Market Leaders (${filteredLeaders.length})`,
+            color: C.cyan,
+            tip: "Queries where you already dominate — high purchase share means you own this keyword. Protect budget here and keep bids stable.\n\nGood starting threshold: Min Purchase Share ≥ 30%.",
+          },
+          {
+            id: "risks",
+            label: `Risk Keywords (${filteredRisks.length})`,
+            color: C.rose,
+            tip: "Queries where you get lots of impressions but few purchases — you're visible but not converting. Review listing relevance or pause these keywords.\n\nGood starting thresholds: Min Impression Share ≥ 10%, Max Purchase Share ≤ 2%.",
+          },
         ];
         return (
-          <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          <div style={{ display: "flex", gap: 6, flexWrap: "wrap", alignItems: "center" }}>
             {tabs.map(t => {
               const active = activeSection === t.id;
               return (
-                <button key={t.id} onClick={() => { setActiveSection(t.id); setExpandedWhy(null); }}
-                  style={{ fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 20, border: `1px solid ${active ? t.color : C.border}`, background: active ? `${t.color}15` : C.card, color: active ? t.color : C.muted, cursor: "pointer", transition: "all 0.15s" }}>
-                  {t.label}
-                </button>
+                <span key={t.id} style={{ position: "relative", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  <button onClick={() => { setActiveSection(t.id); setExpandedWhy(null); }}
+                    style={{ fontSize: 11, fontWeight: 600, padding: "6px 12px", borderRadius: 20, border: `1px solid ${active ? t.color : C.border}`, background: active ? `${t.color}15` : C.card, color: active ? t.color : C.muted, cursor: "pointer", transition: "all 0.15s" }}>
+                    {t.label}
+                  </button>
+                  {t.tip && <Tooltip text={t.tip} dir="down" />}
+                </span>
               );
             })}
           </div>
@@ -1449,7 +1474,7 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
           {
             key: "gap",
             label: "Market gap",
-            tip: "Impression share vs click share. Green bar = your clicks, gray = untapped impressions. Wider gap = bigger opportunity.",
+            tip: "Impression share vs click share. Green bar = your clicks, gray = untapped impressions. Wider gap = bigger opportunity.", tipDir: "left",
             render: (item) => {
               const imp = parseFloat(item.impressionShare);
               const clk = parseFloat(item.clickShare);
@@ -1486,9 +1511,9 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
         columns={[
           { key: "query", label: "Search query", tip: "The customer search query" },
           { key: "volume", label: "Volume", tip: "Monthly search query volume" },
-          { key: "purchaseShare", label: "Purchase share %", tip: "Your dominant share of purchases for this query" },
-          { key: "clickShare", label: "Click share %", tip: "Your share of clicks" },
-          { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions" },
+          { key: "purchaseShare", label: "Purchase share %", tip: "Your dominant share of purchases for this query", tipDir: "left" },
+          { key: "clickShare", label: "Click share %", tip: "Your share of clicks", tipDir: "left" },
+          { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions", tipDir: "left" },
           { key: "insight", label: "Insight", tip: "Strategic recommendation", tipDir: "left" },
         ]}
         onExport={() => downloadCsv(exportSqpCsv([], [], filteredLeaders), "sqp-leaders.csv")}
@@ -1507,9 +1532,9 @@ function SqpTab({ data, setData, onSwitchTab, goalContext }) {
         columns={[
           { key: "query", label: "Search query", tip: "The customer search query" },
           { key: "volume", label: "Volume", tip: "Monthly search query volume" },
-          { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions — high visibility" },
-          { key: "purchaseShare", label: "Purchase share %", tip: "Your share of purchases — low conversion" },
-          { key: "clickShare", label: "Click share %", tip: "Your share of clicks" },
+          { key: "impressionShare", label: "Imp. share %", tip: "Your share of impressions — high visibility", tipDir: "left" },
+          { key: "purchaseShare", label: "Purchase share %", tip: "Your share of purchases — low conversion", tipDir: "left" },
+          { key: "clickShare", label: "Click share %", tip: "Your share of clicks", tipDir: "left" },
           { key: "insight", label: "Insight", tip: "Recommended action", tipDir: "left" },
         ]}
         onExport={() => downloadCsv(exportSqpCsv([], filteredRisks, []), "sqp-risks.csv")}
