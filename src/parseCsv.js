@@ -109,6 +109,17 @@ function findHeaderIndex(rows) {
   return headerIdx;
 }
 
+function extractMetadata(rows, headerIdx) {
+  const metadata = {};
+
+  rows.slice(0, headerIdx).flat().forEach(cell => {
+    const match = String(cell || "").trim().match(/^([^=]+)=\[(.*)\]$/);
+    if (match) metadata[match[1].trim()] = match[2].trim();
+  });
+
+  return metadata;
+}
+
 // Parse CSV or TSV text → { headers, rows }
 export function parseCsv(text) {
   // Strip BOM (UTF-8 BOM = \uFEFF, present in many Amazon exports)
@@ -125,6 +136,7 @@ export function parseCsv(text) {
   const parsedLines = lines.map(splitRow);
   const headerIdx = findHeaderIndex(parsedLines);
   if (parsedLines[headerIdx].filter(Boolean).length < 3) throw new Error("File has no data rows.");
+  const metadata = extractMetadata(parsedLines, headerIdx);
   const headers = splitRow(lines[headerIdx]).map(h => normalizeHeader(h.replace(/^"|"$/g, "")));
   const rows = [];
 
@@ -137,7 +149,7 @@ export function parseCsv(text) {
     rows.push(row);
   }
 
-  return { headers, rows };
+  return { headers, rows, metadata };
 }
 
 // Parse an Excel (.xlsx / .xls) ArrayBuffer → { headers, rows }
@@ -149,6 +161,7 @@ export function parseXlsx(arrayBuffer) {
   if (data.length < 2) throw new Error("File has no data rows.");
 
   const headerIdx = findHeaderIndex(data);
+  const metadata = extractMetadata(data, headerIdx);
 
   const headers = data[headerIdx].map(h => normalizeHeader(String(h)));
   const rows = [];
@@ -161,7 +174,7 @@ export function parseXlsx(arrayBuffer) {
     rows.push(row);
   }
 
-  return { headers, rows };
+  return { headers, rows, metadata };
 }
 
 // Handles quoted fields with commas inside
