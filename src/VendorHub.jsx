@@ -73,7 +73,7 @@ const salesReports = [
       ["Level", "ASIN"],
       ["Date range", "Current period; include prior-year comparison when available"]
     ],
-    recognized: "ASIN plus ordered or shipped revenue/units"
+    recognized: "ASIN plus ordered or dispatched revenue/units"
   },
   {
     id: "traffic",
@@ -128,7 +128,8 @@ function validateVendorReport(headers, reportId) {
   if (reportId === "sales") {
     const hasSales = includesAny(normalized, [
       "ordered revenue", "shipped revenue", "ordered units", "shipped units",
-      "shipped cogs", "ordered product sales"
+      "shipped cogs", "dispatched revenue", "dispatched units", "dispatched cogs",
+      "ordered product sales"
     ]);
     return hasSales ? null : "The file has an ASIN column, but no recognized ordered or shipped sales metrics.";
   }
