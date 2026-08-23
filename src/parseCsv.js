@@ -68,6 +68,47 @@ function normalizeHeader(h) {
   return COLUMN_ALIASES[lower] || h.trim();
 }
 
+const HEADER_HINTS = [
+  "asin", "product title", "brand", "ordered revenue", "ordered units",
+  "dispatched revenue", "dispatched cogs", "dispatched units", "customer returns"
+];
+
+function headerCandidateScore(cells, nextCells) {
+  const values = cells.map(cell => String(cell || "").trim()).filter(Boolean);
+  const nextValues = (nextCells || []).filter(cell => String(cell || "").trim() !== "");
+  const assignmentFields = values.filter(value => value.includes("=")).length;
+  const recognizedHeaders = values.filter(value => {
+    const lower = value.toLowerCase();
+    return Boolean(COLUMN_ALIASES[lower]) || HEADER_HINTS.includes(lower);
+  }).length;
+  const consistentDataRow = values.length >= 3 && nextValues.length === values.length;
+
+  return values.length
+    + (consistentDataRow ? 100 : 0)
+    + (recognizedHeaders * 100)
+    - (assignmentFields * 20);
+}
+
+function findHeaderIndex(rows) {
+  let headerIdx = 0;
+  let bestScore = -Infinity;
+  const limit = Math.min(rows.length, 30);
+
+  for (let i = 0; i < limit; i++) {
+    let nextIdx = i + 1;
+    while (nextIdx < rows.length && rows[nextIdx].every(cell => String(cell || "").trim() === "")) {
+      nextIdx += 1;
+    }
+    const score = headerCandidateScore(rows[i], rows[nextIdx]);
+    if (score > bestScore) {
+      bestScore = score;
+      headerIdx = i;
+    }
+  }
+
+  return headerIdx;
+}
+
 // Parse CSV or TSV text → { headers, rows }
 export function parseCsv(text) {
   // Strip BOM (UTF-8 BOM = \uFEFF, present in many Amazon exports)
@@ -80,19 +121,10 @@ export function parseCsv(text) {
   const tabCount = (sample.match(/\t/g) || []).length;
   const commaCount = (sample.match(/,/g) || []).length;
   const sep = tabCount > commaCount ? "\t" : ",";
-  const countSep = (line) => (line.match(sep === "\t" ? /\t/g : /,/g) || []).length;
-
-  // Find header row: pick the row with the MOST separators in first 15 rows
-  // (metadata rows have few columns; the real header has many)
-  let headerIdx = 0;
-  let maxSeps = 0;
-  for (let i = 0; i < Math.min(lines.length, 15); i++) {
-    const n = countSep(lines[i]);
-    if (n > maxSeps) { maxSeps = n; headerIdx = i; }
-  }
-  if (maxSeps < 2) throw new Error("File has no data rows.");
-
   const splitRow = sep === "\t" ? splitTsvRow : splitCsvRow;
+  const parsedLines = lines.map(splitRow);
+  const headerIdx = findHeaderIndex(parsedLines);
+  if (parsedLines[headerIdx].filter(Boolean).length < 3) throw new Error("File has no data rows.");
   const headers = splitRow(lines[headerIdx]).map(h => normalizeHeader(h.replace(/^"|"$/g, "")));
   const rows = [];
 
@@ -116,13 +148,7 @@ export function parseXlsx(arrayBuffer) {
 
   if (data.length < 2) throw new Error("File has no data rows.");
 
-  // Find row with most columns (same heuristic as CSV)
-  let headerIdx = 0;
-  let maxCols = 0;
-  for (let i = 0; i < Math.min(data.length, 15); i++) {
-    const n = data[i].filter(c => c !== "").length;
-    if (n > maxCols) { maxCols = n; headerIdx = i; }
-  }
+  const headerIdx = findHeaderIndex(data);
 
   const headers = data[headerIdx].map(h => normalizeHeader(String(h)));
   const rows = [];
@@ -169,5 +195,8 @@ export function validateColumns(headers, required) {
 // Parse a number from an Amazon report cell (handles %, $, commas, dashes)
 export function parseNum(val) {
   if (!val || val === "--" || val === "-" || val === "") return 0;
-  return parseFloat(String(val).replace(/[$%,]/g, "")) || 0;
+  const text = String(val).trim();
+  const negative = /^\(.*\)$/.test(text);
+  const number = parseFloat(text.replace(/[^\d.-]/g, "")) || 0;
+  return negative ? -number : number;
 }
