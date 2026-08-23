@@ -1,5 +1,6 @@
 import { useState, useMemo, useCallback, useEffect } from "react";
 import PPCLab from "./src/PPCLab.jsx";
+import VendorHub from "./src/VendorHub.jsx";
 import { Analytics } from "@vercel/analytics/react";
 import { PieChart, Pie, Cell, Tooltip as ReTooltip, ResponsiveContainer } from "recharts";
 import {
@@ -198,9 +199,9 @@ function TopBar({ activeTool, onSwitch }) {
         <img src="/danuly-logo.png" alt="Danuly" style={{ height: 30, width: "auto", display: "block", mixBlendMode: "multiply" }} />
       </button>
       <div className="topbar-divider" style={{ width: 1, height: 20, background: C.border }} />
-      <span className="topbar-tool-name" style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>{activeTool === "calculator" ? "Profit Calculator" : "PPC Lab"}</span>
+      <span className="topbar-tool-name" style={{ fontSize: 12, color: C.muted, fontWeight: 500 }}>{{ vendor: "Vendor Hub", calculator: "Profit Calculator", ppc: "PPC Lab" }[activeTool] || "Danuly"}</span>
       <div style={{ marginLeft: "auto", display: "flex", gap: 3, background: C.inset, border: `1px solid ${C.border}`, borderRadius: 9, padding: "3px" }}>
-        {[{ id: "ppc", label: "PPC Lab" }, { id: "calculator", label: "Profit Calc" }].map(({ id, label }) => (
+        {[{ id: "vendor", label: "Vendor Hub" }, { id: "ppc", label: "PPC Lab" }, { id: "calculator", label: "Seller Calc" }].map(({ id, label }) => (
           <button key={id} onClick={() => onSwitch(id)} onMouseEnter={() => setHovered(id)} onMouseLeave={() => setHovered(null)}
             className="topbar-tab-btn"
             style={{ padding: "6px 14px", borderRadius: 7, border: "none", cursor: "pointer", fontSize: 12, fontWeight: 600, transition: "all 0.15s", outline: "none", background: activeTool === id ? C.indigo : hovered === id ? C.border : "transparent", color: activeTool === id ? "#fff" : hovered === id ? C.ink : C.muted }}
@@ -214,6 +215,7 @@ function TopBar({ activeTool, onSwitch }) {
 function HomeScreen({ onSelect }) {
   const [hovered, setHovered] = useState(null);
   const tools = [
+    { id: "vendor", icon: Package, title: "Vendor Hub", desc: "Start with a business question. Danuly guides you to the exact Vendor Central reports, validates each upload, and builds the path to a clear diagnosis.", badge: "Sales · Traffic · Inventory" },
     { id: "ppc", icon: BarChart3, title: "PPC Lab", desc: "Analyze your PPC reports: find negative keyword candidates, harvest opportunities, optimize keyword bids, and analyze placement performance — with export-ready CSVs.", badge: "STR · SQP · Targeting · Placement" },
     { id: "calculator", icon: DollarSign, title: "Profit Calculator", desc: "Full unit economics simulator for Amazon FBA and DTC channels. P&L waterfall, cash flow analysis, pricing tools, and AI-driven margin insights.", badge: "FBA + DTC · US & Intl" },
   ];
@@ -369,6 +371,7 @@ export default function App() {
         {activeTool !== "home" && (
           <>
             <TopBar activeTool={activeTool} onSwitch={switchToolWithFade} />
+            {activeTool === "vendor" && <VendorHub />}
             {activeTool === "calculator" && (
               <div style={{ background: C.surface, minHeight: "calc(100vh - 52px)", padding: "20px 16px", ...SANS, color: C.ink }}>
                 <h2 className="sr-only">Danuly Profit Calculator</h2>
