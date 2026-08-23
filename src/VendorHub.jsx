@@ -86,7 +86,7 @@ const salesReports = [
       ["Level", "ASIN"],
       ["Date range", "Match the Sales report exactly"]
     ],
-    recognized: "ASIN and Glance Views"
+    recognized: "ASIN and page views (Glance Views or Featured offer page views)"
   },
   {
     id: "inventory",
@@ -135,9 +135,9 @@ function validateVendorReport(headers, reportId) {
   }
 
   if (reportId === "traffic") {
-    return includesAny(normalized, ["glance view", "detail page view"])
+    return includesAny(normalized, ["glance view", "detail page view", "featured offer page view"])
       ? null
-      : "The file has an ASIN column, but Glance Views were not found.";
+      : "The file has an ASIN column, but a recognized page-view metric was not found.";
   }
 
   if (reportId === "inventory") {
