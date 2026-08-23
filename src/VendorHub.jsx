@@ -1,10 +1,11 @@
 import React, { useState } from "react";
 import {
   ArrowLeft, ArrowRight, BarChart3, CalendarDays, CheckCircle, FileSpreadsheet,
-  HelpCircle, ShieldAlert, TrendingUp, Upload, WalletCards
+  HelpCircle, LayoutDashboard, ShieldAlert, TrendingUp, Upload, WalletCards
 } from "lucide-react";
 import { parseCsv, parseXlsx } from "./parseCsv.js";
 import VendorAnalysis from "./VendorAnalysis.jsx";
+import DirectorHub from "./DirectorHub.jsx";
 
 const C = {
   teal: "#14B8A6",
@@ -26,6 +27,14 @@ const C = {
 };
 
 const goals = [
+  {
+    id: "director",
+    icon: LayoutDashboard,
+    title: "Direct market performance",
+    question: "Where are we off plan?",
+    description: "Prioritize markets against targets, then investigate only the exceptions.",
+    available: true
+  },
   {
     id: "sales",
     icon: TrendingUp,
@@ -597,6 +606,10 @@ export default function VendorHub() {
         </div>
       </main>
     );
+  }
+
+  if (selectedGoal === "director") {
+    return <DirectorHub onBack={resetFlow} />;
   }
 
   const allCurrentComplete = firstIncomplete === -1;
