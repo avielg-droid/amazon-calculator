@@ -1,7 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import {
   ArrowLeft, ArrowRight, BarChart3, CheckCircle, FileSpreadsheet,
-  HelpCircle, Package, ShieldAlert, TrendingUp, Upload, WalletCards
+  HelpCircle, ShieldAlert, TrendingUp, Upload, WalletCards
 } from "lucide-react";
 import { parseCsv, parseXlsx } from "./parseCsv.js";
 
@@ -308,9 +308,9 @@ export default function VendorHub() {
   const [uploaded, setUploaded] = useState({});
   const [errors, setErrors] = useState({});
 
-  const firstIncomplete = useMemo(function () {
-    return salesReports.findIndex(function (report) { return !uploaded[report.id]; });
-  }, [uploaded]);
+  const firstIncomplete = salesReports.findIndex(function (report) {
+    return !uploaded[report.id];
+  });
 
   function resetFlow() {
     setSelectedGoal(null);
