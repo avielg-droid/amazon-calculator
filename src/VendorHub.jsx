@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import {
-  ArrowLeft, ArrowRight, BarChart3, CheckCircle, FileSpreadsheet,
+  ArrowLeft, ArrowRight, BarChart3, CalendarDays, CheckCircle, FileSpreadsheet,
   HelpCircle, ShieldAlert, TrendingUp, Upload, WalletCards
 } from "lucide-react";
 import { parseCsv, parseXlsx } from "./parseCsv.js";
@@ -71,7 +71,7 @@ const salesReports = [
       ["Distributor view", "Manufacturing"],
       ["Selling program", "Retail"],
       ["Level", "ASIN"],
-      ["Date range", "Current period; include prior-year comparison when available"]
+      ["Date range", "The period you want to investigate"]
     ],
     recognized: "ASIN plus ordered or dispatched revenue/units"
   },
@@ -151,6 +151,100 @@ function validateVendorReport(headers, reportId) {
   return null;
 }
 
+function dateFromParts(day, month, year) {
+  return new Date(Date.UTC(Number(year), Number(month) - 1, Number(day)));
+}
+
+function formatDate(date) {
+  return [
+    String(date.getUTCDate()).padStart(2, "0"),
+    String(date.getUTCMonth() + 1).padStart(2, "0"),
+    date.getUTCFullYear()
+  ].join("/");
+}
+
+function createPeriod(start, end) {
+  return {
+    start: start,
+    end: end,
+    key: start.toISOString().slice(0, 10) + "|" + end.toISOString().slice(0, 10),
+    label: formatDate(start) + " – " + formatDate(end)
+  };
+}
+
+function getReportPeriod(metadata, fileName) {
+  const entry = Object.entries(metadata || {}).find(function (item) {
+    return item[0].toLowerCase() === "viewing range";
+  });
+  const source = entry ? entry[1] : fileName;
+  const match = String(source || "").match(/(\d{2})[\/-](\d{2})[\/-](\d{4}).*?(\d{2})[\/-](\d{2})[\/-](\d{4})/);
+
+  if (!match) return null;
+  return createPeriod(
+    dateFromParts(match[1], match[2], match[3]),
+    dateFromParts(match[4], match[5], match[6])
+  );
+}
+
+function getComparisonPeriod(currentPeriod, comparisonType) {
+  if (!currentPeriod) return null;
+
+  if (comparisonType === "yoy") {
+    return createPeriod(
+      dateFromParts(
+        currentPeriod.start.getUTCDate(),
+        currentPeriod.start.getUTCMonth() + 1,
+        currentPeriod.start.getUTCFullYear() - 1
+      ),
+      dateFromParts(
+        currentPeriod.end.getUTCDate(),
+        currentPeriod.end.getUTCMonth() + 1,
+        currentPeriod.end.getUTCFullYear() - 1
+      )
+    );
+  }
+
+  const day = 24 * 60 * 60 * 1000;
+  const duration = currentPeriod.end.getTime() - currentPeriod.start.getTime();
+  const previousEnd = new Date(currentPeriod.start.getTime() - day);
+  const previousStart = new Date(previousEnd.getTime() - duration);
+  return createPeriod(previousStart, previousEnd);
+}
+
+function createComparisonReports(period) {
+  const dateRange = period ? period.label : "The matching comparison dates";
+  return [
+    {
+      id: "comparisonSales",
+      validationId: "sales",
+      number: 1,
+      title: "Comparison Sales Report",
+      purpose: "Measures the change in revenue and units by ASIN.",
+      path: "Vendor Central → Reports → Retail Analytics → Sales",
+      settings: [
+        ["Distributor view", "Manufacturing"],
+        ["Selling program", "Retail"],
+        ["Level", "ASIN"],
+        ["Date range", dateRange]
+      ],
+      recognized: "ASIN plus ordered or dispatched revenue/units"
+    },
+    {
+      id: "comparisonTraffic",
+      validationId: "traffic",
+      number: 2,
+      title: "Comparison Traffic Report",
+      purpose: "Separates traffic change from the conversion effect.",
+      path: "Vendor Central → Reports → Retail Analytics → Traffic",
+      settings: [
+        ["Level", "ASIN"],
+        ["Date range", dateRange]
+      ],
+      recognized: "ASIN and page views (Glance Views or Featured offer page views)"
+    }
+  ];
+}
+
 function GoalCard({ goal, onSelect }) {
   const Icon = goal.icon;
   return (
@@ -198,7 +292,7 @@ function GoalCard({ goal, onSelect }) {
         <p style={{ fontSize: 12, color: C.muted, lineHeight: 1.55, margin: 0 }}>{goal.description}</p>
         {goal.available && (
           <div style={{ marginTop: 16, display: "flex", alignItems: "center", gap: 6, color: C.sky, fontSize: 12, fontWeight: 700 }}>
-            Start analysis <ArrowRight size={13} />
+            Start guided setup <ArrowRight size={13} />
           </div>
         )}
       </div>
@@ -292,7 +386,9 @@ function ReportStep({ report, completed, locked, fileName, error, onFile }) {
                   type="file"
                   accept=".csv,.xlsx,.xls"
                   style={{ display: "none" }}
-                  onChange={function (event) { onFile(report.id, event.target.files[0]); }}
+                  onChange={function (event) {
+                    onFile(report.id, report.validationId || report.id, event.target.files[0]);
+                  }}
                 />
               </label>
               {error && <p style={{ margin: "8px 0 0", color: C.red, fontSize: 11 }}>{error}</p>}
@@ -304,12 +400,75 @@ function ReportStep({ report, completed, locked, fileName, error, onFile }) {
   );
 }
 
+function ComparisonChoice({ active, title, description, recommended, onClick }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={active}
+      style={{
+        textAlign: "left", padding: "14px 15px", borderRadius: 11,
+        border: "1px solid " + (active ? C.sky : C.border),
+        background: active ? "#F0F9FF" : C.card,
+        cursor: "pointer", minHeight: 92
+      }}
+    >
+      <div style={{ display: "flex", justifyContent: "space-between", gap: 8, alignItems: "center" }}>
+        <span style={{ color: C.navy, fontSize: 13, fontWeight: 750 }}>{title}</span>
+        {recommended && (
+          <span style={{ color: C.sky, background: "#E0F2FE", borderRadius: 99, padding: "3px 7px", fontSize: 9, fontWeight: 800 }}>
+            RECOMMENDED
+          </span>
+        )}
+      </div>
+      <p style={{ color: C.muted, fontSize: 11, lineHeight: 1.45, margin: "7px 0 0" }}>{description}</p>
+    </button>
+  );
+}
+
+function CurrentReportsSummary({ uploaded, period }) {
+  return (
+    <section style={{ padding: "16px 18px", borderRadius: 12, background: C.greenDim, border: "1px solid #86EFAC" }}>
+      <div style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+        <CheckCircle size={19} color={C.green} />
+        <div style={{ minWidth: 0 }}>
+          <h3 style={{ color: C.navy, fontSize: 14, margin: "0 0 5px" }}>Current-period reports complete</h3>
+          <p style={{ color: C.body, fontSize: 11, margin: 0 }}>
+            {period ? period.label : "Current investigation period"} · Sales, Traffic and Inventory
+          </p>
+          <div style={{ marginTop: 9, display: "flex", gap: 6, flexWrap: "wrap" }}>
+            {salesReports.map(function (report) {
+              return (
+                <span key={report.id} style={{
+                  maxWidth: "100%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+                  padding: "4px 7px", background: C.card, border: "1px solid #BBF7D0",
+                  borderRadius: 99, color: C.green, fontSize: 9, fontWeight: 700
+                }}>
+                  {uploaded[report.id] ? uploaded[report.id].file.name : report.title}
+                </span>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function VendorHub() {
   const [selectedGoal, setSelectedGoal] = useState(null);
   const [uploaded, setUploaded] = useState({});
   const [errors, setErrors] = useState({});
+  const [stage, setStage] = useState("current");
+  const [comparisonType, setComparisonType] = useState("yoy");
 
   const firstIncomplete = salesReports.findIndex(function (report) {
+    return !uploaded[report.id];
+  });
+  const currentPeriod = uploaded.sales ? uploaded.sales.period : null;
+  const comparisonPeriod = getComparisonPeriod(currentPeriod, comparisonType);
+  const comparisonReports = createComparisonReports(comparisonPeriod);
+  const comparisonFirstIncomplete = comparisonReports.findIndex(function (report) {
     return !uploaded[report.id];
   });
 
@@ -317,9 +476,28 @@ export default function VendorHub() {
     setSelectedGoal(null);
     setUploaded({});
     setErrors({});
+    setStage("current");
+    setComparisonType("yoy");
   }
 
-  function handleFile(reportId, file) {
+  function chooseComparison(nextType) {
+    if (nextType === comparisonType) return;
+    setComparisonType(nextType);
+    setUploaded(function (current) {
+      const next = Object.assign({}, current);
+      delete next.comparisonSales;
+      delete next.comparisonTraffic;
+      return next;
+    });
+    setErrors(function (current) {
+      const next = Object.assign({}, current);
+      delete next.comparisonSales;
+      delete next.comparisonTraffic;
+      return next;
+    });
+  }
+
+  function handleFile(reportId, validationId, file) {
     if (!file) return;
     const lower = file.name.toLowerCase();
     if (!lower.endsWith(".csv") && !lower.endsWith(".xlsx") && !lower.endsWith(".xls")) {
@@ -335,10 +513,22 @@ export default function VendorHub() {
         const parsed = lower.endsWith(".csv")
           ? parseCsv(event.target.result)
           : parseXlsx(event.target.result);
-        const issue = validateVendorReport(parsed.headers, reportId);
+        const issue = validateVendorReport(parsed.headers, validationId);
         if (issue) {
           setErrors(function (current) {
             return Object.assign({}, current, { [reportId]: issue });
+          });
+          return;
+        }
+        const period = getReportPeriod(parsed.metadata, file.name);
+        const isComparison = reportId.startsWith("comparison");
+        const expectedPeriod = isComparison ? comparisonPeriod : currentPeriod;
+
+        if (expectedPeriod && period && expectedPeriod.key !== period.key) {
+          setErrors(function (current) {
+            return Object.assign({}, current, {
+              [reportId]: "Wrong date range. Expected " + expectedPeriod.label + ", but this file contains " + period.label + "."
+            });
           });
           return;
         }
@@ -349,7 +539,13 @@ export default function VendorHub() {
         });
         setUploaded(function (current) {
           return Object.assign({}, current, {
-            [reportId]: { file: file, rows: parsed.rows, headers: parsed.headers }
+            [reportId]: {
+              file: file,
+              rows: parsed.rows,
+              headers: parsed.headers,
+              metadata: parsed.metadata,
+              period: period
+            }
           });
         });
       } catch (parseError) {
@@ -402,7 +598,8 @@ export default function VendorHub() {
     );
   }
 
-  const allComplete = firstIncomplete === -1;
+  const allCurrentComplete = firstIncomplete === -1;
+  const allComparisonComplete = comparisonFirstIncomplete === -1;
 
   return (
     <main style={{ minHeight: "calc(100vh - 52px)", background: C.surface, padding: "26px 18px 54px" }}>
@@ -418,60 +615,167 @@ export default function VendorHub() {
           <ArrowLeft size={13} /> Change goal
         </button>
 
-        <div style={{ margin: "18px 0 20px" }}>
-          <h1 style={{ fontSize: 24, color: C.navy, margin: "0 0 6px", letterSpacing: "-0.025em" }}>
-            Why are sales up or down?
-          </h1>
-          <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.55, margin: 0 }}>
-            Begin with sales. Danuly will progressively request traffic and inventory so you receive value before downloading every possible report.
-          </p>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {salesReports.map(function (report, index) {
-            const completed = Boolean(uploaded[report.id]);
-            const locked = !completed && index > firstIncomplete;
-            return (
-              <ReportStep
-                key={report.id}
-                report={report}
-                completed={completed}
-                locked={locked}
-                fileName={completed ? uploaded[report.id].file.name : ""}
-                error={errors[report.id]}
-                onFile={handleFile}
-              />
-            );
-          })}
-        </div>
-
-        {allComplete && (
-          <section style={{
-            marginTop: 16, padding: "20px", borderRadius: 14,
-            border: "1px solid #86EFAC", background: C.greenDim
-          }}>
-            <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-              <CheckCircle size={21} color={C.green} />
-              <div>
-                <h3 style={{ color: C.navy, fontSize: 15, margin: "0 0 6px" }}>Reports are ready for analysis</h3>
-                <p style={{ color: C.body, fontSize: 12, lineHeight: 1.55, margin: 0 }}>
-                  The next milestone will connect these files into sales drivers, ASIN-level opportunities, availability risks and recommended actions.
-                </p>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 12 }}>
-                  {["Sales bridge", "Traffic vs CVR", "ASIN contribution", "Inventory risks", "Action plan"].map(function (label) {
-                    return (
-                      <span key={label} style={{
-                        background: C.card, border: "1px solid #BBF7D0", borderRadius: 99,
-                        padding: "5px 9px", fontSize: 10, color: C.green, fontWeight: 700
-                      }}>
-                        {label}
-                      </span>
-                    );
-                  })}
-                </div>
-              </div>
+        {stage === "current" ? (
+          <>
+            <div style={{ margin: "18px 0 20px" }}>
+              <span style={{ color: C.sky, fontSize: 10, fontWeight: 800, letterSpacing: "0.07em" }}>
+                STEP 1 OF 2 · CURRENT PERIOD
+              </span>
+              <h1 style={{ fontSize: 24, color: C.navy, margin: "5px 0 6px", letterSpacing: "-0.025em" }}>
+                Why are sales up or down?
+              </h1>
+              <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.55, margin: 0 }}>
+                Start with the current period. The first Sales report sets the date range, and Danuly checks that Traffic and Inventory match it.
+              </p>
             </div>
-          </section>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {salesReports.map(function (report, index) {
+                const completed = Boolean(uploaded[report.id]);
+                const locked = !completed && index > firstIncomplete;
+                return (
+                  <ReportStep
+                    key={report.id}
+                    report={report}
+                    completed={completed}
+                    locked={locked}
+                    fileName={completed ? uploaded[report.id].file.name : ""}
+                    error={errors[report.id]}
+                    onFile={handleFile}
+                  />
+                );
+              })}
+            </div>
+
+            {allCurrentComplete && (
+              <section style={{
+                marginTop: 16, padding: "20px", borderRadius: 14,
+                border: "1px solid #BAE6FD", background: "#F0F9FF"
+              }}>
+                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <CalendarDays size={21} color={C.sky} />
+                  <div style={{ flex: 1 }}>
+                    <h3 style={{ color: C.navy, fontSize: 15, margin: "0 0 6px" }}>Current period is ready</h3>
+                    <p style={{ color: C.body, fontSize: 12, lineHeight: 1.55, margin: 0 }}>
+                      {currentPeriod ? currentPeriod.label + " is loaded. " : "The current reports are loaded. "}
+                      Choose a baseline so Danuly can measure what changed and why.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={function () { setStage("comparison"); }}
+                      style={{
+                        marginTop: 14, display: "inline-flex", alignItems: "center", gap: 7,
+                        border: "none", borderRadius: 9, padding: "10px 14px",
+                        background: C.sky, color: "#fff", fontSize: 12, fontWeight: 750, cursor: "pointer"
+                      }}
+                    >
+                      Continue to comparison <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              </section>
+            )}
+          </>
+        ) : (
+          <>
+            <button
+              type="button"
+              onClick={function () { setStage("current"); }}
+              style={{
+                display: "flex", alignItems: "center", gap: 6, background: "transparent",
+                border: "none", padding: 0, marginTop: 13, color: C.sky, cursor: "pointer", fontSize: 12
+              }}
+            >
+              <ArrowLeft size={13} /> Back to current reports
+            </button>
+
+            <div style={{ margin: "18px 0 18px" }}>
+              <span style={{ color: C.sky, fontSize: 10, fontWeight: 800, letterSpacing: "0.07em" }}>
+                STEP 2 OF 2 · COMPARISON
+              </span>
+              <h1 style={{ fontSize: 24, color: C.navy, margin: "5px 0 6px", letterSpacing: "-0.025em" }}>
+                What should we compare it against?
+              </h1>
+              <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.55, margin: 0 }}>
+                Danuly needs only comparison Sales and Traffic reports. Current Inventory is already enough for the availability check.
+              </p>
+            </div>
+
+            <CurrentReportsSummary uploaded={uploaded} period={currentPeriod} />
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))", gap: 10, margin: "14px 0" }}>
+              <ComparisonChoice
+                active={comparisonType === "yoy"}
+                title="Same period last year"
+                description="Best for seasonality and year-over-year performance."
+                recommended={true}
+                onClick={function () { chooseComparison("yoy"); }}
+              />
+              <ComparisonChoice
+                active={comparisonType === "previous"}
+                title="Previous equivalent period"
+                description="Best for understanding the most recent operational change."
+                recommended={false}
+                onClick={function () { chooseComparison("previous"); }}
+              />
+            </div>
+
+            <div style={{
+              marginBottom: 12, padding: "11px 13px", borderRadius: 10,
+              background: C.amberDim, border: "1px solid #FDE68A", color: C.body,
+              fontSize: 11, lineHeight: 1.5
+            }}>
+              Download both reports for <strong>{comparisonPeriod ? comparisonPeriod.label : "the matching comparison dates"}</strong>.
+              Do not upload the current-period files again.
+            </div>
+
+            <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+              {comparisonReports.map(function (report, index) {
+                const completed = Boolean(uploaded[report.id]);
+                const locked = !completed && index > comparisonFirstIncomplete;
+                return (
+                  <ReportStep
+                    key={report.id}
+                    report={report}
+                    completed={completed}
+                    locked={locked}
+                    fileName={completed ? uploaded[report.id].file.name : ""}
+                    error={errors[report.id]}
+                    onFile={handleFile}
+                  />
+                );
+              })}
+            </div>
+
+            {allComparisonComplete && (
+              <section style={{
+                marginTop: 16, padding: "20px", borderRadius: 14,
+                border: "1px solid #86EFAC", background: C.greenDim
+              }}>
+                <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
+                  <CheckCircle size={21} color={C.green} />
+                  <div>
+                    <h3 style={{ color: C.navy, fontSize: 15, margin: "0 0 6px" }}>All reports are ready for analysis</h3>
+                    <p style={{ color: C.body, fontSize: 12, lineHeight: 1.55, margin: 0 }}>
+                      Current and comparison periods are aligned. The analysis can now explain the change instead of showing only a current-period snapshot.
+                    </p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 7, marginTop: 12 }}>
+                      {["Sales bridge", "Traffic vs conversion", "ASIN contribution", "Inventory risks", "Action plan"].map(function (label) {
+                        return (
+                          <span key={label} style={{
+                            background: C.card, border: "1px solid #BBF7D0", borderRadius: 99,
+                            padding: "5px 9px", fontSize: 10, color: C.green, fontWeight: 700
+                          }}>
+                            {label}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+              </section>
+            )}
+          </>
         )}
 
         <div style={{
