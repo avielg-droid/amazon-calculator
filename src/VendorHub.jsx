@@ -4,6 +4,7 @@ import {
   HelpCircle, ShieldAlert, TrendingUp, Upload, WalletCards
 } from "lucide-react";
 import { parseCsv, parseXlsx } from "./parseCsv.js";
+import VendorAnalysis from "./VendorAnalysis.jsx";
 
 const C = {
   teal: "#14B8A6",
@@ -615,7 +616,11 @@ export default function VendorHub() {
           <ArrowLeft size={13} /> Change goal
         </button>
 
-        {stage === "current" ? (
+        {stage === "analysis" ? (
+          <div style={{ marginTop: 16 }}>
+            <VendorAnalysis uploaded={uploaded} onBack={function () { setStage("comparison"); }} />
+          </div>
+        ) : stage === "current" ? (
           <>
             <div style={{ margin: "18px 0 20px" }}>
               <span style={{ color: C.sky, fontSize: 10, fontWeight: 800, letterSpacing: "0.07em" }}>
@@ -771,6 +776,17 @@ export default function VendorHub() {
                         );
                       })}
                     </div>
+                    <button
+                      type="button"
+                      onClick={function () { setStage("analysis"); }}
+                      style={{
+                        marginTop: 14, display: "inline-flex", alignItems: "center", gap: 7,
+                        border: "none", borderRadius: 9, padding: "10px 14px",
+                        background: C.green, color: "#fff", fontSize: 12, fontWeight: 750, cursor: "pointer"
+                      }}
+                    >
+                      Run sales diagnosis <ArrowRight size={14} />
+                    </button>
                   </div>
                 </div>
               </section>
