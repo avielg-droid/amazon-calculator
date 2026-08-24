@@ -4,6 +4,7 @@ import {
   Info, PackageCheck, Save, ShoppingCart, Target, TrendingUp
 } from "lucide-react";
 import SellOutControlTower from "./SellOutControlTower.jsx";
+import SellInForecast from "./SellInForecast.jsx";
 
 const C = {
   sky: "#0EA5E9", navy: "#0B1F3A", body: "#334155", muted: "#64748B",
@@ -408,10 +409,27 @@ function ViewToggle({ active, onChange }) {
   );
 }
 
+function SellInModeToggle({ active, onChange }) {
+  const choices = [
+    { id: "track", label: "Track against plan" },
+    { id: "forecast", label: "Create monthly forecast" }
+  ];
+  return (
+    <div style={{ marginTop: 8, display: "flex", gap: 6, flexWrap: "wrap" }}>
+      {choices.map(function (choice) {
+        const selected = active === choice.id;
+        return <button key={choice.id} type="button" aria-pressed={selected} onClick={function () { onChange(choice.id); }} style={{ border: "1px solid " + (selected ? C.sky : C.border), borderRadius: 99, padding: "6px 10px", background: selected ? "#E0F2FE" : C.card, color: selected ? C.navy : C.muted, fontSize: 9, fontWeight: 750, cursor: "pointer" }}>{choice.label}</button>;
+      })}
+    </div>
+  );
+}
+
 export default function DirectorHub({ onBack }) {
   const [view, setView] = useState("sellIn");
-  const navigation = <ViewToggle active={view} onChange={setView} />;
-  return view === "sellIn"
-    ? <SellInControlTower onBack={onBack} navigation={navigation} />
-    : <SellOutControlTower onBack={onBack} navigation={navigation} />;
+  const [sellInMode, setSellInMode] = useState("forecast");
+  const navigation = <><ViewToggle active={view} onChange={setView} />{view === "sellIn" ? <SellInModeToggle active={sellInMode} onChange={setSellInMode} /> : null}</>;
+  if (view === "sellOut") return <SellOutControlTower onBack={onBack} navigation={navigation} />;
+  return sellInMode === "forecast"
+    ? <SellInForecast navigation={navigation} onBack={onBack} />
+    : <SellInControlTower onBack={onBack} navigation={navigation} />;
 }
