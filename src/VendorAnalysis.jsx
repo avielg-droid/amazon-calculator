@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import {
-  AlertTriangle, ArrowLeft, CheckCircle2, PackageSearch, TrendingDown, TrendingUp
+  AlertTriangle, ArrowLeft, CheckCircle2, Info, PackageSearch, TrendingDown, TrendingUp
 } from "lucide-react";
 import { availableSalesModes, buildVendorAnalysis } from "./vendorAnalysis.js";
 
@@ -49,12 +49,24 @@ function ChangeValue({ value }) {
   );
 }
 
-function MetricCard({ label, value, comparison, changeValue, note }) {
+function MetricCard({ label, value, comparison, changeValue, note, tooltip }) {
   return (
     <div style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 12, padding: "14px 15px" }}>
-      <p style={{ color: C.muted, fontSize: 10, margin: 0, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-        {label}
-      </p>
+      <div style={{ display: "flex", alignItems: "center", gap: 5 }}>
+        <p style={{ color: C.muted, fontSize: 10, margin: 0, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+          {label}
+        </p>
+        {tooltip && (
+          <span
+            title={tooltip}
+            tabIndex={0}
+            aria-label={tooltip}
+            style={{ display: "inline-flex", color: C.subtle, cursor: "help", outline: "none" }}
+          >
+            <Info size={12} />
+          </span>
+        )}
+      </div>
       <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8, marginTop: 8 }}>
         <strong style={{ color: C.navy, fontSize: 20 }}>{value}</strong>
         <ChangeValue value={changeValue} />
@@ -279,7 +291,14 @@ export default function VendorAnalysis({ uploaded, onBack }) {
         <MetricCard label={analysis.mode + " revenue"} value={formatCurrency(analysis.current.revenue, analysis.currency, true)} comparison={formatCurrency(analysis.comparison.revenue, analysis.currency, true)} changeValue={analysis.revenueChange} />
         <MetricCard label={analysis.mode + " units"} value={formatNumber(analysis.current.units)} comparison={formatNumber(analysis.comparison.units)} changeValue={change(analysis.current.units, analysis.comparison.units)} />
         <MetricCard label="Page views" value={formatNumber(analysis.current.views)} comparison={formatNumber(analysis.comparison.views)} changeValue={change(analysis.current.views, analysis.comparison.views)} />
-        <MetricCard label="Units per page view" value={formatPercent(analysis.current.conversion, 2).replace("+", "")} comparison={formatPercent(analysis.comparison.conversion, 2).replace("+", "")} changeValue={change(analysis.current.conversion, analysis.comparison.conversion)} note="Conversion proxy" />
+        <MetricCard
+          label="Units per page view"
+          value={formatPercent(analysis.current.conversion, 2).replace("+", "")}
+          comparison={formatPercent(analysis.comparison.conversion, 2).replace("+", "")}
+          changeValue={change(analysis.current.conversion, analysis.comparison.conversion)}
+          note="Conversion proxy"
+          tooltip="Calculated as ordered or dispatched units divided by page views. Example: 120 units ÷ 1,000 page views = 12%. It works like a conversion rate, but measures units rather than orders."
+        />
         <MetricCard label="Revenue per unit" value={formatCurrency(analysis.current.price, analysis.currency, false)} comparison={formatCurrency(analysis.comparison.price, analysis.currency, false)} changeValue={change(analysis.current.price, analysis.comparison.price)} />
         <MetricCard label="Inventory risks" value={formatNumber(analysis.inventoryRisks)} comparison={analysis.inventoryAvailable ? "Current snapshot" : "Metric unavailable"} changeValue={null} />
       </div>
