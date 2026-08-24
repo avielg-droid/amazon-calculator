@@ -6,6 +6,7 @@ import {
 import { parseCsv, parseXlsx } from "./parseCsv.js";
 import VendorAnalysis from "./VendorAnalysis.jsx";
 import DirectorHub from "./DirectorHub.jsx";
+import AdvertisingHub from "./AdvertisingHub.jsx";
 
 const C = {
   teal: "#14B8A6",
@@ -65,7 +66,7 @@ const goals = [
     title: "Evaluate advertising",
     question: "Is media driving retail growth?",
     description: "Connect Sponsored Ads and DSP investment to total retail sales.",
-    available: false
+    available: true
   }
 ];
 
@@ -610,6 +611,10 @@ export default function VendorHub() {
 
   if (selectedGoal === "director") {
     return <DirectorHub onBack={resetFlow} />;
+  }
+
+  if (selectedGoal === "ads") {
+    return <AdvertisingHub onBack={resetFlow} />;
   }
 
   const allCurrentComplete = firstIncomplete === -1;
