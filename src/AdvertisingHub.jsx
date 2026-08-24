@@ -51,6 +51,10 @@ function findExactHeader(headers, terms) {
   return headers.find(function (header) { return normalizedTerms.includes(normalize(header)); });
 }
 
+function findSpendHeader(headers) {
+  return findExactHeader(headers, ["total cost", "cost", "spend", "media spend", "total cost reconciled"]);
+}
+
 function parseDate(value) {
   const text = String(value || "").trim();
   let match = text.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
@@ -134,13 +138,14 @@ function validateAdvertisingReport(parsed) {
   const date = findExactHeader(headers, ["date"]);
   const dateRange = findExactHeader(headers, ["date range"]);
   const campaign = findHeader(headers, ["campaign", "campaign name"]);
-  const spend = findHeader(headers, ["cost", "spend", "total cost"]);
+  const spend = findSpendHeader(headers);
   const sales = findHeader(headers, ["sales", "total sales", "attributed sales"]);
   const clicks = findHeader(headers, ["clicks"]);
   if (!date && dateRange) return "This is a summary report with a Date range column. Recreate it with Time dimension = Date and daily breakdown so Danuly can isolate the selected period.";
   if (!date) return "Choose Date as the time dimension so the file contains one row per date.";
   if (!campaign) return "Choose Campaign as the level of detail.";
-  if (!spend || !sales || !clicks) return "Include Cost, Sales and Clicks in the Unified Advertising report.";
+  if (!spend) return "Actual spend is missing. Add the Total cost metric; Campaign cost type is not spend.";
+  if (!sales || !clicks) return "Include Sales and Clicks in the Unified Advertising report.";
   return null;
 }
 
@@ -168,7 +173,7 @@ function validateSalesReport(parsed, market, month) {
 function validateSearchReport(parsed) {
   const headers = parsed.headers || [];
   const term = findHeader(headers, ["customer search term", "search term"]);
-  const spend = findHeader(headers, ["cost", "spend", "total cost"]);
+  const spend = findSpendHeader(headers);
   const sales = findHeader(headers, ["sales", "total sales", "attributed sales"]);
   return term && spend && sales ? null : "Include Search term, Cost and Sales in the report.";
 }
@@ -215,7 +220,7 @@ function columnsFor(parsed) {
     adProduct: findHeader(headers, ["ad product", "campaign type", "ad type"]),
     country: findHeader(headers, ["country", "marketplace"]),
     impressions: findHeader(headers, ["impressions"]), clicks: findHeader(headers, ["clicks"]),
-    spend: findHeader(headers, ["cost", "spend", "total cost"]), sales: findHeader(headers, ["sales", "total sales", "attributed sales"]),
+    spend: findSpendHeader(headers), sales: findHeader(headers, ["sales", "total sales", "attributed sales"]),
     purchases: findHeader(headers, ["purchases", "orders", "total orders"]), units: findHeader(headers, ["units sold", "units"]),
     ntbSales: findHeader(headers, ["new to brand sales", "ntb sales"]), ntbPurchases: findHeader(headers, ["new to brand purchases", "ntb purchases", "new to brand orders"])
   };
