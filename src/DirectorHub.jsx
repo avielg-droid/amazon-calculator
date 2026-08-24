@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from "react";
 import {
   AlertTriangle, ArrowLeft, Calculator, CheckCircle2,
-  Info, Plus, Save, Target, Trash2, TrendingUp
+  Info, PackageCheck, Plus, Save, ShoppingCart, Target, Trash2, TrendingUp
 } from "lucide-react";
+import SellOutControlTower from "./SellOutControlTower.jsx";
 
 const C = {
   sky: "#0EA5E9", navy: "#0B1F3A", body: "#334155", muted: "#64748B",
@@ -174,7 +175,7 @@ function RollupCard({ title, data, accent }) {
   );
 }
 
-export default function DirectorHub({ onBack }) {
+function SellInControlTower({ onBack, navigation }) {
   const initial = useMemo(loadSettings, []);
   const [month, setMonth] = useState(initial.month);
   const [markets, setMarkets] = useState(initial.markets);
@@ -260,6 +261,7 @@ export default function DirectorHub({ onBack }) {
         <button type="button" onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, background: "transparent", border: "none", padding: 0, color: C.muted, cursor: "pointer", fontSize: 12 }}>
           <ArrowLeft size={13} /> Change goal
         </button>
+        {navigation}
 
         <div style={{ margin: "18px 0 20px", display: "flex", flexWrap: "wrap", gap: 16, justifyContent: "space-between", alignItems: "flex-end" }}>
           <div style={{ maxWidth: 710 }}>
@@ -392,4 +394,48 @@ export default function DirectorHub({ onBack }) {
       </div>
     </main>
   );
+}
+
+function ViewToggle({ active, onChange }) {
+  const choices = [
+    { id: "sellIn", label: "Sell-In", note: "Amazon POs", icon: PackageCheck },
+    { id: "sellOut", label: "Sell-Out", note: "Consumer sales", icon: ShoppingCart }
+  ];
+  return (
+    <div style={{ marginTop: 15, display: "inline-flex", gap: 3, padding: 4, borderRadius: 11, background: C.inset, border: "1px solid " + C.border }}>
+      {choices.map(function (choice) {
+        const Icon = choice.icon;
+        const selected = active === choice.id;
+        return (
+          <button
+            key={choice.id}
+            type="button"
+            aria-pressed={selected}
+            onClick={function () { onChange(choice.id); }}
+            style={{
+              minWidth: 132, display: "flex", alignItems: "center", gap: 8,
+              border: "none", borderRadius: 8, padding: "8px 11px", cursor: "pointer",
+              background: selected ? C.card : "transparent",
+              color: selected ? C.navy : C.muted,
+              boxShadow: selected ? "0 1px 3px rgba(15,23,42,0.1)" : "none"
+            }}
+          >
+            <Icon size={15} color={selected ? C.sky : C.subtle} />
+            <span style={{ textAlign: "left" }}>
+              <strong style={{ display: "block", fontSize: 11 }}>{choice.label}</strong>
+              <span style={{ display: "block", marginTop: 1, fontSize: 8, color: C.muted }}>{choice.note}</span>
+            </span>
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function DirectorHub({ onBack }) {
+  const [view, setView] = useState("sellIn");
+  const navigation = <ViewToggle active={view} onChange={setView} />;
+  return view === "sellIn"
+    ? <SellInControlTower onBack={onBack} navigation={navigation} />
+    : <SellOutControlTower onBack={onBack} navigation={navigation} />;
 }
