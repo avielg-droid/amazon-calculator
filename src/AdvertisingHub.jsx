@@ -137,11 +137,13 @@ function validateAdvertisingReport(parsed) {
   const headers = parsed.headers || [];
   const date = findExactHeader(headers, ["date"]);
   const dateRange = findExactHeader(headers, ["date range"]);
+  const dayOfMonth = findExactHeader(headers, ["day of month"]);
   const campaign = findHeader(headers, ["campaign", "campaign name"]);
   const spend = findSpendHeader(headers);
   const sales = findHeader(headers, ["sales", "total sales", "attributed sales"]);
   const clicks = findHeader(headers, ["clicks"]);
   if (!date && dateRange) return "This is a summary report with a Date range column. Recreate it with Time dimension = Date and daily breakdown so Danuly can isolate the selected period.";
+  if (!date && dayOfMonth) return "This report uses Day of Month (1–31), which does not include the month or year. Replace that dimension with Date so Danuly can isolate the selected period from the 90-day file.";
   if (!date) return "Choose Date as the time dimension so the file contains one row per date.";
   if (!campaign) return "Choose Campaign as the level of detail.";
   if (!spend) return "Actual spend is missing. Add the Total cost metric; Campaign cost type is not spend.";
