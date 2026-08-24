@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import {
   AlertTriangle, ArrowLeft, Calculator, CheckCircle2,
-  Info, PackageCheck, Plus, Save, ShoppingCart, Target, Trash2, TrendingUp
+  Info, PackageCheck, Save, ShoppingCart, Target, TrendingUp
 } from "lucide-react";
 import SellOutControlTower from "./SellOutControlTower.jsx";
 
@@ -13,21 +13,12 @@ const C = {
 };
 
 const MARKET_OPTIONS = [
-  { code: "UK", name: "United Kingdom", currency: "GBP", credit: 81.37, logistics: 5, fx: 1.35 },
-  { code: "DE", name: "Germany", currency: "EUR", credit: 92, logistics: 5, fx: 1.17 },
-  { code: "FR", name: "France", currency: "EUR", credit: 92, logistics: 5, fx: 1.17 },
-  { code: "IT", name: "Italy", currency: "EUR", credit: 92, logistics: 5, fx: 1.17 },
-  { code: "ES", name: "Spain", currency: "EUR", credit: 92, logistics: 5, fx: 1.17 },
-  { code: "NL", name: "Netherlands", currency: "EUR", credit: 92, logistics: 5, fx: 1.17 },
-  { code: "BE", name: "Belgium", currency: "EUR", credit: 92, logistics: 5, fx: 1.17 },
-  { code: "SE", name: "Sweden", currency: "SEK", credit: 92, logistics: 5, fx: "" },
-  { code: "PL", name: "Poland", currency: "PLN", credit: 92, logistics: 5, fx: "" },
-  { code: "JP", name: "Japan", currency: "JPY", credit: 92, logistics: 5, fx: "" },
-  { code: "AU", name: "Australia", currency: "AUD", credit: 92, logistics: 5, fx: "" }
+  { code: "UK", name: "United Kingdom", currency: "GBP", credit: 81.37, logistics: 5, fx: 1.35, fxOperation: "multiply" },
+  { code: "EU", name: "EU combined", currency: "EUR", credit: 92, logistics: 5, fx: 1.17, fxOperation: "multiply" },
+  { code: "JP", name: "Japan", currency: "JPY", credit: 100, logistics: 0, fx: 150, fxOperation: "divide" }
 ];
 
-const SETTINGS_KEY = "danuly-director-sell-in-v2";
-const EU_MARKETS = new Set(["DE", "FR", "IT", "ES", "NL", "BE", "SE", "PL"]);
+const SETTINGS_KEY = "danuly-director-sell-in-v3";
 
 function marketOption(code) {
   return MARKET_OPTIONS.find(function (option) { return option.code === code; }) || MARKET_OPTIONS[0];
@@ -38,13 +29,12 @@ function createMarket(code, priority) {
   return {
     code: option.code, currency: option.currency, priority: priority || "Secondary",
     targetUsd: "", owner: "", threshold: 5, creditMultiplier: option.credit,
-    logisticsPct: option.logistics, fxToUsd: option.fx
+    logisticsPct: option.logistics, fxToUsd: option.fx, fxOperation: option.fxOperation
   };
 }
 
 const DEFAULT_MARKETS = [
-  createMarket("UK", "Core"), createMarket("DE", "Core"),
-  createMarket("FR", "Standard"), createMarket("IT", "Standard"), createMarket("ES", "Standard")
+  createMarket("UK", "Core"), createMarket("EU", "Core"), createMarket("JP", "Core")
 ];
 
 function currentMonth() {
@@ -61,7 +51,7 @@ function loadSettings() {
   if (typeof window === "undefined") return fallback;
   try {
     const saved = JSON.parse(window.localStorage.getItem(SETTINGS_KEY));
-    if (saved && saved.version === 2 && Array.isArray(saved.markets) && saved.markets.length) {
+    if (saved && saved.version === 3 && Array.isArray(saved.markets) && saved.markets.length) {
       return { month: saved.month || currentMonth(), markets: saved.markets, monthlyInputs: saved.monthlyInputs || {} };
     }
   } catch {}
@@ -90,7 +80,11 @@ export function calculateSellIn(market, input, scenario, weeksElapsed) {
   const assumptionsReady = numeric(market.creditMultiplier) > 0 && numeric(market.fxToUsd) > 0;
   const netAfterCredits = assumptionsReady ? grossSellIn * numeric(market.creditMultiplier) / 100 : null;
   const netAfterLogistics = netAfterCredits === null ? null : netAfterCredits * (1 - numeric(market.logisticsPct) / 100);
-  const netUsd = netAfterLogistics === null ? null : netAfterLogistics * numeric(market.fxToUsd);
+  const netUsd = netAfterLogistics === null
+    ? null
+    : market.fxOperation === "divide"
+      ? netAfterLogistics / numeric(market.fxToUsd)
+      : netAfterLogistics * numeric(market.fxToUsd);
   const targetUsd = numeric(market.targetUsd);
   const gapUsd = hasPoData && netUsd !== null && targetUsd ? netUsd - targetUsd : null;
   const achievement = hasPoData && netUsd !== null && targetUsd ? netUsd / targetUsd : null;
@@ -194,7 +188,7 @@ function SellInControlTower({ onBack, navigation }) {
   const measured = summaries.filter(function (row) { return row.hasPoData && row.targetUsd && row.netUsd !== null; });
   const attention = measured.filter(function (row) { return row.status !== "On plan"; }).length;
   const onPlan = measured.filter(function (row) { return row.status === "On plan"; }).length;
-  const euRollup = rollup(summaries.filter(function (row) { return EU_MARKETS.has(row.market.code); }));
+  const euRollup = rollup(summaries.filter(function (row) { return row.market.code === "EU"; }));
   const portfolioRollup = rollup(summaries);
 
   function updateMarket(index, field, value) {
@@ -233,22 +227,9 @@ function SellInControlTower({ onBack, navigation }) {
     setSaved(false);
   }
 
-  function addMarket() {
-    const used = new Set(markets.map(function (market) { return market.code; }));
-    const option = MARKET_OPTIONS.find(function (market) { return !used.has(market.code); });
-    if (!option) return;
-    setMarkets(function (current) { return current.concat(createMarket(option.code, "Secondary")); });
-    setSaved(false);
-  }
-
-  function removeMarket(index) {
-    setMarkets(function (current) { return current.filter(function (_, marketIndex) { return marketIndex !== index; }); });
-    setSaved(false);
-  }
-
   function saveProgress() {
     try {
-      window.localStorage.setItem(SETTINGS_KEY, JSON.stringify({ version: 2, month, markets, monthlyInputs }));
+      window.localStorage.setItem(SETTINGS_KEY, JSON.stringify({ version: 3, month, markets, monthlyInputs }));
       setSaved(true);
     } catch {
       setSaved(false);
@@ -267,7 +248,7 @@ function SellInControlTower({ onBack, navigation }) {
           <div style={{ maxWidth: 710 }}>
             <span style={{ color: C.sky, fontSize: 10, fontWeight: 800, letterSpacing: "0.07em" }}>DIRECTOR SELL-IN CONTROL TOWER</span>
             <h1 style={{ fontSize: 26, color: C.navy, margin: "5px 0 6px", letterSpacing: "-0.025em" }}>Are we on track against Sell-In forecast?</h1>
-            <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.55, margin: 0 }}>Enter weekly gross Amazon PO values. Danuly applies credits, logistics and FX to calculate net Sell-In in USD and identify markets requiring attention.</p>
+            <p style={{ color: C.muted, fontSize: 13, lineHeight: 1.55, margin: 0 }}>Enter weekly gross Amazon PO values for UK, combined EU and Japan. Danuly applies each region's Sell-In rules and converts the result to USD.</p>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 7, color: C.green, fontSize: 10, fontWeight: 700, background: C.greenDim, border: "1px solid #BBF7D0", padding: "7px 10px", borderRadius: 99 }}>
             <Calculator size={13} /> No Vendor report required
@@ -275,28 +256,24 @@ function SellInControlTower({ onBack, navigation }) {
         </div>
 
         <section style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 14, padding: "18px", marginBottom: 14 }}>
-          <StepHeader number="1" title="Set forecasts and market ownership" description="Monthly forecasts are net Sell-In in USD, after credits and logistics." complete={targetsComplete} />
+          <StepHeader number="1" title="Set forecasts and market ownership" description="Monthly forecasts are net Sell-In in USD. Credits and logistics apply to UK and EU only." complete={targetsComplete} />
           <label style={{ display: "block", maxWidth: 230, fontSize: 10, fontWeight: 700, color: C.muted, marginBottom: 14 }}>
             TARGET MONTH
             <input type="month" value={month} onChange={function (event) { setMonth(event.target.value); setSaved(false); }} style={inputStyle({ marginTop: 5 })} />
           </label>
           <div style={{ overflowX: "auto", border: "1px solid " + C.border, borderRadius: 10 }}>
-            <div style={{ minWidth: 760 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "150px 105px 170px 1fr 100px 34px", gap: 8, padding: "8px 10px", background: C.inset, color: C.muted, fontSize: 9, fontWeight: 800, letterSpacing: "0.04em" }}>
-                <span>MARKET</span><span>PRIORITY</span><span>MONTHLY FORECAST USD</span><span>OWNER</span><span>ALERT GAP</span><span />
+            <div style={{ minWidth: 720 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "150px 105px 170px 1fr 100px", gap: 8, padding: "8px 10px", background: C.inset, color: C.muted, fontSize: 9, fontWeight: 800, letterSpacing: "0.04em" }}>
+                <span>MARKET</span><span>PRIORITY</span><span>MONTHLY FORECAST USD</span><span>OWNER</span><span>ALERT GAP</span>
               </div>
               {markets.map(function (market, index) {
-                const usedByOthers = new Set(markets.filter(function (_, otherIndex) { return otherIndex !== index; }).map(function (item) { return item.code; }));
                 return (
-                  <div key={market.code} style={{ display: "grid", gridTemplateColumns: "150px 105px 170px 1fr 100px 34px", gap: 8, padding: "8px 10px", borderTop: index ? "1px solid " + C.border : "none", alignItems: "center" }}>
-                    <select aria-label="Market" value={market.code} onChange={function (event) { updateMarket(index, "code", event.target.value); }} style={inputStyle()}>
-                      {MARKET_OPTIONS.filter(function (option) { return option.code === market.code || !usedByOthers.has(option.code); }).map(function (option) { return <option key={option.code} value={option.code}>{option.code} · {option.name}</option>; })}
-                    </select>
+                  <div key={market.code} style={{ display: "grid", gridTemplateColumns: "150px 105px 170px 1fr 100px", gap: 8, padding: "8px 10px", borderTop: index ? "1px solid " + C.border : "none", alignItems: "center" }}>
+                    <div><strong style={{ display: "block", color: C.navy, fontSize: 11 }}>{market.code}</strong><span style={{ color: C.muted, fontSize: 9 }}>{marketOption(market.code).name}</span></div>
                     <select aria-label={market.code + " priority"} value={market.priority} onChange={function (event) { updateMarket(index, "priority", event.target.value); }} style={inputStyle()}><option>Core</option><option>Standard</option><option>Secondary</option></select>
                     <div style={{ position: "relative" }}><span style={{ position: "absolute", left: 9, top: 9, color: C.muted, fontSize: 10 }}>$</span><input aria-label={market.code + " monthly forecast USD"} type="number" min="0" placeholder="e.g. 250000" value={market.targetUsd} onChange={function (event) { updateMarket(index, "targetUsd", event.target.value); }} style={inputStyle({ paddingLeft: 22 })} /></div>
                     <input aria-label={market.code + " owner"} placeholder="Name or team" value={market.owner} onChange={function (event) { updateMarket(index, "owner", event.target.value); }} style={inputStyle()} />
                     <div style={{ position: "relative" }}><input aria-label={market.code + " alert gap percentage"} type="number" min="0" max="100" value={market.threshold} onChange={function (event) { updateMarket(index, "threshold", event.target.value); }} style={inputStyle({ paddingRight: 24 })} /><span style={{ position: "absolute", right: 9, top: 9, color: C.muted, fontSize: 10 }}>%</span></div>
-                    <button type="button" aria-label={"Remove " + market.code} disabled={markets.length === 1} onClick={function () { removeMarket(index); }} style={{ border: "none", background: "transparent", color: C.subtle, cursor: markets.length === 1 ? "default" : "pointer", padding: 5 }}><Trash2 size={14} /></button>
                   </div>
                 );
               })}
@@ -307,7 +284,7 @@ function SellInControlTower({ onBack, navigation }) {
             <summary style={{ padding: "11px 12px", color: C.body, fontSize: 11, fontWeight: 750, cursor: "pointer" }}>Calculation assumptions · credits, logistics and FX</summary>
             <div style={{ padding: "0 12px 12px", overflowX: "auto" }}>
               <div style={{ minWidth: 650 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "100px 100px 1fr 1fr 1fr", gap: 8, padding: "8px 0", color: C.muted, fontSize: 9, fontWeight: 800 }}><span>MARKET</span><span>CURRENCY</span><span>CREDIT MULTIPLIER</span><span>LOGISTICS</span><span>FX TO USD</span></div>
+                <div style={{ display: "grid", gridTemplateColumns: "100px 100px 1fr 1fr 1fr", gap: 8, padding: "8px 0", color: C.muted, fontSize: 9, fontWeight: 800 }}><span>MARKET</span><span>CURRENCY</span><span>CREDIT MULTIPLIER</span><span>LOGISTICS</span><span>USD CONVERSION</span></div>
                 {markets.map(function (market, index) {
                   return (
                     <div key={market.code} style={{ display: "grid", gridTemplateColumns: "100px 100px 1fr 1fr 1fr", gap: 8, alignItems: "center", padding: "6px 0", borderTop: "1px solid " + C.border }}>
@@ -315,17 +292,16 @@ function SellInControlTower({ onBack, navigation }) {
                       <input aria-label={market.code + " currency"} value={market.currency} onChange={function (event) { updateMarket(index, "currency", event.target.value.toUpperCase()); }} style={inputStyle()} />
                       <div style={{ position: "relative" }}><input aria-label={market.code + " credit multiplier"} type="number" min="0" max="100" step="0.01" value={market.creditMultiplier} onChange={function (event) { updateMarket(index, "creditMultiplier", event.target.value); }} style={inputStyle({ paddingRight: 24 })} /><span style={{ position: "absolute", right: 9, top: 9, fontSize: 10, color: C.muted }}>%</span></div>
                       <div style={{ position: "relative" }}><input aria-label={market.code + " logistics percentage"} type="number" min="0" max="100" step="0.1" value={market.logisticsPct} onChange={function (event) { updateMarket(index, "logisticsPct", event.target.value); }} style={inputStyle({ paddingRight: 24 })} /><span style={{ position: "absolute", right: 9, top: 9, fontSize: 10, color: C.muted }}>%</span></div>
-                      <input aria-label={market.code + " FX to USD"} type="number" min="0" step="0.0001" placeholder="Required" value={market.fxToUsd} onChange={function (event) { updateMarket(index, "fxToUsd", event.target.value); }} style={inputStyle()} />
+                      <div style={{ position: "relative" }}><span style={{ position: "absolute", left: 9, top: 9, fontSize: 10, color: C.muted }}>{market.fxOperation === "divide" ? "÷" : "×"}</span><input aria-label={market.code + " USD conversion rate"} type="number" min="0" step="0.0001" value={market.fxToUsd} onChange={function (event) { updateMarket(index, "fxToUsd", event.target.value); }} style={inputStyle({ paddingLeft: 24 })} /></div>
                     </div>
                   );
                 })}
               </div>
-              <p style={{ margin: "10px 0 0", color: C.muted, fontSize: 9, lineHeight: 1.5 }}>Defaults follow your calculator: UK 81.37% credits, 5% logistics and 1.35 FX; EUR markets 92%, 5% and 1.17. Update FX when your planning rate changes.</p>
+              <p style={{ margin: "10px 0 0", color: C.muted, fontSize: 9, lineHeight: 1.5 }}>UK: gross × 81.37% × 95% × 1.35. EU combined: gross × 92% × 95% × 1.17. Japan: gross JPY ÷ 150, with no credit or logistics deduction.</p>
             </div>
           </details>
 
-          <div style={{ marginTop: 12, display: "flex", flexWrap: "wrap", gap: 8, justifyContent: "space-between" }}>
-            <button type="button" onClick={addMarket} disabled={markets.length >= MARKET_OPTIONS.length} style={{ display: "inline-flex", alignItems: "center", gap: 6, border: "1px solid " + C.border, borderRadius: 8, background: C.card, color: C.body, padding: "8px 11px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}><Plus size={13} /> Add market</button>
+          <div style={{ marginTop: 12, display: "flex", justifyContent: "flex-end" }}>
             <button type="button" onClick={saveProgress} style={{ display: "inline-flex", alignItems: "center", gap: 6, border: "none", borderRadius: 8, background: saved ? C.green : C.sky, color: "#fff", padding: "8px 12px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}><Save size={13} /> {saved ? "Progress saved" : "Save progress"}</button>
           </div>
         </section>
@@ -355,7 +331,7 @@ function SellInControlTower({ onBack, navigation }) {
         </section>
 
         <section style={{ background: C.card, border: "1px solid " + C.border, borderRadius: 14, padding: "18px" }}>
-          <StepHeader number="3" title="Review Sell-In performance" description="All portfolio comparisons use net Sell-In USD after credits, logistics and FX." complete={measured.length > 0} />
+          <StepHeader number="3" title="Review Sell-In performance" description="All portfolio comparisons use USD after applying the relevant UK, EU or Japan calculation." complete={measured.length > 0} />
           {measured.length === 0 ? (
             <div style={{ padding: "22px", borderRadius: 10, background: C.inset, textAlign: "center" }}><TrendingUp size={20} color={C.subtle} /><p style={{ color: C.body, fontSize: 12, fontWeight: 700, margin: "8px 0 3px" }}>Your Sell-In Control Tower will appear here</p><p style={{ color: C.muted, fontSize: 10, margin: 0 }}>Enter at least one market forecast and PO value.</p></div>
           ) : (
